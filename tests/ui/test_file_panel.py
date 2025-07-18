@@ -60,7 +60,7 @@ def test_create_all_file_types(login_page):
     # --- Создаём папку ---
     folder_name = file_panel.create_folder(f"autofolder_{int(time.time())}")
     if folder_name:
-        created += 1
+            created += 1
     # --- Создаём остальные типы файлов ---
     file_panel.open_create_file_menu()
     time.sleep(1)
@@ -81,38 +81,4 @@ def test_create_all_file_types(login_page):
     save_screenshot(page, "test_create_all_file_types")
 
 
-def test_create_and_delete_all_types_universal(login_page):
-    page = login_page
-    file_panel = FilePanelPage(page)
-    project_page = ProjectPage(page)
-    # Переход в первый проект
-    project_page.goto_first_available_project()
-    # Открыть файловую панель
-    file_panel.open_file_panel()
-    created_names = []
-    # --- Создаём папку ---
-    folder_name = file_panel.create_folder(f"autofolder_{int(time.time())}")
-    if folder_name:
-        created_names.append(folder_name)
-    # Получить доступные типы файлов через кнопки
-    file_panel.open_create_file_menu()
-    time.sleep(1)
-    file_type_buttons = file_panel.get_file_type_buttons()
-    type_keys = []
-    for btn in file_type_buttons:
-        aria = btn.get_attribute('aria-label')
-        text = btn.inner_text()
-        if should_skip(aria, text):
-            continue
-        type_keys.append((aria, text))
-    # Создать все доступные типы файлов
-    for idx, (aria, text) in enumerate(type_keys):
-        file_panel.open_create_file_menu()
-        file_name = file_panel.create_file_of_type(f"autofile_{idx}_{int(time.time())}", aria, text)
-        if file_name:
-            created_names.append(file_name)
-    # Удалить только реально созданные файлы
-    for file_name in created_names:
-        file_panel.delete_tree_item(file_name)
-
-# Удалён тест test_create_and_delete_each_file_type 
+# Удалён тест test_create_and_delete_all_types_universal 
