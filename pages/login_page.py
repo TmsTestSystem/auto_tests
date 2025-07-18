@@ -18,4 +18,9 @@ class LoginPage(BasePage):
         self.page.fill(self.EMAIL_INPUT, email)
         self.page.fill(self.PASSWORD_INPUT, password)
         self.page.click(self.SUBMIT_BUTTON)
-        self.page.wait_for_load_state('networkidle') 
+        self.page.wait_for_load_state('networkidle')
+
+    def is_create_project_button_visible(self, timeout=15000):
+        selector = 'button:has-text("Создать проект")'
+        self.page.wait_for_selector(selector, timeout=timeout)
+        return self.page.is_visible(selector) 

@@ -58,12 +58,37 @@ class ProjectPage(BasePage):
             return True
         return False
 
+    def goto_first_available_project(self, timeout=15000):
+        self.page.wait_for_selector('div[aria-label="projects_card"]', timeout=timeout)
+        cards = self.page.query_selector_all('div[aria-label="projects_card"]')
+        if not cards:
+            raise Exception('Нет доступных проектов!')
+        first_card = cards[0]
+        link = first_card.query_selector('a[aria-label="projects_card_link"]')
+        if not link:
+            raise Exception('Не найдена ссылка на проект!')
+        link.click()
+        self.page.wait_for_load_state('networkidle')
+
     def check_required_buttons(self, required_aria_labels):
         for label in required_aria_labels:
             assert self.page.is_visible(f'button[aria-label="{label}"]'), f'Кнопка с aria-label="{label}" не найдена!' 
 
-    # Удалены методы:
-    # - open_file_panel
-    # - open_create_file_menu
-    # - get_file_type_buttons
-    # - create_file_of_type 
+    def wait_for_toolbar_buttons(self, toolbar_labels, timeout=20000):
+        found_labels = set()
+        for _ in range(int(timeout / 500)):
+            buttons = self.page.query_selector_all('button[aria-label]')
+            found_labels = set(btn.get_attribute('aria-label') for btn in buttons if btn.get_attribute('aria-label') in toolbar_labels)
+            if found_labels == set(toolbar_labels):
+                break
+            time.sleep(0.5)
+        return found_labels
+
+    def get_file_sidebar_buttons(self):
+        # Возвращает все кнопки в левом сайдбаре файлового менеджера
+        return self.page.query_selector_all('div.TreeItem__LabelPrimary___vzajD[aria-label="treeitem_label"]') 
+
+    def open_file_panel(self):
+        from pages.file_panel_page import FilePanelPage
+        file_panel = FilePanelPage(self.page)
+        file_panel.open_file_panel() 

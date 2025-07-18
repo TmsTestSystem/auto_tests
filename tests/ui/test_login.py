@@ -18,7 +18,5 @@ def test_login_success(email, password):
         login_page = LoginPage(page)
         login_page.goto()
         login_page.login(email, password)
-        # Проверяем, что после логина есть кнопка 'Создать проект'
-        page.wait_for_selector('button:has-text("Создать проект")', timeout=15000)
-        assert page.is_visible('button:has-text("Создать проект")'), "Кнопка 'Создать проект' не найдена после логина!"
+        assert login_page.is_create_project_button_visible(), "Кнопка 'Создать проект' не найдена после логина!"
         browser.close() 

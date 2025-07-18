@@ -37,13 +37,7 @@ def test_create_project_and_check_toolbar(login_page):
         'board_toolbar_structures_button',
         'board_toolbar_search_button',
     ]
-    found_labels = set()
-    for _ in range(40):  # 40 * 0.5s = 20 секунд
-        buttons = page.query_selector_all('button[aria-label]')
-        found_labels = set(btn.get_attribute('aria-label') for btn in buttons if btn.get_attribute('aria-label') in toolbar_labels)
-        if found_labels == set(toolbar_labels):
-            break
-        time.sleep(0.5)
+    found_labels = project_page.wait_for_toolbar_buttons(toolbar_labels)
     for label in toolbar_labels:
         assert label in found_labels, f'Кнопка с aria-label="{label}" не найдена на тулбаре проекта!'
     # Сохраняем скриншот через утилиту
