@@ -6,9 +6,9 @@ import time
 class ProjectPage(BasePage):
     CREATE_BUTTON = 'button:has-text("Создать проект")'
     MODAL_FORM = 'form'
-    MODAL_BACKDROP = '.Modal__Backdrop'  # примерный селектор backdrop
-    PROJECT_LIST = '[data-testid="project-list"]'  # заменить на актуальный селектор списка проектов
-    PROJECT_ROW = 'a[href^="/projects/"]'  # ссылка на проект
+    MODAL_BACKDROP = '.Modal__Backdrop'
+    PROJECT_LIST = '[data-testid="project-list"]'
+    PROJECT_ROW = 'a[href^="/projects/"]'
     SUBMIT_BUTTON = 'button[aria-label="Отправить"]'
 
     def __init__(self, page: Page):
@@ -36,9 +36,7 @@ class ProjectPage(BasePage):
         self.page.click(self.SUBMIT_BUTTON)
 
     def wait_modal_close(self):
-        # Ждём исчезновения формы или backdrop
         self.page.wait_for_selector(self.MODAL_FORM, state='detached', timeout=15000)
-        # self.page.wait_for_selector(self.MODAL_BACKDROP, state='detached', timeout=15000)  # если есть backdrop
 
     def find_project_in_list(self, title: str):
         self.page.wait_for_selector('div[aria-label="projects_card"]', timeout=10000)
@@ -85,7 +83,6 @@ class ProjectPage(BasePage):
         return found_labels
 
     def get_file_sidebar_buttons(self):
-        # Возвращает все кнопки в левом сайдбаре файлового менеджера
         return self.page.query_selector_all('div.TreeItem__LabelPrimary___vzajD[aria-label="treeitem_label"]') 
 
     def open_file_panel(self):

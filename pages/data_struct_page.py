@@ -290,8 +290,8 @@ class DataStructPage(BasePage):
 
     def select_attribute_type_by_index(self, idx, type_name):
         self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.type").click()
-        self.page.wait_for_selector(f'div[role="treeitem"][aria-label="{type_name}"]', timeout=5000)
-        self.page.locator(f'div[role="treeitem"][aria-label="{type_name}"]').click()
+        self.page.wait_for_selector('div.TreeItem__LabelPrimary___vzajD', timeout=5000)
+        self.page.get_by_text(type_name, exact=True).click()
 
     def fill_attribute_description_by_index(self, idx, value):
         locator = self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.description")
@@ -303,20 +303,25 @@ class DataStructPage(BasePage):
     def select_list_element_type_in_modal(self, element_type, is_first_list=False):
         popup = self.page.locator('.Popup__Popup___vJ6BT.AttributeTypeField__Popup___Z67HW:visible')
         popup.wait_for(timeout=5000)
-        if not is_first_list:
-            popup.get_by_role("button", name="textfield_arrow_button").click()
-            popup.locator(f'div[role="treeitem"][aria-label="{element_type}"]').click()
+        # Если элемент string, сразу подтверждаем выбор
+        if element_type == "string":
+            popup.get_by_role("button", name="datastructureeditor_popup_select_button").click()
+            return
+        # Для других типов (например, структура данных) оставить прежнюю логику
+        self.page.get_by_role("textbox", name="popup.type").click()
+        popup.locator('div.TreeItem__LabelPrimary___vzajD', has_text="Структура данных").click()
+        self.select_schema_in_modal(element_type)
         popup.get_by_role("button", name="datastructureeditor_popup_select_button").click()
 
     def select_dict_key_value_types_in_modal(self, key_type, value_type):
-        # Ждём появления popup-модалки выбора типов для dictionary
         popup = self.page.locator('.Popup__Popup___vJ6BT.AttributeTypeField__Popup___Z67HW:visible')
         popup.wait_for(timeout=5000)
-        # Первый селект — ключ, второй — значение
-        # Ключ всегда string, поэтому не раскрываем селект для ключа
-        # Для значения раскрываем селект, если не string
-        if value_type != "string":
-            popup.get_by_role("button", name="textfield_arrow_button").nth(1).click()
-            popup.locator(f'div[role="treeitem"][aria-label="{value_type}"]').click()
-        # Подтвердить выбор
+        # Ключ всегда string, сразу подтверждаем выбор, если значение тоже string
+        if value_type == "string":
+            popup.get_by_role("button", name="datastructureeditor_popup_select_button").click()
+            return
+        # Для других типов значения (например, структура данных) оставить прежнюю логику
+        self.page.get_by_role("textbox", name="popup.type").click()
+        popup.locator('div.TreeItem__LabelPrimary___vzajD', has_text="Структура данных").click()
+        self.select_schema_in_modal(value_type)
         popup.get_by_role("button", name="datastructureeditor_popup_select_button").click() 

@@ -9,9 +9,7 @@ def test_create_data_struct_and_add_attribute(login_page):
     file_panel = FilePanelPage(page)
     project_page = ProjectPage(page)
     data_struct = DataStructPage(page)
-    # Переход в первый доступный проект
     project_page.goto_first_available_project()
-    # 1. Открыть файловую панель и создать структуру данных
     file_panel.click_toolbar_filemanager_button()
     time.sleep(0.5)
     file_panel.click_create_file_button()
@@ -22,18 +20,14 @@ def test_create_data_struct_and_add_attribute(login_page):
     file_panel.fill_treeitem_label_field(file_name)
     file_panel.press_enter_treeitem_label_field()
     time.sleep(0.5)
-    # 2. Создать схему
     page.get_by_role("button", name="Создать").click()
     schema_name = f"schema_{int(time.time())}"
     page.get_by_role("textbox", name="treeitem_label_field").fill(schema_name)
     page.get_by_role("textbox", name="treeitem_label_field").press("Enter")
-    time.sleep(1)
-    # Явное ожидание появления интерфейса для атрибутов (например, кнопки "Добавить атрибут")
-    page.wait_for_selector('button[aria-label="datastructureeditor_create_attribute_button"]', timeout=5000)
-    # 2.1. Заполнить описание схемы
+    page.wait_for_selector('button[aria-label="datastructureeditor_create_attribute_button"]', timeout=10000)
+    time.sleep(0.5)
     file_panel.fill_schema_description("Описание схемы автотестом")
     time.sleep(0.5)
-    # 3. Добавить все основные типы структур
     types = [
         "string",
         "boolean",
@@ -45,6 +39,7 @@ def test_create_data_struct_and_add_attribute(login_page):
     attr_idx = 0
     for type_name in types:
         data_struct.click_create_attribute_button()
+        page.wait_for_selector(f'input[name="attributes.{attr_idx}.name"]', timeout=10000)
         time.sleep(0.5)
         attr_name = f"attr_{type_name}_{int(time.time())}"
         data_struct.fill_attribute_name_by_index(attr_idx, attr_name)
@@ -56,8 +51,8 @@ def test_create_data_struct_and_add_attribute(login_page):
         data_struct.fill_attribute_description_by_index(attr_idx, f"Описание для {type_name}")
         time.sleep(1)
         attr_idx += 1
-    # list(string)
     data_struct.click_create_attribute_button()
+    page.wait_for_selector(f'input[name="attributes.{attr_idx}.name"]', timeout=10000)
     time.sleep(0.5)
     attr_name = f"attr_list_string_{int(time.time())}"
     data_struct.fill_attribute_name_by_index(attr_idx, attr_name)
@@ -68,8 +63,8 @@ def test_create_data_struct_and_add_attribute(login_page):
     data_struct.fill_attribute_description_by_index(attr_idx, "Описание для list[string]")
     time.sleep(1)
     attr_idx += 1
-    # dictionary(string)
     data_struct.click_create_attribute_button()
+    page.wait_for_selector(f'input[name="attributes.{attr_idx}.name"]', timeout=10000)
     time.sleep(0.5)
     attr_name = f"attr_dict_string_{int(time.time())}"
     data_struct.fill_attribute_name_by_index(attr_idx, attr_name)
@@ -80,6 +75,5 @@ def test_create_data_struct_and_add_attribute(login_page):
     data_struct.fill_attribute_description_by_index(attr_idx, "Описание для dict[string,string]")
     time.sleep(1)
     time.sleep(3)
-    # Нажать кнопку 'Генерировать python-классы' и проверить нотификацию
     data_struct.generate_python_classes()
     time.sleep(2) 
