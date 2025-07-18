@@ -53,6 +53,7 @@ class DataStructPage(BasePage):
         type_select.select_option(attr_type)
         if description:
             desc_input.fill(description)
+        time.sleep(1.5)
 
     def delete_attribute(self, index: int = -1):
         attr_rows = self.page.query_selector_all('tr')
@@ -82,7 +83,11 @@ class DataStructPage(BasePage):
             desc_input.fill(description)
 
     def generate_python_classes(self):
-        self.page.click(self.GENERATE_PYTHON_BUTTON)
+        self.page.get_by_role("button", name="datastructureeditor_generate_button").click()
+        self.page.get_by_role("button", name="Генерировать").click()
+        # Ожидание появления нотификации (до 30 сек)
+        self.page.wait_for_selector('div:has-text("Python-классы сгенерированыДиректория с файлами python-классов: data_structures")', timeout=30000)
+        return True
 
     def save(self):
         self.page.click(self.SAVE_BUTTON)
@@ -91,16 +96,39 @@ class DataStructPage(BasePage):
         # Возвращает список текстов ошибок валидации
         return [el.inner_text() for el in self.page.query_selector_all('.error-message, .ErrorMessage')]
 
-    def create_schema(self, name: str):
-        self.page.click(self.CREATE_SCHEMA_BUTTON)
-        # Ожидаем появления инпута для имени (может быть input или textarea)
-        self.page.wait_for_selector('input, textarea', timeout=3000)
-        input_box = self.page.query_selector('input, textarea')
-        if input_box is None:
-            raise Exception('Инпут для имени новой структуры не найден!')
-        input_box.fill(name)
-        self.page.keyboard.press('Enter')
-        self.page.wait_for_selector(f'{self.TREE_ITEM}[aria-label="{name}"]', timeout=3000)
+    def create_schema(self, name):
+        self.page.get_by_role("button", name="datastructureeditor_create_schema_button").click()
+        self.page.get_by_role("textbox", name="treeitem_label_field").fill(name)
+        self.page.get_by_role("textbox", name="treeitem_label_field").press("Enter")
+
+    def add_struct_ref_attribute(self, idx, attr_name, ref_schema_name):
+        self.page.get_by_role("button", name="Добавить").click()
+        self.page.get_by_role("textbox", name=f"attributes.{idx}.name").fill(attr_name)
+        self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.type").click()
+        self.page.get_by_text("Структура данных").click()
+        self.select_schema_in_modal(ref_schema_name)
+
+    def add_list_struct_ref_attribute(self, idx, attr_name, ref_schema_name):
+        self.page.get_by_role("button", name="datastructureeditor_create_attribute_button").click()
+        self.page.get_by_role("textbox", name=f"attributes.{idx}.name").fill(attr_name)
+        self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.type").click()
+        self.page.get_by_text("list").click()
+        self.page.get_by_text("Структура данных").click()
+        self.select_schema_in_modal(ref_schema_name)
+        self.page.get_by_role("button", name="datastructureeditor_popup_select_button").click()
+
+    def add_dict_struct_ref_attribute(self, idx, attr_name, ref_schema_name):
+        self.page.get_by_role("button", name="datastructureeditor_create_attribute_button").click()
+        self.page.get_by_role("textbox", name=f"attributes.{idx}.name").fill(attr_name)
+        self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.type").click()
+        self.page.get_by_text("dictionary").click()
+        self.page.get_by_text("Структура данных").click()
+        self.select_schema_in_modal(ref_schema_name)
+        self.page.get_by_role("button", name="datastructureeditor_popup_select_button").click()
+
+    def select_schema_in_modal(self, schema_name):
+        self.page.get_by_test_id("Modal__Container").get_by_text(schema_name).click()
+        self.page.get_by_role("button", name="datastructureview_select_button").click()
 
     def delete_schema(self, name: str):
         item = self.page.query_selector(f'{self.TREE_ITEM}[aria-label="{name}"]')
@@ -250,3 +278,45 @@ class DataStructPage(BasePage):
         self.page.keyboard.press('Enter')
         # Вернуть список найденных атрибутов
         return [el.query_selector('input[aria-label^="attributes."]').input_value() for el in self.page.query_selector_all(self.ATTRIBUTE_ROW)] 
+
+    def click_create_attribute_button(self):
+        self.page.get_by_role("button", name="datastructureeditor_create_attribute_button").click()
+
+    def fill_attribute_name_by_index(self, idx, value):
+        self.page.get_by_role("textbox", name=f"attributes.{idx}.name").fill(value)
+
+    def press_enter_attribute_name_by_index(self, idx):
+        self.page.get_by_role("textbox", name=f"attributes.{idx}.name").press("Enter")
+
+    def select_attribute_type_by_index(self, idx, type_name):
+        self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.type").click()
+        self.page.wait_for_selector(f'div[role="treeitem"][aria-label="{type_name}"]', timeout=5000)
+        self.page.locator(f'div[role="treeitem"][aria-label="{type_name}"]').click()
+
+    def fill_attribute_description_by_index(self, idx, value):
+        locator = self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.description")
+        if locator.count():
+            locator.fill(value)
+        else:
+            print(f"[WARN] Поле описания для attributes.{idx}.schema.description не найдено, пропускаем.")
+
+    def select_list_element_type_in_modal(self, element_type, is_first_list=False):
+        popup = self.page.locator('.Popup__Popup___vJ6BT.AttributeTypeField__Popup___Z67HW:visible')
+        popup.wait_for(timeout=5000)
+        if not is_first_list:
+            popup.get_by_role("button", name="textfield_arrow_button").click()
+            popup.locator(f'div[role="treeitem"][aria-label="{element_type}"]').click()
+        popup.get_by_role("button", name="datastructureeditor_popup_select_button").click()
+
+    def select_dict_key_value_types_in_modal(self, key_type, value_type):
+        # Ждём появления popup-модалки выбора типов для dictionary
+        popup = self.page.locator('.Popup__Popup___vJ6BT.AttributeTypeField__Popup___Z67HW:visible')
+        popup.wait_for(timeout=5000)
+        # Первый селект — ключ, второй — значение
+        # Ключ всегда string, поэтому не раскрываем селект для ключа
+        # Для значения раскрываем селект, если не string
+        if value_type != "string":
+            popup.get_by_role("button", name="textfield_arrow_button").nth(1).click()
+            popup.locator(f'div[role="treeitem"][aria-label="{value_type}"]').click()
+        # Подтвердить выбор
+        popup.get_by_role("button", name="datastructureeditor_popup_select_button").click() 
