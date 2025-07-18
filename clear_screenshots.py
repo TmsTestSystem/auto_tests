@@ -3,7 +3,7 @@ import glob
 import time
 
 SCREENSHOTS_DIR = 'screenshots'
-AGE_SECONDS = 24 * 60 * 60  # 1 день
+AGE_SECONDS = 0
 
 def clear_screenshots():
     if not os.path.exists(SCREENSHOTS_DIR):

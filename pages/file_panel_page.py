@@ -87,7 +87,8 @@ class FilePanelPage(BasePage):
         self.page.get_by_role("button", name="filemanager_create_button").click()
 
     def click_data_structure_type(self):
-        self.page.get_by_role("treeitem", name="data_structure").locator("div").nth(2).click()
+        self.page.wait_for_selector('div[role="menu"] div, div[role="menuitem"], div.TreeItem__LabelPrimary___vzajD', timeout=5000)
+        self.page.get_by_text("Структуры данных", exact=True).click()
 
     def fill_treeitem_label_field(self, value):
         self.page.get_by_role("textbox", name="treeitem_label_field").fill(value)
