@@ -4,6 +4,7 @@ from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
+from pages.diagram_page import DiagramPage
 from conftest import save_screenshot, get_project_by_code, delete_project_by_id
 
 
@@ -15,6 +16,7 @@ def test_flow_standart(login_page, shared_flow_project):
     project_code = shared_flow_project
     project_page = ProjectPage(page)
     file_panel = FilePanelPage(page)
+    diagram_page = DiagramPage(page)
     
     # 1. Переход к нужному проекту по коду (проект уже создан фикстурой)
     assert project_page.goto_project(project_code), f"Проект с кодом {project_code} не найден!"
@@ -247,32 +249,12 @@ def test_flow_standart(login_page, shared_flow_project):
     except Exception as e:
         print(f"Не удалось заполнить поле данных: {e}")
     
-    play_btn = page.get_by_role("button", name="diagram_play_button")
-    play_btn.wait_for(state="visible", timeout=5000)
-    play_btn.click()
-    time.sleep(2)  # Ждём запуска диаграммы
+    # Запускаем диаграмму и ждем завершения
+    success = diagram_page.run_diagram_and_wait(completion_timeout=15000)
     
-    try:
-        toast = page.locator('.Toast__Toast___ZqZzU[aria-label="toast"]')
-        toast.wait_for(state="visible", timeout=15000)  # Ждём до 15 секунд появления тоста
-        print("[INFO] Тост о завершении диаграммы появился")
-        
-        toast_title = toast.locator('.Toast__Title___-0bIZ')
-        assert toast_title.is_visible(), "Заголовок тоста не найден!"
-        title_text = toast_title.text_content()
-        assert "Диаграмма завершена" in title_text, f"Неожиданный заголовок тоста: {title_text}"
-        print(f"[SUCCESS] Заголовок тоста: {title_text}")
-        
-        toast_description = toast.locator('.Toast__Description___YwLXR')
-        assert toast_description.is_visible(), "Описание тоста не найдено!"
-        description_text = toast_description.text_content()
-        assert "Диаграмма завершена на компоненте \"Output\"" in description_text, f"Неожиданное описание тоста: {description_text}"
-        print(f"[SUCCESS] Описание тоста: {description_text}")
-        
-    except Exception as e:
-        print(f"[ERROR] Не удалось найти или проверить тост о завершении диаграммы: {e}")
-        page.screenshot(path=f'screenshots/toast_error_{int(time.time())}.png', full_page=True)
-        raise
+    # Проверяем успешность выполнения
+    assert success, "Диаграмма не выполнилась успешно!"
+    print("[SUCCESS] Диаграмма завершилась успешно!")
     
     try:
         page.get_by_text("Анализ", exact=True).click()

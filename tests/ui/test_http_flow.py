@@ -8,6 +8,7 @@ import pytest
 from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.canvas_utils import CanvasUtils
+from pages.diagram_page import DiagramPage
 from conftest import save_screenshot
 # from fake_http_server import create_fake_server  # Больше не используется
 
@@ -52,6 +53,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
 
     # Подготавливаем необходимые объекты
     file_panel = FilePanelPage(page)
+    diagram_page = DiagramPage(page)
 
     try:
         is_open = page.get_by_label("board_toolbar_panel").is_visible()
@@ -97,28 +99,9 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     time.sleep(2)
     print("[INFO] Canvas диаграммы загружен")
 
-    # Закрываем файловую панель
-    try:
-        if page.get_by_label("board_toolbar_panel").is_visible():
-            file_manager_btn = page.get_by_role("button", name="board_toolbar_filemanager_button")
-            if file_manager_btn.is_visible():
-                file_manager_btn.click()
-                time.sleep(0.5)
-                print("[INFO] Файловая панель закрыта")
-    except Exception as e:
-        print(f"[INFO] Файловая панель уже закрыта: {e}")
-
-    # Закрываем правый сайдбар
-    try:
-        details_panel = page.locator('[aria-label="diagram_details_panel"]')
-        if details_panel.is_visible():
-            switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
-            if switcher.is_visible():
-                switcher.click()
-                time.sleep(0.5)
-                print("[INFO] Правый сайдбар закрыт")
-    except Exception as e:
-        print(f"[INFO] Правый сайдбар уже закрыт: {e}")
+    # Закрываем панели
+    print("[INFO] Закрытие панелей")
+    diagram_page.close_panels()
 
     # Инициализируем canvas_utils
     canvas_utils = CanvasUtils(page)
@@ -674,25 +657,11 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     # 8. Запускаем диаграмму
     print("[INFO] Шаг 8: Запуск диаграммы")
 
-    # Находим и нажимаем кнопку запуска диаграммы
-    play_button = page.get_by_role("button", name="diagram_play_button")
-    assert play_button.is_visible(), "Кнопка запуска диаграммы не найдена!"
-    play_button.click()
-    time.sleep(5)  # Увеличиваем время ожидания для последовательности запросов
-    print("[INFO] Диаграмма запущена")
-
-    # Ждем появления тоста с результатом
-    toast = page.locator('[aria-label="toast"]')
-    toast.wait_for(state="visible", timeout=60000)  # Увеличиваем таймаут
-    print("[INFO] Toast с результатом появился")
-
+    # Запускаем диаграмму и ждем завершения
+    success = diagram_page.run_diagram_and_wait(completion_timeout=60000)
+    
     # Проверяем успешность выполнения
-    toast_title = page.locator('[aria-label="toast"] .Toast__Title___-0bIZ')
-    toast_text = toast_title.inner_text()
-    print(f"[INFO] Результат выполнения: {toast_text}")
-
-    # Проверяем, что диаграмма завершилась успешно
-    assert "Диаграмма завершена" in toast_text, f"Ожидался успешный результат, получен: {toast_text}"
+    assert success, "Диаграмма не выполнилась успешно!"
     print("[INFO] Диаграмма завершилась успешно!")
 
     # 9. Проверяем результаты в Output компоненте

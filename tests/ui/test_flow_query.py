@@ -7,6 +7,7 @@ from pages.file_panel_page import FilePanelPage
 from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
 from pages.db_connector_page import DBConnectorPage
+from pages.diagram_page import DiagramPage
 from conftest import save_screenshot
 
 
@@ -17,6 +18,7 @@ def test_flow_query(login_page, shared_flow_project):
     page = login_page
     project_code = shared_flow_project
     project_page = ProjectPage(page)
+    diagram_page = DiagramPage(page)
 
     print(f"[INFO] Запуск теста Query в проекте: {project_code}")
 
@@ -268,25 +270,11 @@ def test_flow_query(login_page, shared_flow_project):
     # 8. Запускаем диаграмму
     print("[INFO] Шаг 8: Запуск диаграммы")
 
-    # Находим и нажимаем кнопку запуска диаграммы
-    play_button = page.get_by_role("button", name="diagram_play_button")
-    assert play_button.is_visible(), "Кнопка запуска диаграммы не найдена!"
-    play_button.click()
-    time.sleep(2)
-    print("[INFO] Диаграмма запущена")
-
-    # Ждем появления тоста с результатом
-    toast = page.locator('[aria-label="toast"]')
-    toast.wait_for(state="visible", timeout=15000)
-    print("[INFO] Toast с результатом появился")
-
+    # Запускаем диаграмму и ждем завершения
+    success = diagram_page.run_diagram_and_wait(completion_timeout=15000)
+    
     # Проверяем успешность выполнения
-    toast_title = page.locator('[aria-label="toast"] .Toast__Title___-0bIZ')
-    toast_text = toast_title.inner_text()
-    print(f"[INFO] Результат выполнения: {toast_text}")
-
-    # Проверяем, что диаграмма завершилась успешно
-    assert "Диаграмма завершена" in toast_text, f"Ожидался успешный результат, получен: {toast_text}"
+    assert success, "Диаграмма не выполнилась успешно!"
     print("[INFO] Диаграмма завершилась успешно!")
 
     # 9. Проверяем JSON данные в модальном окне

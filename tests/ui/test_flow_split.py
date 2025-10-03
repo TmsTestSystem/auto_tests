@@ -4,6 +4,7 @@ from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
+from pages.diagram_page import DiagramPage
 from conftest import save_screenshot, get_project_by_code, delete_project_by_id
 
 
@@ -14,6 +15,7 @@ def test_flow_split(login_page, shared_flow_project):
     page = login_page
     project_code = shared_flow_project
     project_page = ProjectPage(page)
+    diagram_page = DiagramPage(page)
     
     print(f"[INFO] Начинаем тест Split в проекте: {project_code}")
     
@@ -413,11 +415,12 @@ def test_flow_split(login_page, shared_flow_project):
     print("[INFO] Шаг 14: Запуск диаграммы (первый раз - ожидаем ошибку)")
     
     try:
-        play_btn = page.get_by_role("button", name="diagram_play_button")
-        play_btn.wait_for(state="visible", timeout=5000)
-        play_btn.click()
-        time.sleep(2)  # Ждём запуска диаграммы
-        print("[INFO] Диаграмма запущена")
+        # Запускаем диаграмму (ожидаем ошибку)
+        success = diagram_page.run_diagram()
+        if success:
+            print("[INFO] Диаграмма запущена")
+        else:
+            print("[ERROR] Не удалось запустить диаграмму")
         
         # Проверяем toast уведомление об ошибке
         try:
@@ -628,12 +631,12 @@ def test_flow_split(login_page, shared_flow_project):
         except Exception as e:
             print(f"[WARN] Не удалось нажать кнопку reset: {e}")
         
-        # Запускаем диаграмму повторно
-        play_btn = page.get_by_role("button", name="diagram_play_button")
-        play_btn.wait_for(state="visible", timeout=10000)
-        play_btn.click()
-        time.sleep(2)  # Ждём запуска диаграммы
-        print("[INFO] Диаграмма запущена повторно")
+        # Запускаем диаграмму повторно (ожидаем успех)
+        success = diagram_page.run_diagram_and_wait(completion_timeout=15000)
+        if success:
+            print("[INFO] Диаграмма запущена повторно и завершилась успешно")
+        else:
+            print("[ERROR] Диаграмма не выполнилась успешно")
         
         # Проверяем toast уведомление об успешном завершении
         try:

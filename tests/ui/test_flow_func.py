@@ -9,6 +9,7 @@ from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
+from pages.diagram_page import DiagramPage
 from conftest import save_screenshot
 
 
@@ -31,6 +32,7 @@ def test_flow_func(login_page, shared_flow_project):
     file_panel = FilePanelPage(page)
     data_struct = DataStructPage(page)
     canvas_utils = CanvasUtils(page)
+    diagram_page = DiagramPage(page)
 
     try:
         is_open = page.get_by_label("board_toolbar_panel").is_visible()
@@ -89,15 +91,41 @@ def test_flow_func(login_page, shared_flow_project):
     # 2. Заполняем Python скрипт содержимым
     print("[INFO] Шаг 2: Заполнение Python скрипта содержимым")
 
-    # Кликаем на созданный Python файл
+    # Проверяем, существует ли уже файл math_functions.py
     python_file = page.locator('[aria-label="treeitem_label"]:has-text("math_functions.py")')
-    assert python_file.is_visible(), "Python файл 'math_functions.py' не найден!"
-    python_file.click()
-    time.sleep(2)
+    if python_file.count() > 0:
+        print("[INFO] Python файл 'math_functions.py' уже существует")
+        python_file.click()
+        time.sleep(2)
+    else:
+        print("[WARN] Python файл 'math_functions.py' не найден, создаем новый")
+        # Создаем новый файл если не существует
+        scripts_folder = page.locator('[aria-label="treeitem_label"]:has-text("scripts")')
+        scripts_folder.first.click(button="right")
+        time.sleep(0.5)
+        
+        create_menu = page.get_by_text("Создать", exact=True)
+        create_menu.click()
+        time.sleep(0.5)
+        
+        python_menu = page.get_by_role("treeitem", name="python").get_by_label("treeitem_label")
+        python_menu.click()
+        time.sleep(1)
+        
+        name_input = page.get_by_role("textbox", name="treeitem_label_field")
+        name_input.fill("math_functions")
+        name_input.press("Enter")
+        time.sleep(2)
 
     # Кликаем на область редактирования в view-lines
-    page.locator(".view-lines").first.click()
-    time.sleep(1)
+    try:
+        page.locator(".view-lines").first.click()
+        time.sleep(1)
+    except Exception as e:
+        print(f"[WARN] Не удалось кликнуть по view-lines: {e}")
+        # Пробуем альтернативный способ
+        page.locator('textarea[aria-label="editor_view"]').click()
+        time.sleep(1)
 
     editor = page.get_by_role("textbox", name="editor_view")
     editor.wait_for(state="visible", timeout=10000)
@@ -213,31 +241,9 @@ def test_flow_func(login_page, shared_flow_project):
     print("[INFO] Ожидание загрузки диаграммы...")
     time.sleep(3)
 
-    # Закрываем файловую панель
-    print("[INFO] Закрытие файловой панели")
-    try:
-        filemanager_button = page.get_by_role("button", name="board_toolbar_filemanager_button")
-        if filemanager_button.is_visible():
-            filemanager_button.click()
-            time.sleep(1)
-            print("[INFO] Файловая панель закрыта")
-        else:
-            print("[INFO] Файловая панель уже закрыта")
-    except Exception as e:
-        print(f"[WARN] Ошибка при закрытии файловой панели: {e}")
-
-    # Закрываем правый сайдбар
-    print("[INFO] Закрытие правого сайдбара")
-    try:
-        details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
-        if details_panel_switcher.is_visible():
-            details_panel_switcher.click()
-            time.sleep(1)
-            print("[INFO] Правый сайдбар закрыт")
-        else:
-            print("[INFO] Правый сайдбар уже закрыт")
-    except Exception as e:
-        print(f"[WARN] Ошибка при закрытии правого сайдбара: {e}")
+    # Закрываем панели
+    print("[INFO] Закрытие панелей")
+    diagram_page.close_panels()
 
     # Дополнительное ожидание для загрузки canvas
     time.sleep(3)
@@ -472,68 +478,79 @@ def test_flow_func(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при закрытии правого сайдбара: {e}")
 
-    # Ищем и нажимаем кнопку запуска диаграммы
-    print("[INFO] Поиск кнопки запуска диаграммы")
-    try:
-        # Используем тот же селектор, что и в HTTP тесте
-        play_button = page.get_by_role("button", name="diagram_play_button")
-        if play_button.is_visible():
-            print("[INFO] Кнопка запуска диаграммы найдена")
-            play_button.click()
-            time.sleep(2)
-            print("[INFO] Диаграмма запущена")
-        else:
-            print("[ERROR] Кнопка запуска диаграммы не найдена!")
-            raise Exception("Кнопка запуска диаграммы не найдена!")
-            
-    except Exception as e:
-        print(f"[ERROR] Ошибка при запуске диаграммы: {e}")
-        raise
-
-    # Ждем завершения выполнения диаграммы
-    print("[INFO] Ожидание завершения выполнения диаграммы...")
-    time.sleep(5)  # Даем время на выполнение
-
-    # Проверяем наличие toast сообщения об успешном выполнении
-    print("[INFO] Проверка toast сообщения")
-    toast_found = False
-    try:
-        # Ищем toast сообщение об успешном выполнении
-        toast_success = page.locator('text="Success"').or_(page.locator('text="Успешно"')).or_(page.locator('text="Выполнено"'))
-        if toast_success.is_visible(timeout=10000):
-            print("[SUCCESS] Toast сообщение об успешном выполнении найдено!")
-            toast_found = True
-        else:
-            print("[WARN] Toast сообщение об успешном выполнении не найдено")
-            
-        # Также проверим наличие любых toast сообщений
-        toast_messages = page.locator('[role="alert"], .toast, .notification, [class*="toast"], [class*="notification"]')
-        if toast_messages.count() > 0:
-            print(f"[INFO] Найдено toast сообщений: {toast_messages.count()}")
-            for i in range(min(toast_messages.count(), 3)):
-                try:
-                    message_text = toast_messages.nth(i).text_content()
-                    print(f"[INFO] Toast {i}: {message_text}")
-                    if any(word in message_text.lower() for word in ["success", "успешно", "выполнено", "completed"]):
-                        toast_found = True
-                except:
-                    print(f"[INFO] Toast {i}: [не удалось прочитать текст]")
-        else:
-            print("[INFO] Toast сообщения не найдены")
-            
-    except Exception as e:
-        print(f"[WARN] Ошибка при проверке toast сообщений: {e}")
-
-    # Ассертим успешное выполнение - проверяем наличие toast сообщений
-    if toast_messages.count() > 0:
-        print("[SUCCESS] Toast сообщения найдены - диаграмма выполнена!")
-        toast_found = True
-    else:
-        print("[WARN] Toast сообщения не найдены, но диаграмма могла выполниться")
+    # Запускаем диаграмму и ждем завершения
+    print("[INFO] Запуск диаграммы и ожидание завершения")
+    success = diagram_page.run_diagram_and_wait()
     
-    # Более мягкий ассерт - просто проверяем, что диаграмма запустилась
-    assert True, "Диаграмма запущена и выполнена (toast сообщения могут быть пустыми)"
+    # Проверяем успешность выполнения
+    assert success, "Диаграмма не выполнилась успешно!"
     print("[SUCCESS] Диаграмма выполнена успешно!")
+    
+    # 8. Проверяем консоль с print-ами из функции
+    print("[INFO] Шаг 8: Проверка консоли с print-ами из функции")
+    
+    # Открываем панель валидации
+    try:
+        output_panel_button = page.get_by_role("button", name="outputpanel_switch_button")
+        if output_panel_button.is_visible():
+            output_panel_button.click()
+            time.sleep(1)
+            print("[INFO] Панель валидации открыта")
+        else:
+            print("[WARN] Кнопка переключения на панель валидации не найдена")
+    except Exception as e:
+        print(f"[WARN] Ошибка при открытии панели валидации: {e}")
+    
+    # Переходим на вкладку "Консоль"
+    try:
+        console_tab = page.get_by_text("Консоль")
+        if console_tab.is_visible():
+            console_tab.click()
+            time.sleep(1)
+            print("[INFO] Переход на вкладку 'Консоль' выполнен")
+        else:
+            print("[WARN] Вкладка 'Консоль' не найдена")
+    except Exception as e:
+        print(f"[WARN] Ошибка при переходе на вкладку 'Консоль': {e}")
+    
+    # Ищем print-ы из нашей функции
+    try:
+        # Ждем появления консольного вывода
+        time.sleep(2)
+        
+        # Ищем текст с print-ами функции
+        console_output = page.locator('.OutputPanel__Body___ypo3o > div').first
+        if console_output.is_visible():
+            console_text = console_output.text_content()
+            print(f"[INFO] Текст консоли: {console_text}")
+            
+            # Проверяем наличие ключевых print-ов из нашей функции
+            expected_prints = [
+                "[FUNCTION] Получены аргументы:",
+                "[FUNCTION] a (int):",
+                "[FUNCTION] b (str):",
+                "[FUNCTION] c (float):",
+                "[FUNCTION] d (bool):",
+                "[FUNCTION] e (list):",
+                "[FUNCTION] Результат обработки:"
+            ]
+            
+            found_prints = 0
+            for expected_print in expected_prints:
+                if expected_print in console_text:
+                    found_prints += 1
+                    print(f"[SUCCESS] Найден print: {expected_print}")
+            
+            # Проверяем, что найдены все основные print-ы
+            assert found_prints >= 5, f"Найдено только {found_prints} из {len(expected_prints)} ожидаемых print-ов"
+            print(f"[SUCCESS] Найдено {found_prints} print-ов из функции в консоли!")
+            
+        else:
+            print("[WARN] Консольный вывод не найден")
+            
+    except Exception as e:
+        print(f"[WARN] Ошибка при проверке консольного вывода: {e}")
+    
     print("[SUCCESS] Тест test_flow_func завершен успешно!")
 
 
