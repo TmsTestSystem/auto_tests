@@ -13,7 +13,8 @@ class ProjectPage(BasePage):
 
     def __init__(self, page: Page):
         super().__init__(page)
-        self.projects_url = f"{os.getenv('BASE_URL')}/projects"
+        # Главная страница уже является списком проектов, перехода на /projects не требуется
+        self.projects_url = f"{os.getenv('BASE_URL')}"
 
     def goto(self):
         self.page.goto(self.projects_url)
@@ -49,11 +50,27 @@ class ProjectPage(BasePage):
         return None
 
     def goto_project(self, code: str):
-        prj = self.find_project_in_list(code)
-        if prj:
-            prj.click()
-            self.page.wait_for_load_state('networkidle')
-            return True
+        # Обновляем страницу проектов и пытаемся найти ссылку, содержащую код
+        self.goto()
+        try:
+            self.page.wait_for_selector(self.PROJECT_ROW, timeout=15000)
+        except Exception:
+            pass
+
+        for _ in range(20):  # до ~10 секунд с полсекундным ожиданием
+            links = self.page.query_selector_all(self.PROJECT_ROW)
+            for link in links:
+                href = link.get_attribute('href')
+                if href and code in href:
+                    link.click()
+                    self.page.wait_for_load_state('networkidle')
+                    return True
+            # Если не нашли — обновим список и попробуем ещё раз
+            try:
+                self.page.reload()
+            except Exception:
+                pass
+            time.sleep(0.5)
         return False
 
     def goto_first_available_project(self, timeout=15000):
@@ -89,3 +106,26 @@ class ProjectPage(BasePage):
         from pages.file_panel_page import FilePanelPage
         file_panel = FilePanelPage(self.page)
         file_panel.open_file_panel() 
+
+    def is_project_present(self, code: str, wait_seconds: int = 15) -> bool:
+        """Проверить, что проект с заданным кодом появился в списке (без перехода).
+        Делает начальный переход на страницу проектов и периодически обновляет её.
+        """
+        self.goto()
+        deadline = time.time() + wait_seconds
+        while time.time() < deadline:
+            try:
+                self.page.wait_for_selector(self.PROJECT_ROW, timeout=3000)
+            except Exception:
+                pass
+            links = self.page.query_selector_all(self.PROJECT_ROW)
+            for link in links:
+                href = link.get_attribute('href')
+                if href and code in href:
+                    return True
+            try:
+                self.page.reload()
+            except Exception:
+                pass
+            time.sleep(0.5)
+        return False

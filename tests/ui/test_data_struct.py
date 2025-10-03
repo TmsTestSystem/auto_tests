@@ -10,20 +10,21 @@ def test_create_data_struct_and_add_attribute(login_page):
     project_page = ProjectPage(page)
     data_struct = DataStructPage(page)
     project_page.goto_first_available_project()
-    file_panel.click_toolbar_filemanager_button()
-    time.sleep(0.5)
-    file_panel.click_create_file_button()
-    time.sleep(0.5)
-    file_panel.click_data_structure_type()
-    time.sleep(0.5)
-    file_name = f"datastruct_{int(time.time())}"
-    file_panel.fill_treeitem_label_field(file_name)
-    file_panel.press_enter_treeitem_label_field()
-    time.sleep(0.5)
-    page.get_by_role("button", name="Создать").click()
+    file_panel.open_file_panel()
+    
+    # Используем готовый метод для создания файла структуры данных
+    file_name = file_panel.create_data_structure_file()
+    assert file_name is not None, "Не удалось создать файл структуры данных"
+    
+    # Открываем созданный файл (кликаем по нему в дереве)
+    page.get_by_role("treeitem", name=f"/{file_name}").click()
+    time.sleep(1)
+    
+    # Создаем схему
     schema_name = f"schema_{int(time.time())}"
-    page.get_by_role("textbox", name="treeitem_label_field").fill(schema_name)
-    page.get_by_role("textbox", name="treeitem_label_field").press("Enter")
+    data_struct.create_schema(schema_name)
+    
+    # Ждем появления кнопки создания атрибутов
     page.wait_for_selector('button[aria-label="datastructureeditor_create_attribute_button"]', timeout=10000)
     time.sleep(0.5)
     file_panel.fill_schema_description("Описание схемы автотестом")

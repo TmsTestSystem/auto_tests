@@ -10,25 +10,26 @@ def test_create_schema_with_struct_refs(login_page):
     project_page = ProjectPage(page)
     data_struct = DataStructPage(page)
     project_page.goto_first_available_project()
-    file_panel.click_toolbar_filemanager_button()
-    time.sleep(0.5)
-    file_panel.click_create_file_button()
-    time.sleep(0.5)
-    file_panel.click_data_structure_type()
-    time.sleep(0.5)
-    file_name = f"datastruct_{int(time.time())}"
-    file_panel.fill_treeitem_label_field(file_name)
-    file_panel.press_enter_treeitem_label_field()
-    time.sleep(0.5)
-    page.get_by_role("button", name="Создать").click()
-    schema1_name = f"schema1_{int(time.time())}"
-    page.get_by_role("textbox", name="treeitem_label_field").fill(schema1_name)
-    page.get_by_role("textbox", name="treeitem_label_field").press("Enter")
+    file_panel.open_file_panel()
+    
+    # Используем готовый метод для создания файла структуры данных
+    file_name = file_panel.create_data_structure_file()
+    assert file_name is not None, "Не удалось создать файл структуры данных"
+    
+    # Открываем созданный файл (кликаем по нему в дереве)
+    page.get_by_role("treeitem", name=f"/{file_name}").click()
     time.sleep(1)
+    
+    # Создаем первую схему
+    schema1_name = f"schema1_{int(time.time())}"
+    data_struct.create_schema(schema1_name)
+    
+    # Создаем вторую схему
     schema2_name = f"schema2_{int(time.time())}"
     data_struct.create_schema(schema2_name)
-    time.sleep(1)
-    page.get_by_role("treeitem", name=schema2_name).click()
+    
+    # Кликаем по второй схеме
+    data_struct.click_schema_in_tree(schema2_name)
     time.sleep(0.5)
     data_struct.click_create_attribute_button()
     time.sleep(0.5)

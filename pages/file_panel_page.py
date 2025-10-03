@@ -60,8 +60,39 @@ class FilePanelPage(BasePage):
         self.page.wait_for_selector(input_selector, state='detached', timeout=5000)
         try:
             time.sleep(0.5)
-            self.page.wait_for_selector(f'text={file_name}', timeout=5000)
-            return True
+            # Проверяем, что файл появился в дереве файлов
+            all_files = self.get_all_tree_names()
+            
+            # Ищем файл по частичному совпадению (так как могут быть расширения)
+            file_found = False
+            found_file_name = None
+            
+            # Сначала ищем точное совпадение
+            for f in all_files:
+                if file_name == f:
+                    file_found = True
+                    found_file_name = f
+                    break
+            
+            # Если точное совпадение не найдено, ищем частичное совпадение
+            if not file_found:
+                for f in all_files:
+                    if file_name in f or f.endswith(f'.{file_name}') or f.endswith(f'{file_name}.json'):
+                        file_found = True
+                        found_file_name = f
+                        break
+            
+            if file_found:
+                print(f'[SUCCESS] Файл {file_name} найден в дереве файлов как: {found_file_name}')
+                return True
+            else:
+                print(f'[WARN] Файл {file_name} не найден в дереве файлов')
+                print(f'[WARN] Доступные файлы: {all_files}')
+                # Делаем скриншот для диагностики
+                screenshot_path = f'screenshots/diagnostic_autofile_{file_name}.png'
+                self.page.screenshot(path=screenshot_path, full_page=True)
+                print(f'[WARN] Скриншот сохранен: {screenshot_path}')
+                return False
         except Exception as e:
             screenshot_path = f'screenshots/diagnostic_autofile_{file_name}.png'
             self.page.screenshot(path=screenshot_path, full_page=True)
@@ -172,7 +203,7 @@ class FilePanelPage(BasePage):
             return None
 
     def create_file_of_type(self, base_name, aria, text, extension=None):
-        self.open_create_file_menu()
+        # Не открываем меню заново, если оно уже открыто
         found_btn = None
         for btn in self.get_file_type_buttons():
             if btn.get_attribute('aria-label') == aria and btn.inner_text() == text:

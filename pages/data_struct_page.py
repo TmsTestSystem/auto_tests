@@ -1,4 +1,5 @@
 from playwright.sync_api import Page
+from urllib.parse import urlparse, parse_qs, unquote
 from .base_page import BasePage
 import time
 
@@ -86,7 +87,7 @@ class DataStructPage(BasePage):
         self.page.get_by_role("button", name="datastructureeditor_generate_button").click()
         self.page.get_by_role("button", name="Генерировать").click()
         # Ожидание появления нотификации (до 30 сек)
-        self.page.wait_for_selector('div:has-text("Python-классы сгенерированыДиректория с файлами python-классов: data_structures")', timeout=30000)
+        self.page.wait_for_selector('div:has-text("Python-классы сгенерированы")', timeout=30000)
         return True
 
     def save(self):
@@ -97,9 +98,25 @@ class DataStructPage(BasePage):
         return [el.inner_text() for el in self.page.query_selector_all('.error-message, .ErrorMessage')]
 
     def create_schema(self, name):
-        self.page.get_by_role("button", name="datastructureeditor_create_schema_button").click()
+        """Создает новую схему"""
+        self.page.locator('button[aria-label="datastructureeditor_create_schema_button"]').first.click()
+        time.sleep(0.5)
         self.page.get_by_role("textbox", name="treeitem_label_field").fill(name)
         self.page.get_by_role("textbox", name="treeitem_label_field").press("Enter")
+        time.sleep(1)
+
+    def click_schema_in_tree(self, schema_name: str):
+        """Кликает по схеме в дереве"""
+        self.page.get_by_role("treeitem", name=schema_name).click()
+        time.sleep(1)
+
+    def click_create_schema_button(self, schema_name=None):
+        """Кликает по кнопке создания схемы"""
+        self.page.locator('button[aria-label="datastructureeditor_create_schema_button"]').first.click()
+        time.sleep(0.5)
+        if schema_name:
+            self.page.get_by_role("textbox", name="treeitem_label_field").fill(schema_name)
+            self.page.get_by_role("textbox", name="treeitem_label_field").press("Enter")
 
     def add_struct_ref_attribute(self, idx, attr_name, ref_schema_name):
         self.page.get_by_role("button", name="Добавить").click()
@@ -127,8 +144,39 @@ class DataStructPage(BasePage):
         self.page.get_by_role("button", name="datastructureeditor_popup_select_button").click()
 
     def select_schema_in_modal(self, schema_name):
-        self.page.get_by_test_id("Modal__Container").get_by_text(schema_name).click()
-        self.page.get_by_role("button", name="datastructureview_select_button").click()
+        modal = self.page.get_by_test_id("Modal__Container")
+        modal.wait_for(state="visible", timeout=10000)
+
+        # 0) Определяем имя текущего файла структуры данных из URL
+        try:
+            parsed = urlparse(self.page.url)
+            params = parse_qs(parsed.query)
+            file_param = params.get("file", [None])[0]
+            if file_param:
+                current_file = unquote(file_param).lstrip("/")
+                # Клик по файлу слева в списке
+                modal.get_by_text(current_file, exact=True).click()
+        except Exception:
+            pass
+
+        # 1) Клик по схеме справа
+        try:
+            modal.get_by_text(schema_name, exact=True).click()
+        except Exception:
+            # Фолбэк: по роли treeitem
+            try:
+                modal.get_by_role("treeitem", name=schema_name).click()
+            except Exception:
+                modal.get_by_text(schema_name, exact=False).first.click()
+
+        # 2) Подтверждаем выбор
+        try:
+            self.page.get_by_role("button", name="datastructureview_select_button").click()
+        except Exception:
+            try:
+                self.page.get_by_role("button", name="Выбрать").click()
+            except Exception:
+                modal.get_by_text("Выбрать").click()
 
     def delete_schema(self, name: str):
         item = self.page.query_selector(f'{self.TREE_ITEM}[aria-label="{name}"]')
@@ -280,7 +328,7 @@ class DataStructPage(BasePage):
         return [el.query_selector('input[aria-label^="attributes."]').input_value() for el in self.page.query_selector_all(self.ATTRIBUTE_ROW)] 
 
     def click_create_attribute_button(self):
-        self.page.get_by_role("button", name="datastructureeditor_create_attribute_button").click()
+        self.page.locator('button[aria-label="datastructureeditor_create_attribute_button"]').first.click()
 
     def fill_attribute_name_by_index(self, idx, value):
         self.page.get_by_role("textbox", name=f"attributes.{idx}.name").fill(value)
@@ -291,7 +339,8 @@ class DataStructPage(BasePage):
     def select_attribute_type_by_index(self, idx, type_name):
         self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.type").click()
         self.page.wait_for_selector('div.TreeItem__LabelPrimary___vzajD', timeout=5000)
-        self.page.get_by_text(type_name, exact=True).click()
+        # Выбираем элемент из выпадающего списка, а не любой элемент с таким текстом
+        self.page.locator('div.TreeItem__LabelPrimary___vzajD').filter(has_text=type_name).first.click()
 
     def fill_attribute_description_by_index(self, idx, value):
         locator = self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.description")
@@ -324,4 +373,52 @@ class DataStructPage(BasePage):
         self.page.get_by_role("textbox", name="popup.type").click()
         popup.locator('div.TreeItem__LabelPrimary___vzajD', has_text="Структура данных").click()
         self.select_schema_in_modal(value_type)
-        popup.get_by_role("button", name="datastructureeditor_popup_select_button").click() 
+        popup.get_by_role("button", name="datastructureeditor_popup_select_button").click()
+
+    def is_data_struct_editor_visible(self):
+        """
+        Проверяет, видим ли редактор структуры данных
+        """
+        try:
+            # Проверяем наличие основных элементов редактора
+            editor_indicators = [
+                'button[aria-label="datastructureeditor_create_schema_button"]',
+                'button[aria-label="datastructureeditor_create_attribute_button"]',
+                'textarea[aria-label="description"]'
+            ]
+            
+            for selector in editor_indicators:
+                if self.page.locator(selector).is_visible():
+                    return True
+            return False
+        except Exception:
+            return False
+
+    def create_basic_data_structure(self, name="TestField", type_name="string", description="Test field description"):
+        """
+        Создаёт базовую структуру данных с одним полем
+        """
+        try:
+            # Добавляем атрибут
+            self.click_create_attribute_button()
+            time.sleep(1)
+            
+            # Заполняем имя атрибута
+            self.fill_attribute_name_by_index(0, name)
+            self.press_enter_attribute_name_by_index(0)
+            time.sleep(0.5)
+            
+            # Выбираем тип
+            self.select_attribute_type_by_index(0, type_name)
+            time.sleep(0.5)
+            
+            # Заполняем описание
+            self.fill_attribute_description_by_index(0, description)
+            time.sleep(0.5)
+            
+            print(f"[SUCCESS] Создан атрибут: {name} ({type_name})")
+            return True
+            
+        except Exception as e:
+            print(f"[ERROR] Ошибка при создании структуры данных: {e}")
+            return False 

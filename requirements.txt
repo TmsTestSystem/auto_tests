@@ -2,3 +2,4 @@ pytest
 playwright
 requests
 python-dotenv 
+locust
