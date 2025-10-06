@@ -470,6 +470,233 @@ def test_flow_split(login_page, shared_flow_project):
     
     print("[INFO] Шаг 16: Настройка компонента Output2 и запуск диаграммы повторно")
     
+    # Сначала заполняем условие стрелки перед вторым запуском
+    print("[INFO] Подшаг 16.1: Заполнение компонента Output2")
+    
+    try:
+        time.sleep(2)
+        
+        try:
+            process_tab = page.get_by_text("Процесс", exact=True)
+            if process_tab.is_visible():
+                try:
+                    active_tab = page.locator('.active, [aria-selected="true"]')
+                    if active_tab.count() > 0:
+                        tab_text = active_tab.first.text_content()
+                        if "Процесс" in tab_text:
+                            print("[INFO] Уже находимся на вкладке 'Процесс'")
+                        else:
+                            process_tab.click()
+                            time.sleep(0.5)
+                            print("[INFO] Переключились на вкладку 'Процесс'")
+                    else:
+                        process_tab.click()
+                        time.sleep(0.5)
+                        print("[INFO] Переключились на вкладку 'Процесс'")
+                except Exception:
+                    process_tab.click()
+                    time.sleep(0.5)
+                    print("[INFO] Переключились на вкладку 'Процесс' (fallback)")
+            else:
+                print("[WARN] Вкладка 'Процесс' не найдена")
+        except Exception as e:
+            print(f"[WARN] Не удалось переключиться на вкладку 'Процесс': {e}")
+        
+        print("[INFO] Настройка компонента Output2 перед повторным запуском")
+        
+        try:
+            print("[INFO] Поиск компонента Output2 на canvas...")
+            if canvas_utils.find_component_by_title("Output2", exact=True):
+                print("[SUCCESS] Компонент Output2 найден и открыт")
+                
+                try:
+                    parameters_tab = page.get_by_text("Параметры", exact=True)
+                    if parameters_tab.is_visible():
+                        parameters_tab.click()
+                        time.sleep(0.5)
+                        print("[INFO] Переключились на вкладку 'Параметры'")
+                except Exception as e:
+                    print(f"[WARN] Не удалось переключиться на вкладку 'Параметры': {e}")
+                
+                try:
+                    data_field = page.get_by_role("textbox", name="inputs_config.data.value")
+                    if data_field.is_visible():
+                        data_field.click()
+                        time.sleep(0.5)
+                        data_field.fill('{"result" : $node.Split."1"}')
+                        time.sleep(0.5)
+                        print("[INFO] Поле 'data' заполнено: {\"result\" : $node.Split.\"1\"}")
+                    else:
+                        print("[WARN] Поле 'data' не найдено")
+                except Exception as e:
+                    print(f"[WARN] Ошибка при заполнении поля 'data': {e}")
+                
+                try:
+                    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+                    if details_panel.is_visible():
+                        switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
+                        if switcher.is_visible():
+                            switcher.click()
+                            time.sleep(0.5)
+                            print("[INFO] Правый сайдбар закрыт после настройки Output2")
+                except Exception as e:
+                    print(f"[WARN] Не удалось закрыть правый сайдбар: {e}")
+            else:
+                print("[ERROR] Не удалось найти компонент Output2")
+                save_screenshot(page, f"output2_not_found_{project_code}")
+                raise Exception("Не удалось найти компонент Output2")
+        except Exception as e:
+            print(f"[ERROR] Ошибка при настройке компонента Output2: {e}")
+            save_screenshot(page, f"output2_setup_error_{project_code}")
+            raise
+    except Exception as e:
+        print(f"[ERROR] Ошибка при заполнении компонента Output2: {e}")
+        save_screenshot(page, f"output2_error_{project_code}")
+        raise
+    
+    print("[INFO] Подшаг 16.2: Заполнение условия стрелки перед вторым запуском")
+    
+    try:
+        # Ищем стрелку по координатам (fallback метод, который работал)
+        canvas = page.locator('canvas').first
+        if canvas.is_visible():
+            box = canvas.bounding_box()
+            if box:
+                # Кликаем справа от центра canvas (где должна быть стрелка от Split)
+                arrow_pos = {
+                    "x": box['x'] + box['width'] * 0.6,
+                    "y": box['y'] + box['height'] * 0.5
+                }
+                canvas.click(position=arrow_pos, click_count=2)
+                time.sleep(1)
+                print(f"[INFO] Клик по стрелке для заполнения условия: ({arrow_pos['x']}, {arrow_pos['y']})")
+                
+                # Проверяем, что сайдбар стрелки открыт
+                details_panel = page.locator('[aria-label="diagram_details_panel"]')
+                if details_panel.is_visible():
+                    print("[INFO] Сайдбар стрелки открыт для заполнения условия")
+                    
+                    # Переходим на подвкладку "Параметры" если она не активна
+                    try:
+                        parameters_tab = page.get_by_text("Параметры", exact=True)
+                        if parameters_tab.is_visible():
+                            parameters_tab.click()
+                            time.sleep(0.5)
+                            print("[INFO] Перешли на подвкладку 'Параметры' стрелки")
+                        else:
+                            print("[WARN] Подвкладка 'Параметры' не найдена")
+                    except Exception as e:
+                        print(f"[WARN] Ошибка при переходе на подвкладку 'Параметры': {e}")
+                    
+                    # Ищем поле условия
+                    condition_selectors = [
+                        'textarea[name="config.from"][aria-label="config.from"]',
+                        'textarea[name="config.from"]',
+                        'input[name="config.from"]',
+                        '[aria-label="config.from"]'
+                    ]
+                    
+                    condition_field = None
+                    for selector in condition_selectors:
+                        try:
+                            field = page.locator(selector).first
+                            if field.is_visible():
+                                condition_field = field
+                                print(f"[INFO] Поле условия найдено: {selector}")
+                                break
+                        except Exception:
+                            continue
+                    
+                    if condition_field:
+                        print("[INFO] Заполняем поле условия")
+                        
+                        # Кликаем на поле условия
+                        condition_field.click()
+                        time.sleep(1)
+                        print("[INFO] Клик по полю условия выполнен")
+                        
+                        # Ищем выпадающий список
+                        try:
+                            dropdown = page.locator('div[role="tree"].TextField__Menu___pmHMx')
+                            if dropdown.is_visible():
+                                options = dropdown.locator('[role="treeitem"]')
+                                if options.count() > 0:
+                                    print(f"[INFO] Найдено {options.count()} опций")
+                                    
+                                    # Выводим все доступные опции
+                                    for i in range(min(options.count(), 5)):
+                                        try:
+                                            option = options.nth(i)
+                                            option_text = option.text_content()
+                                            aria_label = option.get_attribute('aria-label')
+                                            print(f"[DEBUG] Опция {i+1}: текст='{option_text}', aria-label='{aria_label}'")
+                                        except Exception as e:
+                                            print(f"[DEBUG] Ошибка при получении опции {i+1}: {e}")
+                                    
+                                    # Ищем "1. condition_name"
+                                    try:
+                                        condition_option = page.get_by_text("1. condition_name", exact=True)
+                                        if condition_option.is_visible():
+                                            condition_option.click()
+                                            time.sleep(0.5)
+                                            print("[SUCCESS] Выбрано условие '1. condition_name'")
+                                        else:
+                                            # Выбираем первую опцию
+                                            first_option = options.first
+                                            first_option.click()
+                                            time.sleep(0.5)
+                                            print("[SUCCESS] Выбрана первая опция")
+                                    except Exception as e:
+                                        print(f"[WARN] Ошибка при выборе условия: {e}")
+                                else:
+                                    print("[WARN] В выпадающем списке нет опций")
+                            else:
+                                print("[WARN] Выпадающий список не найден")
+                        except Exception as e:
+                            print(f"[WARN] Ошибка при работе с выпадающим списком: {e}")
+                        
+                        # Закрываем сайдбар
+                        print("[INFO] Закрываем сайдбар")
+                        try:
+                            switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
+                            if switcher.is_visible():
+                                switcher.click()
+                                time.sleep(0.5)
+                                print("[SUCCESS] Сайдбар закрыт")
+                        except Exception as e:
+                            print(f"[WARN] Не удалось закрыть сайдбар: {e}")
+                        
+                        # Сбрасываем диаграмму
+                        print("[INFO] Сбрасываем диаграмму")
+                        try:
+                            reset_button = page.get_by_role("button", name="diagram_reset_button")
+                            if reset_button.is_visible():
+                                reset_button.click()
+                                time.sleep(1)
+                                print("[SUCCESS] Диаграмма сброшена")
+                        except Exception as e:
+                            print(f"[WARN] Ошибка при сбросе диаграммы: {e}")
+                        
+                        # Запускаем диаграмму
+                        print("[INFO] Запускаем диаграмму")
+                        try:
+                            play_button = page.get_by_role("button", name="diagram_play_button")
+                            if play_button.is_visible():
+                                play_button.click()
+                                time.sleep(1)
+                                print("[SUCCESS] Диаграмма запущена")
+                        except Exception as e:
+                            print(f"[WARN] Ошибка при запуске диаграммы: {e}")
+                        
+                        print("[SUCCESS] Условие стрелки выбрано, сайдбар закрыт, диаграмма сброшена и запущена")
+                        return  # Завершаем выполнение
+                    else:
+                        print("[WARN] Поле условия не найдено")
+                else:
+                    print("[WARN] Сайдбар стрелки не открылся")
+    except Exception as e:
+        print(f"[WARN] Ошибка при заполнении условия стрелки: {e}")
+    
     try:
         time.sleep(2)
         

@@ -19,9 +19,13 @@ def api_server():
     Фикстура для использования публичного API (JSONPlaceholder)
     """
     import requests
+    import urllib3
+    
+    # Отключаем предупреждения о небезопасных запросах
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     
     try:
-        response = requests.get("https://jsonplaceholder.typicode.com/users/1", timeout=5)
+        response = requests.get("https://jsonplaceholder.typicode.com/users/1", timeout=5, verify=False)
         if response.status_code == 200:
             print("[INFO] JSONPlaceholder API is accessible")
             return {

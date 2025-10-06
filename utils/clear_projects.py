@@ -3,10 +3,14 @@ import time
 from pathlib import Path
 from dotenv import load_dotenv
 import requests
+import urllib3
 
 # Загружаем переменные окружения из .env файла
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path, override=True)
+
+# Отключаем предупреждения о небезопасных запросах
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 API_BASE_URL = os.getenv("BASE_URL", "http://localhost:3333").rstrip("/")
 PROJECTS_API = f"{API_BASE_URL}/api/projects"
@@ -17,7 +21,7 @@ def get_auth_cookies():
     """
     email = os.getenv("LOGIN")
     password = os.getenv("PASSWORD")
-    resp = requests.post(f"{API_BASE_URL}/api/auth/sign_in", json={"email": email, "password": password})
+    resp = requests.post(f"{API_BASE_URL}/api/auth/sign_in", json={"email": email, "password": password}, verify=False)
     resp.raise_for_status()
     return resp.cookies
 
@@ -26,7 +30,7 @@ def get_all_projects():
     Получить все проекты через API
     """
     cookies = get_auth_cookies()
-    resp = requests.get(PROJECTS_API, cookies=cookies)
+    resp = requests.get(PROJECTS_API, cookies=cookies, verify=False)
     resp.raise_for_status()
     return resp.json()
 
@@ -35,7 +39,7 @@ def delete_project_by_id(project_id):
     Удалить проект по ID через API
     """
     cookies = get_auth_cookies()
-    resp = requests.delete(f"{PROJECTS_API}/{project_id}", cookies=cookies)
+    resp = requests.delete(f"{PROJECTS_API}/{project_id}", cookies=cookies, verify=False)
     resp.raise_for_status()
     return resp.status_code == 204
 
