@@ -22,11 +22,9 @@ def test_flow_query(login_page, shared_flow_project):
 
     print(f"[INFO] Запуск теста Query в проекте: {project_code}")
 
-    # Переходим в нужный проект
     assert project_page.goto_project(project_code), f"Переход в проект {project_code} не удался!"
     time.sleep(2)
 
-    # Подготавливаем необходимые объекты
     file_panel = FilePanelPage(page)
     data_struct = DataStructPage(page)
 
@@ -42,34 +40,28 @@ def test_flow_query(login_page, shared_flow_project):
     # 1. Создаем файл базы данных 'db_query' в папке 'db_connection'
     print("[INFO] Шаг 1: Создание файла базы данных 'db_query' в папке 'db_connection'")
 
-    # Ищем папку 'db_connection' в файловой панели
     db_connection_folder = page.locator('[aria-label="treeitem_label"]:has-text("db_connection")')
     assert db_connection_folder.count() > 0, "Папка 'db_connection' не найдена в файловой панели!"
     print("[INFO] Папка 'db_connection' найдена")
     
-    # Правый клик по папке db_connection
     db_connection_folder.first.click(button="right")
     time.sleep(1)
     print("[INFO] Правый клик по папке 'db_connection' выполнен")
 
-    # Выбираем "Создать" -> "Подключение к бд"
     create_menu = page.get_by_text("Создать", exact=True)
     assert create_menu.is_visible(), "Меню 'Создать' не найдено в контекстном меню!"
     create_menu.click()
     time.sleep(0.5)
     print("[INFO] Клик по меню 'Создать' в контекстном меню")
 
-    # Ждем появления подменю
     time.sleep(2)
     
-    # Ищем кнопку "Подключение к БД" по aria-label
     db_menu = page.locator('[aria-label="database_connection_info"]')
     assert db_menu.count() > 0, "Меню 'Подключение к БД' не найдено в подменю!"
     db_menu.click()
     time.sleep(1)
     print("[INFO] Клик по меню 'Подключение к БД' в подменю")
 
-    # Вводим название файла базы данных
     timestamp = int(time.time())
     db_file_name = f"db_query_{timestamp}"
     name_input = page.get_by_role("textbox", name="treeitem_label_field")
@@ -83,29 +75,23 @@ def test_flow_query(login_page, shared_flow_project):
     # 2. Настраиваем подключение к базе данных
     print("[INFO] Шаг 2: Настройка подключения к базе данных")
 
-    # Двойной клик по созданному файлу базы данных
     db_file_item = page.locator(f'[aria-label="treeitem_label"]:has-text("{db_file_name}")')
     assert db_file_item.is_visible(), f"Файл базы данных '{db_file_name}' не найден!"
     db_file_item.dblclick()
     time.sleep(2)
     print(f"[INFO] Открыт файл базы данных '{db_file_name}'")
 
-    # Ждем загрузки страницы настройки БД
     submit_button = page.get_by_role("button", name="dbconnection_submit")
     submit_button.wait_for(state="visible", timeout=10000)
     print("[INFO] Страница настройки БД загружена")
 
-    # Используем DBConnectorPage для настройки подключения
     db_connector = DBConnectorPage(page)
     
-    # Настраиваем подключение (по умолчанию используется $env.DATABASE_URL)
     db_connector.configure_and_save_connection()
     print("[INFO] Подключение к базе данных настроено и сохранено")
 
-    # 3. Открываем диаграмму 'test_query.df.json' в папке 'test_flow_component'
     print("[INFO] Шаг 3: Открытие диаграммы 'test_query.df.json' в папке 'test_flow_component'")
 
-    # Ищем папку 'test_flow_component'
     test_flow_folder = page.locator('[aria-label="treeitem_label"]:has-text("test_flow_component")')
     assert test_flow_folder.count() > 0, "Папка 'test_flow_component' не найдена в файловой панели!"
     print("[INFO] Папка 'test_flow_component' найдена")
@@ -113,7 +99,6 @@ def test_flow_query(login_page, shared_flow_project):
     time.sleep(1)
     print("[INFO] Клик по папке 'test_flow_component' выполнен")
 
-    # Ищем и открываем файл 'test_query.df.json'
     test_query_file = page.locator('[aria-label="treeitem_label"]:has-text("test_query.df.json")')
     assert test_query_file.count() > 0, "Файл 'test_query.df.json' не найден в папке!"
     print("[INFO] Файл 'test_query.df.json' найден")
@@ -121,13 +106,11 @@ def test_flow_query(login_page, shared_flow_project):
     time.sleep(2)
     print("[INFO] Диаграмма 'test_query.df.json' открыта")
 
-    # Убеждаемся, что canvas загрузился
     canvas = page.locator('canvas').first
     canvas.wait_for(state="visible", timeout=10000)
     time.sleep(2)
     print("[INFO] Canvas диаграммы загружен")
 
-    # Закрываем файловую панель (если она открыта)
     try:
         if page.get_by_label("board_toolbar_panel").is_visible():
             file_manager_btn = page.get_by_role("button", name="board_toolbar_filemanager_button")
@@ -138,7 +121,6 @@ def test_flow_query(login_page, shared_flow_project):
     except Exception as e:
         print(f"[INFO] Файловая панель уже закрыта или не найдена: {e}")
 
-    # Закрываем правый сайдбар (если он открыт)
     try:
         details_panel = page.locator('[aria-label="diagram_details_panel"]')
         if details_panel.is_visible():
@@ -150,77 +132,62 @@ def test_flow_query(login_page, shared_flow_project):
     except Exception as e:
         print(f"[INFO] Правый сайдбар уже закрыт или не найден: {e}")
 
-    # 4. Ищем компонент Query на канвасе и настраиваем его
     print("[INFO] Шаг 4: Поиск и настройка компонента Query на канвасе")
 
-    # Ищем компонент Query на канвасе и выполняем двойной клик
     canvas_utils = CanvasUtils(page)
     query_found = canvas_utils.find_component_by_title("Query", timeout=10000)
     assert query_found, "Компонент 'Query' не найден на канвасе!"
     print("[INFO] Компонент 'Query' найден и двойной клик выполнен")
 
-    # Ждем открытия правого сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт")
 
-    # 5. Настраиваем подключение к базе данных в компоненте Query
     print("[INFO] Шаг 5: Настройка подключения к БД в компоненте Query")
 
-    # Находим кнопку выбора файла в поле "Подключение"
     select_file_button = page.get_by_role("button", name="textfield_select_file_button")
     assert select_file_button.is_visible(), "Кнопка выбора файла не найдена!"
     select_file_button.click()
     time.sleep(1)
     print("[INFO] Клик по кнопке выбора файла выполнен")
 
-    # Ждем открытия модалки выбора БД (используем более специфичный селектор)
     modal = page.locator('.decision-flow__Modal_open___NIla4.src__FileManagerModal___HeqlP')
     modal.wait_for(state="visible", timeout=10000)
     print("[INFO] Модалка выбора БД открыта")
 
-    # Ищем созданный файл подключения в модалке по treeitem
     db_file_name_with_extension = f"{db_file_name}.db.json"
     db_file_item = page.get_by_role("treeitem", name=f"/{db_file_name_with_extension}")
     
     if db_file_item.count() == 0:
-        # Попробуем найти по части имени
         db_file_item = page.get_by_role("treeitem").filter(has_text=db_file_name)
     
     assert db_file_item.count() > 0, f"Файл подключения '{db_file_name}' не найден в модалке!"
     print(f"[INFO] Найден файл подключения: {db_file_name}")
     
-    # Кликаем на файл подключения (используем locator("div").nth(1).click())
     db_file_item.locator("div").nth(1).click()
     time.sleep(1)
     print("[INFO] Клик по файлу подключения выполнен")
 
-    # Находим и нажимаем кнопку "Выбрать"
     select_button = page.get_by_role("button", name="filemanager_select_button")
     assert select_button.count() > 0, "Кнопка 'Выбрать' не найдена в модалке!"
     select_button.click()
     time.sleep(1)
     print("[INFO] Клик по кнопке 'Выбрать' выполнен")
 
-    # Ждем закрытия модалки
     modal.wait_for(state="hidden", timeout=10000)
     print("[INFO] Модалка выбора БД закрыта")
 
-    # 6. Заполняем SQL запрос в поле редактора
     print("[INFO] Шаг 6: Заполнение SQL запроса в поле редактора")
 
-    # Находим поле редактора SQL
-    sql_editor = page.get_by_role("textbox", name="editor_view")
+    sql_editor = page.get_by_role("textbox", name="editor_view").first
     assert sql_editor.is_visible(), "Поле редактора SQL не найдено!"
     print("[INFO] Поле редактора SQL найдено")
 
-    # Заполняем SQL запрос для поиска созданного проекта
     sql_query = f"SELECT * FROM projects WHERE code = '{project_code}'"
     sql_editor.fill(sql_query)
     time.sleep(1)
     print(f"[INFO] SQL запрос введен: {sql_query}")
 
-    # Закрываем правый сайдбар
     try:
         details_panel = page.locator('[aria-label="diagram_details_panel"]')
         if details_panel.is_visible():
@@ -232,23 +199,18 @@ def test_flow_query(login_page, shared_flow_project):
     except Exception as e:
         print(f"[INFO] Правый сайдбар уже закрыт или не найден: {e}")
 
-    # 7. Настраиваем компонент Output
     print("[INFO] Шаг 7: Настройка компонента Output")
 
-    # Ищем компонент Output на канвасе
     output_found = canvas_utils.find_component_by_title("Output", timeout=10000)
     assert output_found, "Компонент 'Output' не найден на канвасе!"
     print("[INFO] Компонент 'Output' найден и двойной клик выполнен")
 
-    # Ждем открытия правого сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт")
 
-    # Находим и заполняем поле "Данные"
     data_field = page.get_by_role("textbox", name="data")
     if data_field.count() == 0:
-        # Попробуем найти по другому селектору
         data_field = page.locator('input[name="data"], textarea[name="data"]')
     
     assert data_field.count() > 0, "Поле 'Данные' не найдено!"
@@ -256,7 +218,6 @@ def test_flow_query(login_page, shared_flow_project):
     time.sleep(1)
     print("[INFO] Поле 'Данные' заполнено: $node.Query.data[0]")
 
-    # Закрываем правый сайдбар после настройки
     try:
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -267,66 +228,52 @@ def test_flow_query(login_page, shared_flow_project):
     except Exception as e:
         print(f"[INFO] Правый сайдбар уже закрыт: {e}")
 
-    # 8. Запускаем диаграмму
     print("[INFO] Шаг 8: Запуск диаграммы")
 
-    # Запускаем диаграмму и ждем завершения
     success = diagram_page.run_diagram_and_wait(completion_timeout=15000)
     
-    # Проверяем успешность выполнения
     assert success, "Диаграмма не выполнилась успешно!"
     print("[INFO] Диаграмма завершилась успешно!")
 
-    # 9. Проверяем JSON данные в модальном окне
     print("[INFO] Шаг 9: Проверка JSON данных в модальном окне")
 
-    # Двойной клик по канвасу для открытия сайдбара
     canvas = page.locator('canvas').first
     canvas.dblclick()
     time.sleep(1)
     print("[INFO] Двойной клик по канвасу выполнен")
 
-    # Ждем открытия сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Сайдбар открыт")
 
-    # Переходим на вкладку "Процесс"
     process_tab = page.get_by_text("Процесс", exact=True)
     assert process_tab.is_visible(), "Вкладка 'Процесс' не найдена!"
     process_tab.click()
     time.sleep(1)
     print("[INFO] Переход на вкладку 'Процесс' выполнен")
 
-    # Переходим на подвкладку "Анализ"
     analysis_tab = page.get_by_text("Анализ", exact=True)
     assert analysis_tab.is_visible(), "Подвкладка 'Анализ' не найдена!"
     analysis_tab.click()
     time.sleep(1)
     print("[INFO] Переход на подвкладку 'Анализ' выполнен")
 
-    # Нажимаем кнопку для открытия модального окна "Просмотр JSON"
     full_view_button = page.get_by_role("button", name="formitem_full_view_button").nth(1)
     assert full_view_button.is_visible(), "Кнопка 'formitem_full_view_button' не найдена!"
     full_view_button.click()
     time.sleep(1)
     print("[INFO] Кнопка 'formitem_full_view_button' нажата")
 
-    # Ждем открытия модального окна "Просмотр JSON"
     json_modal = page.locator('[role="dialog"]:has-text("Просмотр JSON")')
     json_modal.wait_for(state="visible", timeout=10000)
     print("[INFO] Модальное окно 'Просмотр JSON' открыто")
     
-    # Делаем скриншот модального окна для отладки
     save_screenshot(page, f"json_modal_{project_code}")
     
-    # Ждем загрузки данных в модальное окно
     time.sleep(3)
 
-    # Получаем JSON данные из Monaco Editor в модальном окне
     json_text = ""
     
-    # Используем правильный селектор для Monaco Editor
     view_lines = page.locator('[role="dialog"] .view-lines')
     assert view_lines.count() > 0, "Monaco Editor не найден в модальном окне!"
     
@@ -335,25 +282,21 @@ def test_flow_query(login_page, shared_flow_project):
     
     assert json_text.strip(), "JSON данные не найдены в Monaco Editor!"
 
-    # Очищаем JSON от невидимых символов (non-breaking spaces и других)
     import re
     json_text_clean = re.sub(r'[\xa0\u00a0]', ' ', json_text)  # Заменяем non-breaking spaces на обычные пробелы
     json_text_clean = json_text_clean.strip()
     print(f"[INFO] Очищенный JSON (длина: {len(json_text_clean)}): {json_text_clean[:200]}...")
 
-    # Парсим JSON для проверки полей
     import json
     try:
         json_data = json.loads(json_text_clean)
         print("[INFO] JSON успешно распарсен")
         
-        # Проверяем структуру JSON
         assert "data" in json_data, "Поле 'data' не найдено в JSON"
         assert "error" in json_data, "Поле 'error' не найдено в JSON"
         
         data = json_data["data"]
         
-        # Проверяем поля проекта
         assert data["code"] == project_code, f"Код проекта не совпадает: ожидался '{project_code}', получен '{data['code']}'"
         assert data["default_branch"] == "main", f"Ветка по умолчанию не 'main': {data['default_branch']}"
         assert data["deleted_at"] is None, f"Проект удален: {data['deleted_at']}"
@@ -370,15 +313,12 @@ def test_flow_query(login_page, shared_flow_project):
     except Exception as e:
         raise Exception(f"Ошибка проверки JSON данных: {e}")
 
-    # Закрываем модальное окно
     close_button = page.locator('[role="dialog"] button[aria-label="close"], [role="dialog"] .close-button')
     if close_button.count() > 0:
         close_button.first.click()
         time.sleep(1)
         print("[INFO] Модальное окно закрыто")
 
-    # Делаем скриншот для проверки
     save_screenshot(page, f"query_test_complete_{project_code}")
 
     print("[SUCCESS] Все шаги теста Query выполнены успешно!")
-    time.sleep(10)  # Пауза для просмотра модального окна

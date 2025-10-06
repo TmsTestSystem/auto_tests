@@ -7,13 +7,21 @@ import time
 from pathlib import Path
 import requests
 import uuid
+import urllib3
 
 # Загружаем переменные окружения из .env файла
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path, override=True)
 
-API_BASE_URL = os.getenv("BASE_URL", "http://localhost:3333").rstrip("/")
-PROJECTS_API = f"{API_BASE_URL}/api/projects"
+# Хост настраивается через run_tests.py скрипт
+
+def get_api_base_url():
+    """Получить BASE_URL из переменных окружения"""
+    return os.getenv("BASE_URL", "http://localhost:3333").rstrip("/")
+
+def get_projects_api():
+    """Получить URL для API проектов"""
+    return f"{get_api_base_url()}/api/projects"
 
 
 def get_auth_cookies():
@@ -21,15 +29,21 @@ def get_auth_cookies():
     Получить куки авторизации через API логин
     """
     import requests
+    import urllib3
+    # Отключаем предупреждения о небезопасных запросах
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    
     email = os.getenv("LOGIN")
     password = os.getenv("PASSWORD")
-    resp = requests.post(f"{API_BASE_URL}/api/auth/sign_in", json={"email": email, "password": password})
+    api_base_url = get_api_base_url()
+    resp = requests.post(f"{api_base_url}/api/auth/sign_in", json={"email": email, "password": password}, verify=False)
     resp.raise_for_status()
     return resp.cookies
 
 def get_project_by_code(code):
     cookies = get_auth_cookies()
-    resp = requests.get(PROJECTS_API, cookies=cookies)
+    projects_api = get_projects_api()
+    resp = requests.get(projects_api, cookies=cookies, verify=False)
     resp.raise_for_status()
     for prj in resp.json():
         if prj.get("code") == code:
@@ -38,7 +52,8 @@ def get_project_by_code(code):
 
 def delete_project_by_id(project_id):
     cookies = get_auth_cookies()
-    resp = requests.delete(f"{PROJECTS_API}/{project_id}", cookies=cookies)
+    projects_api = get_projects_api()
+    resp = requests.delete(f"{projects_api}/{project_id}", cookies=cookies, verify=False)
     resp.raise_for_status()
     return resp.status_code == 204
 
@@ -55,7 +70,8 @@ def save_screenshot(page, test_name):
 
 def get_all_projects_via_api():
     cookies = get_auth_cookies()
-    resp = requests.get(PROJECTS_API, cookies=cookies)
+    projects_api = get_projects_api()
+    resp = requests.get(projects_api, cookies=cookies, verify=False)
     resp.raise_for_status()
     return resp.json()
 

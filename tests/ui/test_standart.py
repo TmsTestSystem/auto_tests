@@ -18,28 +18,23 @@ def test_flow_standart(login_page, shared_flow_project):
     file_panel = FilePanelPage(page)
     diagram_page = DiagramPage(page)
     
-    # 1. Переход к нужному проекту по коду (проект уже создан фикстурой)
     assert project_page.goto_project(project_code), f"Проект с кодом {project_code} не найден!"
     time.sleep(2)
 
-    # 2. Открываем левый сайдбар (filemanager)
     page.get_by_role("button", name="board_toolbar_filemanager_button").click()
     time.sleep(1)
 
-    # 3. В сайдбаре раскрываем папку
     folder = page.locator('[aria-label="/test_flow_component"]')
     folder.wait_for(state="visible", timeout=15000)
     folder.click()
     time.sleep(1)
 
-    # 4. Открываем файл
     board_panel = page.get_by_label("board_toolbar_panel")
     file_item = board_panel.get_by_text("test_standart.df.json")
     file_item.wait_for(state="visible", timeout=10000)
     file_item.dblclick()
     time.sleep(2)
 
-    # 5. Создаём структуру данных в папке shema
     file_panel = FilePanelPage(page)
     data_struct = DataStructPage(page)
     
@@ -94,7 +89,6 @@ def test_flow_standart(login_page, shared_flow_project):
         pass
     time.sleep(1)
     
-    # Кликаем по созданной структуре данных чтобы открыть её для редактирования
     data_struct_item = page.locator('[aria-label="treeitem_label"]').filter(has_text=data_struct_name)
     if data_struct_item.count() > 0:
         data_struct_item.first.click()
@@ -104,7 +98,6 @@ def test_flow_standart(login_page, shared_flow_project):
     schema_name = f"test_schema_{int(time.time())}"
     data_struct.create_schema(schema_name)
 
-    # Открываем панель деталей диаграммы если она закрыта
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     if not details_panel.is_visible():
         switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -123,7 +116,6 @@ def test_flow_standart(login_page, shared_flow_project):
     ]
     
     for idx, attr in enumerate(attributes):
-        # Переключаемся на вкладку структуры данных перед созданием атрибута
         try:
             structure_tab = page.get_by_text("Структуры данных", exact=True)
             if structure_tab.is_visible():
@@ -181,26 +173,21 @@ def test_flow_standart(login_page, shared_flow_project):
         except Exception:
             print("[WARN] Диаграмма может быть не загружена")
 
-    # 6. Кликаем по компоненту Input на canvas и открываем правый сайдбар
     print("[INFO] Шаг 6: Поиск и клик по компоненту Input")
     
     canvas_utils = CanvasUtils(page)
     
-    # Используем новую утилиту для поиска компонента Input
     if not canvas_utils.find_component_by_title("Input", exact=True):
         print("[WARN] Не удалось найти компонент Input через точный поиск, пробуем альтернативные методы")
-        # Пробуем через координаты как fallback
         if not canvas_utils.find_component_by_position(0.45, 0.55):
             raise Exception("Не удалось найти или кликнуть по компоненту Input")
 
-    # Выбираем созданную структуру данных и схему
     print("[INFO] Выбор созданной структуры данных и схемы")
     
     if not canvas_utils.select_structure_data(data_struct_name, schema_name):
         save_screenshot(page, f"structure_selection_error_{project_code}")
         raise Exception(f"Не удалось выбрать структуру данных '{data_struct_name}' или схему '{schema_name}'")
 
-    # Настраиваем процесс и анализ
     try:
         page.get_by_text("Процесс", exact=True).click()
         time.sleep(0.3)
@@ -217,12 +204,10 @@ def test_flow_standart(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при настройке процесса и анализа: {e}")
     
-    # 7. Кликаем по компоненту Output на canvas
     print("[INFO] Шаг 7: Поиск и клик по компоненту Output")
     
     if not canvas_utils.find_component_by_title("Output", exact=True):
         print("[WARN] Не удалось найти компонент Output через точный поиск, пробуем альтернативные методы")
-        # Пробуем через координаты как fallback
         if not canvas_utils.find_component_by_position(0.7, 0.7):
             raise Exception("Не удалось найти или кликнуть по компоненту Output")
     
@@ -249,10 +234,8 @@ def test_flow_standart(login_page, shared_flow_project):
     except Exception as e:
         print(f"Не удалось заполнить поле данных: {e}")
     
-    # Запускаем диаграмму и ждем завершения
     success = diagram_page.run_diagram_and_wait(completion_timeout=15000)
     
-    # Проверяем успешность выполнения
     assert success, "Диаграмма не выполнилась успешно!"
     print("[SUCCESS] Диаграмма завершилась успешно!")
     
@@ -290,14 +273,11 @@ def test_flow_standart(login_page, shared_flow_project):
         else:
             print("ERROR: Поле Data не найдено или пустое")
 
-    # 7. Финальный скриншот
     save_screenshot(page, f"component_search_complete_{project_code}")
-    time.sleep(10)
 
 
 def cleanup_projects():
     """
     Функция для очистки созданных проектов в конце тестового файла
     """
-    # TODO: Реализовать очистку всех созданных проектов
     print("[INFO] Очистка проектов - пока что заглушка")

@@ -20,7 +20,6 @@ def api_server():
     """
     import requests
     
-    # Проверяем доступность JSONPlaceholder API
     try:
         response = requests.get("https://jsonplaceholder.typicode.com/users/1", timeout=5)
         if response.status_code == 200:
@@ -47,11 +46,9 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     print(f"[INFO] Запуск теста HTTP Flow Sequence в проекте: {project_code}")
     print(f"[INFO] API server URL: {api_server['base_url']}")
 
-    # Переходим в нужный проект
     assert project_page.goto_project(project_code), f"Переход в проект {project_code} не удался!"
     time.sleep(2)
 
-    # Подготавливаем необходимые объекты
     file_panel = FilePanelPage(page)
     diagram_page = DiagramPage(page)
 
@@ -64,16 +61,13 @@ def test_http_flow(login_page, shared_flow_project, api_server):
         time.sleep(0.5)
     print("[INFO] Файловая панель открыта")
 
-    # 1. Открываем диаграмму
     print("[INFO] Шаг 1: Открытие диаграммы")
 
-    # Ищем папку 'test_flow_component'
     test_flow_folder = page.locator('[aria-label="treeitem_label"]:has-text("test_flow_component")')
     assert test_flow_folder.count() > 0, "Папка 'test_flow_component' не найдена!"
     test_flow_folder.click()
     time.sleep(1)
 
-    # Ищем диаграмму (пробуем разные варианты)
     diagram_files = [
         'test_http.df.json',
         'test_http_flow.df.json', 
@@ -93,32 +87,26 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     time.sleep(2)
     print("[INFO] Диаграмма открыта")
 
-    # Убеждаемся, что canvas загрузился
     canvas = page.locator('canvas').first
     canvas.wait_for(state="visible", timeout=10000)
     time.sleep(2)
     print("[INFO] Canvas диаграммы загружен")
 
-    # Закрываем панели
     print("[INFO] Закрытие панелей")
     diagram_page.close_panels()
 
-    # Инициализируем canvas_utils
     canvas_utils = CanvasUtils(page)
 
-    # 2. Настраиваем Http_GET компонент
     print("[INFO] Шаг 2: Настройка Http_GET компонента")
     
     http_get_found = canvas_utils.find_component_by_title("Http_GET", timeout=10000)
     assert http_get_found, "Компонент 'Http_GET' не найден на канвасе!"
     print("[INFO] Компонент 'Http_GET' найден")
 
-    # Ждем открытия правого сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт")
 
-    # Настраиваем URL (используем более точный селектор)
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
         url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
@@ -129,18 +117,15 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     time.sleep(1)
     print(f"[INFO] Http_GET URL настроен: {get_url}")
 
-    # Настраиваем метод (dropdown/select)
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
             method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
         
         if method_field.count() > 0:
-            # Кликаем по полю чтобы открыть dropdown
             method_field.click()
             time.sleep(1)
             
-            # Выбираем GET метод из dropdown
             get_option = page.get_by_role("treeitem", name="GET").locator("div").nth(1)
             if get_option.count() > 0:
                 get_option.click()
@@ -151,7 +136,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Поле метода не найдено или не настроено: {e}")
 
-    # Закрываем правый сайдбар
     try:
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -162,18 +146,15 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Правый сайдбар уже закрыт: {e}")
 
-    # 3. Настраиваем Http_POST компонент
     print("[INFO] Шаг 3: Настройка Http_POST компонента")
     
     http_post_found = canvas_utils.find_component_by_title("Http_POST", timeout=10000)
     assert http_post_found, "Компонент 'Http_POST' не найден на канвасе!"
     print("[INFO] Компонент 'Http_POST' найден")
 
-    # Ждем открытия правого сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
 
-    # Настраиваем URL
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
         url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
@@ -183,18 +164,15 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     time.sleep(1)
     print(f"[INFO] Http_POST URL настроен: {post_url}")
 
-    # Настраиваем метод (dropdown/select)
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
             method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
         
         if method_field.count() > 0:
-            # Кликаем по полю чтобы открыть dropdown
             method_field.click()
             time.sleep(1)
             
-            # Выбираем POST метод из dropdown
             post_option = page.get_by_role("treeitem", name="POST").locator("div").nth(1)
             if post_option.count() > 0:
                 post_option.click()
@@ -205,13 +183,10 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Поле метода не найдено или не настроено: {e}")
 
-    # Настраиваем заголовки
     try:
-        # Добавляем первый заголовок
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
-        # Заполняем Content-Type
         page.get_by_role("textbox", name="inputs_config.headers.value.0.name").click()
         page.get_by_role("textbox", name="inputs_config.headers.value.0.name").fill("\"Content-Type\"")
         time.sleep(0.5)
@@ -220,7 +195,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
         page.get_by_role("textbox", name="inputs_config.headers.value.0.value").fill("\"application/json\"")
         time.sleep(0.5)
         
-        # Добавляем второй заголовок для оптимизации
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
@@ -232,7 +206,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
         page.get_by_role("textbox", name="inputs_config.headers.value.1.value").fill("\"application/json\"")
         time.sleep(0.5)
         
-        # Добавляем третий заголовок для минимизации данных
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
@@ -244,7 +217,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
         page.get_by_role("textbox", name="inputs_config.headers.value.2.value").fill("\"gzip\"")
         time.sleep(0.5)
         
-        # Добавляем четвертый заголовок для минимизации заголовков в ответе
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
@@ -260,7 +232,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Настройка заголовков не удалась: {e}")
 
-    # Настраиваем тело запроса
     try:
         body_field = page.get_by_role("textbox", name="body")
         if body_field.count() == 0:
@@ -274,7 +245,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Поле тела запроса не найдено: {e}")
 
-    # Закрываем правый сайдбар
     try:
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -285,18 +255,15 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Правый сайдбар уже закрыт: {e}")
 
-    # 4. Настраиваем Http_PUT компонент
     print("[INFO] Шаг 4: Настройка Http_PUT компонента")
     
     http_put_found = canvas_utils.find_component_by_title("Http_PUT", timeout=10000)
     assert http_put_found, "Компонент 'Http_PUT' не найден на канвасе!"
     print("[INFO] Компонент 'Http_PUT' найден")
 
-    # Ждем открытия правого сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
 
-    # Настраиваем URL
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
         url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
@@ -306,18 +273,15 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     time.sleep(1)
     print(f"[INFO] Http_PUT URL настроен: {put_url}")
 
-    # Настраиваем метод (dropdown/select)
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
             method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
         
         if method_field.count() > 0:
-            # Кликаем по полю чтобы открыть dropdown
             method_field.click()
             time.sleep(1)
             
-            # Выбираем PUT метод из dropdown
             put_option = page.get_by_role("treeitem", name="PUT").locator("div").nth(1)
             if put_option.count() > 0:
                 put_option.click()
@@ -328,9 +292,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Поле метода не найдено или не настроено: {e}")
 
-    # Настраиваем заголовки
     try:
-        # Добавляем первый заголовок
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
@@ -342,7 +304,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
         page.get_by_role("textbox", name="inputs_config.headers.value.0.value").fill("\"application/json\"")
         time.sleep(0.5)
         
-        # Добавляем второй заголовок
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
@@ -354,7 +315,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
         page.get_by_role("textbox", name="inputs_config.headers.value.1.value").fill("\"application/json\"")
         time.sleep(0.5)
         
-        # Добавляем третий заголовок для минимизации заголовков в ответе
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
@@ -370,7 +330,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Настройка заголовков не удалась: {e}")
 
-    # Настраиваем тело запроса
     try:
         body_field = page.get_by_role("textbox", name="body")
         if body_field.count() == 0:
@@ -384,7 +343,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Поле тела запроса не найдено: {e}")
 
-    # Закрываем правый сайдбар
     try:
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -395,18 +353,15 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Правый сайдбар уже закрыт: {e}")
 
-    # 5. Настраиваем Http_PATCH компонент
     print("[INFO] Шаг 5: Настройка Http_PATCH компонента")
     
     http_patch_found = canvas_utils.find_component_by_title("Http_PATCH", timeout=10000)
     assert http_patch_found, "Компонент 'Http_PATCH' не найден на канвасе!"
     print("[INFO] Компонент 'Http_PATCH' найден")
 
-    # Ждем открытия правого сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
 
-    # Настраиваем URL
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
         url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
@@ -416,18 +371,15 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     time.sleep(1)
     print(f"[INFO] Http_PATCH URL настроен: {patch_url}")
 
-    # Настраиваем метод (dropdown/select)
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
             method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
         
         if method_field.count() > 0:
-            # Кликаем по полю чтобы открыть dropdown
             method_field.click()
             time.sleep(1)
             
-            # Выбираем PATCH метод из dropdown
             patch_option = page.get_by_role("treeitem", name="PATCH").locator("div").nth(1)
             if patch_option.count() > 0:
                 patch_option.click()
@@ -438,9 +390,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Поле метода не найдено или не настроено: {e}")
 
-    # Настраиваем заголовки
     try:
-        # Добавляем первый заголовок
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
@@ -452,7 +402,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
         page.get_by_role("textbox", name="inputs_config.headers.value.0.value").fill("\"application/json\"")
         time.sleep(0.5)
         
-        # Добавляем второй заголовок
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
@@ -464,7 +413,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
         page.get_by_role("textbox", name="inputs_config.headers.value.1.value").fill("\"application/json\"")
         time.sleep(0.5)
         
-        # Добавляем третий заголовок для минимизации заголовков в ответе
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(0.5)
         
@@ -480,7 +428,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Настройка заголовков не удалась: {e}")
 
-    # Настраиваем тело запроса (частичное обновление)
     try:
         body_field = page.get_by_role("textbox", name="body")
         if body_field.count() == 0:
@@ -494,7 +441,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Поле тела запроса не найдено: {e}")
 
-    # Закрываем правый сайдбар
     try:
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -505,18 +451,15 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Правый сайдбар уже закрыт: {e}")
 
-    # 6. Настраиваем Http_DEL компонент
     print("[INFO] Шаг 6: Настройка Http_DEL компонента")
     
     http_del_found = canvas_utils.find_component_by_title("Http_DEL", timeout=10000)
     assert http_del_found, "Компонент 'Http_DEL' не найден на канвасе!"
     print("[INFO] Компонент 'Http_DEL' найден")
 
-    # Ждем открытия правого сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
 
-    # Настраиваем URL
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
         url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
@@ -526,18 +469,15 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     time.sleep(1)
     print(f"[INFO] Http_DEL URL настроен: {del_url}")
 
-    # Настраиваем метод (dropdown/select)
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
             method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
         
         if method_field.count() > 0:
-            # Кликаем по полю чтобы открыть dropdown
             method_field.click()
             time.sleep(1)
             
-            # Выбираем DELETE метод из dropdown
             delete_option = page.get_by_role("treeitem", name="DELETE").locator("div").nth(1)
             if delete_option.count() > 0:
                 delete_option.click()
@@ -548,9 +488,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Поле метода не найдено или не настроено: {e}")
 
-    # DELETE не требует заголовков Content-Type и тела запроса
 
-    # Закрываем правый сайдбар
     try:
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -561,19 +499,16 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Правый сайдбар уже закрыт: {e}")
 
-    # 7. Настраиваем Output компонент для сбора всех ответов
     print("[INFO] Шаг 7: Настройка Output компонента для сбора всех HTTP ответов")
     
     output_found = canvas_utils.find_component_by_title("Output", timeout=10000)
     assert output_found, "Компонент 'Output' не найден на канвасе!"
     print("[INFO] Компонент 'Output' найден")
 
-    # Ждем открытия правого сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт для Output")
 
-    # Нажимаем кнопку раскрытия для поля "Данные"
     try:
         expression_button = page.get_by_role("button", name="textfield_expression_button")
         if expression_button.count() > 0:
@@ -581,7 +516,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
             time.sleep(1)
             print("[INFO] Кнопка раскрытия поля 'Данные' нажата")
         else:
-            # Пробуем альтернативные селекторы
             expression_button = page.locator('button[aria-label*="expression"], button[title*="expression"]')
             if expression_button.count() > 0:
                 expression_button.first.click()
@@ -592,23 +526,19 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[WARN] Ошибка при нажатии кнопки раскрытия: {e}")
 
-    # Ждем открытия модального окна
     try:
-        modal = page.locator('[role="dialog"], .modal, .expression-modal')
+        modal = page.locator('[role="dialog"], .modal, .expression-modal').first
         modal.wait_for(state="visible", timeout=10000)
         print("[INFO] Модальное окно для редактирования выражения открыто")
     except Exception as e:
         print(f"[WARN] Модальное окно не открылось: {e}")
 
-    # Вводим JSON со всеми ответами HTTP коннекторов
     try:
         editor_field = page.get_by_role("textbox", name="editor_view")
         if editor_field.count() == 0:
-            # Пробуем альтернативные селекторы для Monaco Editor
             editor_field = page.locator('.monaco-editor textarea, .view-lines, [data-testid="editor"]')
         
         if editor_field.count() > 0:
-            # Создаем JSON со всеми ответами HTTP коннекторов (только body, без заголовков)
             all_responses_json = '''{"Get": $node.Http_GET.response.body,"Post": $node.Http_POST.response.body,"Put": $node.Http_PUT.response.body,"Patch": $node.Http_PATCH.response.body,"Delete": $node.Http_DEL.response.body,"summary": {"total_requests": 5,"methods": ["GET", "POST", "PUT", "PATCH", "DELETE"],"api_url": "''' + api_server["base_url"] + '''"}}'''
             
             editor_field.fill(all_responses_json)
@@ -620,30 +550,25 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[WARN] Ошибка при вводе JSON: {e}")
 
-    # Закрываем модальное окно (сохраняем изменения)
     try:
-        # Ищем кнопку сохранения для редактора выражений
         save_button = page.get_by_role("button", name="expressioneditor_submit_button")
         if save_button.count() > 0:
             save_button.click()
             time.sleep(1)
             print("[INFO] Модальное окно закрыто с сохранением через expressioneditor_submit_button")
         else:
-            # Fallback - пробуем другие варианты
             save_button = page.locator('button:has-text("Сохранить"), button:has-text("Save"), button:has-text("OK")')
             if save_button.count() > 0:
                 save_button.first.click()
                 time.sleep(1)
                 print("[INFO] Модальное окно закрыто с сохранением через fallback")
             else:
-                # Пробуем нажать Escape
                 page.keyboard.press("Escape")
                 time.sleep(1)
                 print("[INFO] Модальное окно закрыто через Escape")
     except Exception as e:
         print(f"[WARN] Ошибка при закрытии модального окна: {e}")
 
-    # Закрываем правый сайдбар
     try:
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -654,45 +579,36 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[INFO] Правый сайдбар уже закрыт: {e}")
 
-    # 8. Запускаем диаграмму
     print("[INFO] Шаг 8: Запуск диаграммы")
 
-    # Запускаем диаграмму и ждем завершения
     success = diagram_page.run_diagram_and_wait(completion_timeout=60000)
     
-    # Проверяем успешность выполнения
     assert success, "Диаграмма не выполнилась успешно!"
     print("[INFO] Диаграмма завершилась успешно!")
 
-    # 9. Проверяем результаты в Output компоненте
     print("[INFO] Шаг 9: Проверка результатов в Output компоненте")
 
-    # Двойной клик по канвасу для открытия сайдбара
     canvas = page.locator('canvas').first
     canvas.dblclick()
     time.sleep(1)
     print("[INFO] Двойной клик по канвасу выполнен")
 
-    # Ждем открытия сайдбара
     details_panel = page.locator('[aria-label="diagram_details_panel"]')
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Сайдбар открыт")
 
-    # Переходим на вкладку "Процесс"
     process_tab = page.get_by_text("Процесс", exact=True)
     assert process_tab.is_visible(), "Вкладка 'Процесс' не найдена!"
     process_tab.click()
     time.sleep(1)
     print("[INFO] Переход на вкладку 'Процесс' выполнен")
 
-    # Переходим на подвкладку "Анализ"
     analysis_tab = page.get_by_text("Анализ", exact=True)
     assert analysis_tab.is_visible(), "Подвкладка 'Анализ' не найдена!"
     analysis_tab.click()
     time.sleep(1)
     print("[INFO] Переход на подвкладку 'Анализ' выполнен")
 
-    # Нажимаем кнопку для открытия модального окна "Просмотр JSON"
     try:
         full_view_button = page.get_by_role("button", name="formitem_full_view_button").nth(1)
         if full_view_button.count() > 0:
@@ -700,18 +616,14 @@ def test_http_flow(login_page, shared_flow_project, api_server):
             time.sleep(1)
             print("[INFO] Кнопка 'formitem_full_view_button' (nth(1)) нажата")
 
-            # Ждем открытия модального окна "Просмотр JSON"
             json_modal = page.locator('[role="dialog"]:has-text("Просмотр JSON")')
             json_modal.wait_for(state="visible", timeout=10000)
             print("[INFO] Модальное окно 'Просмотр JSON' открыто")
             
-            # Делаем скриншот модального окна
             save_screenshot(page, f"http_all_responses_{project_code}")
             
-            # Ждем загрузки данных в модальное окно
             time.sleep(3)
 
-            # Получаем JSON данные из Monaco Editor в модальном окне
             view_lines = page.locator('[role="dialog"] .view-lines')
             assert view_lines.count() > 0, "Monaco Editor не найден в модальном окне!"
             
@@ -720,13 +632,11 @@ def test_http_flow(login_page, shared_flow_project, api_server):
             
             assert json_text.strip(), "JSON данные не найдены в Monaco Editor!"
 
-            # Очищаем JSON от невидимых символов и извлекаем только JSON часть
             import re
             json_text_clean = re.sub(r'[\xa0\u00a0]', ' ', json_text)
             json_text_clean = json_text_clean.strip()
             print(f"[INFO] Очищенный JSON (длина: {len(json_text_clean)}): {json_text_clean[:300]}...")
 
-            # Пытаемся найти JSON объект в тексте (ищем { ... })
             json_match = re.search(r'\{.*\}', json_text_clean, re.DOTALL)
             if json_match:
                 json_text_clean = json_match.group(0)
@@ -734,12 +644,10 @@ def test_http_flow(login_page, shared_flow_project, api_server):
             else:
                 print("[WARN] JSON объект не найден в тексте, используем весь текст")
 
-            # Парсим JSON для проверки структуры
             try:
                 json_data = json.loads(json_text_clean)
                 print("[INFO] JSON успешно распарсен")
                 
-                # Проверяем структуру JSON с ответами всех HTTP методов
                 assert "Get" in json_data, "Поле 'Get' не найдено в JSON"
                 assert "Post" in json_data, "Поле 'Post' не найдено в JSON"
                 assert "Put" in json_data, "Поле 'Put' не найдено в JSON"
@@ -747,7 +655,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
                 assert "Delete" in json_data, "Поле 'Delete' не найдено в JSON"
                 assert "summary" in json_data, "Поле 'summary' не найдено в JSON"
                 
-                # Проверяем summary
                 summary = json_data["summary"]
                 assert summary["total_requests"] == 5, f"Ожидалось 5 запросов, получено: {summary['total_requests']}"
                 assert len(summary["methods"]) == 5, f"Ожидалось 5 методов, получено: {len(summary['methods'])}"
@@ -766,7 +673,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
             except Exception as e:
                 raise Exception(f"Ошибка проверки JSON данных: {e}")
 
-            # Закрываем модальное окно
             close_button = page.locator('[role="dialog"] button[aria-label="close"], [role="dialog"] .close-button')
             if close_button.count() > 0:
                 close_button.first.click()
@@ -778,7 +684,6 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     except Exception as e:
         print(f"[WARN] Ошибка при проверке результатов Output: {e}")
 
-    # Делаем финальный скриншот
     save_screenshot(page, f"http_flow_sequence_complete_{project_code}")
 
     print("[SUCCESS] Все шаги теста HTTP Flow Sequence выполнены успешно!")
@@ -786,4 +691,3 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     print(f"[SUCCESS] API server работал на {api_server['base_url']}")
     print("[SUCCESS] DELETE метод вернул JSON ответ с подробной информацией!")
     print("[SUCCESS] Output компонент собрал все HTTP ответы в единый JSON!")
-    time.sleep(5)

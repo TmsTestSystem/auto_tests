@@ -27,14 +27,15 @@ class DiagramPage:
             # Используем стандартный селектор для кнопки запуска диаграммы
             play_button = self.page.get_by_role("button", name="diagram_play_button")
             
-            if play_button.is_visible(timeout=timeout):
+            try:
+                play_button.wait_for(state="visible", timeout=timeout)
                 print("[INFO] Кнопка запуска диаграммы найдена")
                 play_button.click()
                 time.sleep(2)
                 print("[INFO] Диаграмма запущена")
                 return True
-            else:
-                print("[ERROR] Кнопка запуска диаграммы не найдена!")
+            except Exception as e:
+                print(f"[ERROR] Кнопка запуска диаграммы не найдена: {e}")
                 return False
                 
         except Exception as e:
@@ -82,10 +83,11 @@ class DiagramPage:
                            .or_(self.page.locator('text="Успешно"'))
                            .or_(self.page.locator('text="Выполнено"')))
             
-            if toast_success.is_visible(timeout=10000):
+            try:
+                toast_success.wait_for(state="visible", timeout=10000)
                 print("[SUCCESS] Toast сообщение об успешном выполнении найдено!")
                 toast_found = True
-            else:
+            except Exception:
                 print("[WARN] Toast сообщение об успешном выполнении не найдено")
                 
             # Также проверим наличие любых toast сообщений

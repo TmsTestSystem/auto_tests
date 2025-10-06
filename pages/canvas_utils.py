@@ -506,8 +506,12 @@ class CanvasUtils:
             
             # Ищем поле с выпадающим списком условий
             condition_field = self.page.locator('textarea[name="config.from"][aria-label="config.from"]')
-            condition_field.wait_for(state="visible", timeout=timeout)
-            print("[INFO] Поле выбора условия найдено")
+            try:
+                condition_field.wait_for(state="visible", timeout=5000)  # Уменьшили timeout
+                print("[INFO] Поле выбора условия найдено")
+            except Exception as e:
+                print(f"[WARN] Поле выбора условия не найдено: {e}")
+                return False
             
             # Сначала пробуем метод через клавиатуру (более надежный)
             try:
