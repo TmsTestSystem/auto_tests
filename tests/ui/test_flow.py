@@ -4,6 +4,7 @@ from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.diagram_page import DiagramPage
 from pages.canvas_utils import CanvasUtils
+from pages.connection_page import ConnectionPage
 from conftest import save_screenshot, get_project_by_code, delete_project_by_id
 
 
@@ -17,6 +18,7 @@ def test_flow_parent_child_process(login_page, shared_flow_project):
     file_panel = FilePanelPage(page)
     diagram_page = DiagramPage(page)
     canvas_utils = CanvasUtils(page)
+    connection_page = ConnectionPage(page)
     
     assert project_page.goto_project(project_code), f"Проект с кодом {project_code} не найден!"
     time.sleep(2)
@@ -135,101 +137,28 @@ def test_flow_parent_child_process(login_page, shared_flow_project):
     # 4. Соединяем Input -> Output стрелкой
     print("[INFO] Шаг 4: Соединение Input -> Output стрелкой")
     
-    # Находим компонент Input на канвасе и кликаем по нему, чтобы появились точки соединения
-    input_component = page.get_by_text("Input").first
-    input_component.click()
-    time.sleep(1)
-    print("[INFO] Кликнули по компоненту Input, точки соединения должны появиться")
-    
-    # Получаем размеры компонента Input
-    input_box = input_component.bounding_box()
-    
-    if input_box:
-        # Центр компонента Input
-        input_center_x = input_box['x'] + input_box['width'] / 2
-        input_center_y = input_box['y'] + input_box['height'] / 2
-        
-        # Ищем элемент соединения "right" именно для компонента Input
-        try:
-            # Ищем все элементы "right" и выбираем тот, который находится рядом с Input
-            right_connections = page.get_by_text("right")
-            right_connection_found = False
-            
-            for i in range(right_connections.count()):
-                try:
-                    right_conn = right_connections.nth(i)
-                    if right_conn.is_visible():
-                        # Получаем координаты элемента соединения
-                        conn_box = right_conn.bounding_box()
-                        if conn_box:
-                            # Проверяем, находится ли элемент рядом с Input (в пределах 50px)
-                            conn_x = conn_box['x'] + conn_box['width'] / 2
-                            conn_y = conn_box['y'] + conn_box['height'] / 2
-                            
-                            # Проверяем расстояние от центра Input
-                            distance_x = abs(conn_x - input_center_x)
-                            distance_y = abs(conn_y - input_center_y)
-                            
-                            if distance_x < 100 and distance_y < 100:  # В пределах 100px от Input
-                                print(f"[INFO] Найден элемент соединения 'right' для Input на позиции ({conn_x}, {conn_y})")
-                                
-                                # Кликаем по элементу соединения и тянем до Output
-                                right_conn.click()
-                                time.sleep(0.2)
-                                
-                                # Зажимаем кнопку мыши для перетаскивания
-                                page.mouse.down(button="left")
-                                time.sleep(0.5)
-                                right_connection_found = True
-                                break
-                except Exception as e:
-                    print(f"[DEBUG] Ошибка при проверке элемента соединения {i}: {e}")
-                    continue
-            
-            if not right_connection_found:
-                print("[WARN] Элемент соединения 'right' для Input не найден, используем координаты")
-                # Fallback - используем координаты
-                connection_start_x = input_box['x'] + input_box['width']
-                connection_start_y = input_center_y
-                page.mouse.move(connection_start_x, connection_start_y)
-                time.sleep(0.2)
-                page.mouse.down(button="left")
-                time.sleep(0.5)
-                
-        except Exception as e:
-            print(f"[WARN] Ошибка при поиске элемента соединения: {e}")
-            # Fallback - используем координаты
-            connection_start_x = input_box['x'] + input_box['width']
-            connection_start_y = input_center_y
-            page.mouse.move(connection_start_x, connection_start_y)
-            time.sleep(0.2)
-            page.mouse.down(button="left")
-            time.sleep(0.5)
-        
-        # Находим компонент Output и перетаскиваем до него
-        output_component = page.get_by_text("Output").first
-        output_box = output_component.bounding_box()
-        
-        if output_box:
-            # Центр компонента Output
-            output_center_x = output_box['x'] + output_box['width'] / 2
-            output_center_y = output_box['y'] + output_box['height'] / 2
-            
-            # Перетаскиваем до центра Output
-            page.mouse.move(output_center_x, output_center_y)
-            time.sleep(0.5)
-        else:
-            # Fallback - используем координаты клика
-            page.mouse.move(output_x, output_y)
-            time.sleep(0.5)
-        
-        # Отпускаем кнопку мыши
-        page.mouse.up(button="left")
-        time.sleep(1)
-        
+    # Используем новый метод для создания соединения
+    success = connection_page.create_connection("Input", "Output", "right", "center")
+    if success:
         print("[SUCCESS] Стрелка соединения создана между Input и Output")
     else:
-        print("[ERROR] Не удалось найти компонент Input для соединения")
+        print("[ERROR] Не удалось создать соединение между Input и Output")
+        # Fallback - попробуем создать соединение по координатам
+        input_component = page.get_by_text("Input").first
+        output_component = page.get_by_text("Output").first
+        
+        if input_component.is_visible() and output_component.is_visible():
+            input_box = input_component.bounding_box()
+            output_box = output_component.bounding_box()
+            
+            if input_box and output_box:
+                from_x = input_box['x'] + input_box['width']
+                from_y = input_box['y'] + input_box['height'] / 2
+                to_x = output_box['x'] + output_box['width'] / 2
+                to_y = output_box['y'] + output_box['height'] / 2
+                
+                connection_page.create_connection_by_coordinates(from_x, from_y, to_x, to_y)
+                print("[SUCCESS] Соединение создано по координатам")
     
     # 5. Заполняем поле "Данные" для компонента Output
     print("[INFO] Шаг 5: Заполнение поля 'Данные' для компонента Output")
