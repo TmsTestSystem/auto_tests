@@ -11,6 +11,10 @@ from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
 from pages.diagram_page import DiagramPage
 from conftest import save_screenshot
+from locators import (
+    FilePanelLocators, DiagramLocators, CanvasLocators, 
+    ComponentLocators, ModalLocators, ToolbarLocators
+)
 
 
 def test_flow_func(login_page, shared_flow_project):
@@ -33,7 +37,7 @@ def test_flow_func(login_page, shared_flow_project):
     diagram_page = DiagramPage(page)
 
     try:
-        is_open = page.get_by_label("board_toolbar_panel").is_visible()
+        is_open = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL).is_visible()
     except Exception:
         is_open = False
     if not is_open:
@@ -43,7 +47,7 @@ def test_flow_func(login_page, shared_flow_project):
 
     print("[INFO] Шаг 1: Создание Python скрипта в проекте")
 
-    scripts_folder = page.locator('[aria-label="treeitem_label"]:has-text("scripts")')
+    scripts_folder = page.locator(FilePanelLocators.get_treeitem_by_name("scripts"))
     if scripts_folder.count() > 0:
         print("[INFO] Папка 'scripts' найдена")
         scripts_folder.first.click(button="right")
@@ -58,7 +62,7 @@ def test_flow_func(login_page, shared_flow_project):
         name_input.press("Enter")
         time.sleep(1)
 
-        scripts_folder = page.locator('[aria-label="treeitem_label"]:has-text("scripts")')
+        scripts_folder = page.locator(FilePanelLocators.get_treeitem_by_name("scripts"))
         scripts_folder.first.click(button="right")
 
     time.sleep(1)
@@ -82,14 +86,14 @@ def test_flow_func(login_page, shared_flow_project):
 
     print("[INFO] Шаг 2: Заполнение Python скрипта содержимым")
 
-    python_file = page.locator('[aria-label="treeitem_label"]:has-text("math_functions.py")')
+    python_file = page.locator(FilePanelLocators.get_treeitem_by_name("math_functions.py"))
     if python_file.count() > 0:
         print("[INFO] Python файл 'math_functions.py' уже существует")
         python_file.click()
         time.sleep(2)
     else:
         print("[WARN] Python файл 'math_functions.py' не найден, создаем новый")
-        scripts_folder = page.locator('[aria-label="treeitem_label"]:has-text("scripts")')
+        scripts_folder = page.locator(FilePanelLocators.get_treeitem_by_name("scripts"))
         scripts_folder.first.click(button="right")
         time.sleep(0.5)
         
@@ -111,7 +115,7 @@ def test_flow_func(login_page, shared_flow_project):
         time.sleep(1)
     except Exception as e:
         print(f"[WARN] Не удалось кликнуть по view-lines: {e}")
-        page.locator('textarea[aria-label="editor_view"]').click()
+        page.locator(FilePanelLocators.EDITOR_VIEW).click()
         time.sleep(1)
 
     editor = page.get_by_role("textbox", name="editor_view")
@@ -189,7 +193,7 @@ def test_flow_func(login_page, shared_flow_project):
 
     print("[INFO] Шаг 3: Открытие диаграммы test_func.df.json")
 
-    test_flow_component_folder = page.locator('[aria-label="treeitem_label"]:has-text("test_flow_component")')
+    test_flow_component_folder = page.locator(FilePanelLocators.get_treeitem_by_name("test_flow_component"))
     if test_flow_component_folder.count() > 0:
         print("[INFO] Папка 'test_flow_component' найдена")
         test_flow_component_folder.first.click()
@@ -198,7 +202,7 @@ def test_flow_func(login_page, shared_flow_project):
         print("[ERROR] Папка 'test_flow_component' не найдена!")
         raise Exception("Папка test_flow_component не существует в проекте")
 
-    test_func_file = page.locator('[aria-label="treeitem_label"]:has-text("test_func.df.json")')
+    test_func_file = page.locator(FilePanelLocators.get_treeitem_by_name("test_func.df.json"))
     if test_func_file.count() > 0:
         print("[INFO] Файл 'test_func.df.json' найден")
         test_func_file.first.dblclick()  # Двойной клик для открытия
@@ -244,7 +248,7 @@ def test_flow_func(login_page, shared_flow_project):
 
     print("[INFO] Выбор Python скрипта math_functions.py")
     try:
-        python_script = page.locator('[aria-label="treeitem_label"]:has-text("math_functions.py")')
+        python_script = page.locator(FilePanelLocators.get_treeitem_by_name("math_functions.py"))
         if python_script.count() > 0:
             python_script.first.click()
             time.sleep(0.5)

@@ -6,6 +6,10 @@ from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
 from pages.diagram_page import DiagramPage
 from conftest import save_screenshot, get_project_by_code, delete_project_by_id
+from locators import (
+    FilePanelLocators, DiagramLocators, CanvasLocators, 
+    ComponentLocators, ModalLocators, ToolbarLocators
+)
 
 
 def test_flow_split(login_page, shared_flow_project):
@@ -26,7 +30,7 @@ def test_flow_split(login_page, shared_flow_project):
     data_struct = DataStructPage(page)
     
     try:
-        is_open = page.get_by_label("board_toolbar_panel").is_visible()
+        is_open = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL).is_visible()
     except Exception:
         is_open = False
     if not is_open:
@@ -36,7 +40,7 @@ def test_flow_split(login_page, shared_flow_project):
     
     print("[INFO] Шаг 1: Создание структуры данных 'shema_for_split' в папке 'shema'")
     
-    shema_folder = page.locator('[aria-label="treeitem_label"]:has-text("shema")')
+    shema_folder = page.locator(FilePanelLocators.get_treeitem_by_name("shema"))
     assert shema_folder.count() > 0, "Папка 'shema' не найдена в проекте!"
     print("[INFO] Папка 'shema' найдена")
     shema_folder.first.click(button="right")
@@ -65,13 +69,13 @@ def test_flow_split(login_page, shared_flow_project):
     
     print("[INFO] Шаг 2: Создание схемы в структуре со всеми атрибутами")
     
-    shema_for_split = page.locator('[aria-label="treeitem_label"]:has-text("shema_for_split")')
+    shema_for_split = page.locator(FilePanelLocators.get_treeitem_by_name("shema_for_split"))
     assert shema_for_split.is_visible(), "Структура 'shema_for_split' не найдена!"
     shema_for_split.click()
     time.sleep(1)
     print("[INFO] Клик по структуре 'shema_for_split' выполнен")
     
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     if not details_panel.is_visible():
         switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
         if switcher.is_visible():
@@ -118,21 +122,21 @@ def test_flow_split(login_page, shared_flow_project):
     
     print("[INFO] Шаг 3: Открытие диаграммы 'test_split.df.json' в папке 'test_flow_component'")
     
-    test_flow_folder = page.locator('[aria-label="treeitem_label"]:has-text("test_flow_component")')
+    test_flow_folder = page.locator(FilePanelLocators.get_treeitem_by_name("test_flow_component"))
     assert test_flow_folder.count() > 0, "Папка 'test_flow_component' не найдена в проекте!"
     print("[INFO] Папка 'test_flow_component' найдена")
     test_flow_folder.click()
     time.sleep(1)
     print("[INFO] Клик по папке 'test_flow_component' выполнен")
     
-    test_split_file = page.locator('[aria-label="treeitem_label"]:has-text("test_split.df.json")')
+    test_split_file = page.locator(FilePanelLocators.get_treeitem_by_name("test_split.df.json"))
     assert test_split_file.count() > 0, "Файл 'test_split.df.json' не найден в проекте!"
     print("[INFO] Файл 'test_split.df.json' найден")
     test_split_file.dblclick()
     time.sleep(2)
     print("[INFO] Диаграмма 'test_split.df.json' открыта")
     
-    canvas = page.locator('canvas').first
+    canvas = page.locator(CanvasLocators.CANVAS).first
     canvas.wait_for(state="visible", timeout=10000)
     time.sleep(2)
     print("[INFO] Canvas диаграммы загружен")
@@ -148,7 +152,7 @@ def test_flow_split(login_page, shared_flow_project):
         print(f"[INFO] Файловая панель уже закрыта или не найдена: {e}")
     
     try:
-        details_panel = page.locator('[aria-label="diagram_details_panel"]')
+        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
             if switcher.is_visible():
@@ -178,7 +182,7 @@ def test_flow_split(login_page, shared_flow_project):
     print("[INFO] Шаг 6: Закрытие правого сайдбара")
     
     try:
-        details_panel = page.locator('[aria-label="diagram_details_panel"]')
+        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
             if switcher.is_visible():
@@ -198,7 +202,7 @@ def test_flow_split(login_page, shared_flow_project):
     print("[INFO] Шаг 8: Создание условия для компонента Split")
     
     try:
-        details_panel = page.locator('[aria-label="diagram_details_panel"]')
+        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
         details_panel.wait_for(state="visible", timeout=10000)
         print("[INFO] Правый сайдбар открыт для компонента Split")
         
@@ -208,7 +212,7 @@ def test_flow_split(login_page, shared_flow_project):
             time.sleep(2)  # Увеличиваем время ожидания
             print("[INFO] Кнопка 'Добавить' нажата")
         else:
-            add_button = page.locator('[aria-label="diagram_element_details"] div:has-text("Добавить")').first
+            add_button = page.locator(DiagramLocators.ADD_BUTTON).first
             if add_button.is_visible():
                 add_button.click()
                 time.sleep(2)
@@ -293,7 +297,7 @@ def test_flow_split(login_page, shared_flow_project):
     print("[INFO] Шаг 10: Закрытие правого сайдбара после создания условия")
     
     try:
-        details_panel = page.locator('[aria-label="diagram_details_panel"]')
+        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
             if switcher.is_visible():
@@ -322,7 +326,7 @@ def test_flow_split(login_page, shared_flow_project):
             
             print("[INFO] Пробуем альтернативный подход - заполнение поля напрямую")
             try:
-                condition_field = page.locator('textarea[name="config.from"][aria-label="config.from"]')
+                condition_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK)
                 if condition_field.is_visible():
                     condition_field.click()
                     time.sleep(0.5)
@@ -373,7 +377,7 @@ def test_flow_split(login_page, shared_flow_project):
             print("[ERROR] Не удалось запустить диаграмму")
         
         try:
-            toast = page.locator('.Toast__Toast___ZqZzU[aria-label="toast"]')
+            toast = page.locator(ModalLocators.TOAST_SPECIFIC)
             toast.wait_for(state="visible", timeout=15000)  # Ждём до 15 секунд появления тоста
             print("[INFO] Тост о завершении диаграммы появился")
             
@@ -423,7 +427,7 @@ def test_flow_split(login_page, shared_flow_project):
             analysis_field = analysis_fields.first
             print("[WARN] Используем первое доступное поле анализа")
         
-        analysis_field.click()
+        analysis_field.click(force=True)
         time.sleep(0.5)
         
         page.keyboard.press("Control+F")
@@ -453,7 +457,7 @@ def test_flow_split(login_page, shared_flow_project):
         print("[INFO] Значение active обновлено в структуре данных через поле анализа")
         
         try:
-            details_panel = page.locator('[aria-label="diagram_details_panel"]')
+            details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
             if details_panel.is_visible():
                 switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
                 if switcher.is_visible():
@@ -470,7 +474,6 @@ def test_flow_split(login_page, shared_flow_project):
     
     print("[INFO] Шаг 16: Настройка компонента Output2 и запуск диаграммы повторно")
     
-    # Сначала заполняем условие стрелки перед вторым запуском
     print("[INFO] Подшаг 16.1: Заполнение компонента Output2")
     
     try:
@@ -480,7 +483,7 @@ def test_flow_split(login_page, shared_flow_project):
             process_tab = page.get_by_text("Процесс", exact=True)
             if process_tab.is_visible():
                 try:
-                    active_tab = page.locator('.active, [aria-selected="true"]')
+                    active_tab = page.locator(DiagramLocators.ACTIVE_TAB)
                     if active_tab.count() > 0:
                         tab_text = active_tab.first.text_content()
                         if "Процесс" in tab_text:
@@ -532,7 +535,7 @@ def test_flow_split(login_page, shared_flow_project):
                     print(f"[WARN] Ошибка при заполнении поля 'data': {e}")
                 
                 try:
-                    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+                    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
                     if details_panel.is_visible():
                         switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
                         if switcher.is_visible():
@@ -557,12 +560,10 @@ def test_flow_split(login_page, shared_flow_project):
     print("[INFO] Подшаг 16.2: Заполнение условия стрелки перед вторым запуском")
     
     try:
-        # Ищем стрелку по координатам (fallback метод, который работал)
-        canvas = page.locator('canvas').first
+        canvas = page.locator(CanvasLocators.CANVAS).first
         if canvas.is_visible():
             box = canvas.bounding_box()
             if box:
-                # Кликаем справа от центра canvas (где должна быть стрелка от Split)
                 arrow_pos = {
                     "x": box['x'] + box['width'] * 0.6,
                     "y": box['y'] + box['height'] * 0.5
@@ -571,12 +572,10 @@ def test_flow_split(login_page, shared_flow_project):
                 time.sleep(1)
                 print(f"[INFO] Клик по стрелке для заполнения условия: ({arrow_pos['x']}, {arrow_pos['y']})")
                 
-                # Проверяем, что сайдбар стрелки открыт
-                details_panel = page.locator('[aria-label="diagram_details_panel"]')
+                details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
                 if details_panel.is_visible():
                     print("[INFO] Сайдбар стрелки открыт для заполнения условия")
                     
-                    # Переходим на подвкладку "Параметры" если она не активна
                     try:
                         parameters_tab = page.get_by_text("Параметры", exact=True)
                         if parameters_tab.is_visible():
@@ -588,7 +587,6 @@ def test_flow_split(login_page, shared_flow_project):
                     except Exception as e:
                         print(f"[WARN] Ошибка при переходе на подвкладку 'Параметры': {e}")
                     
-                    # Ищем поле условия
                     condition_selectors = [
                         'textarea[name="config.from"][aria-label="config.from"]',
                         'textarea[name="config.from"]',
@@ -610,20 +608,17 @@ def test_flow_split(login_page, shared_flow_project):
                     if condition_field:
                         print("[INFO] Заполняем поле условия")
                         
-                        # Кликаем на поле условия
                         condition_field.click()
                         time.sleep(1)
                         print("[INFO] Клик по полю условия выполнен")
                         
-                        # Ищем выпадающий список
                         try:
-                            dropdown = page.locator('div[role="tree"].TextField__Menu___pmHMx')
+                            dropdown = page.locator(DiagramLocators.DROPDOWN_TREE)
                             if dropdown.is_visible():
                                 options = dropdown.locator('[role="treeitem"]')
                                 if options.count() > 0:
                                     print(f"[INFO] Найдено {options.count()} опций")
                                     
-                                    # Выводим все доступные опции
                                     for i in range(min(options.count(), 5)):
                                         try:
                                             option = options.nth(i)
@@ -633,7 +628,6 @@ def test_flow_split(login_page, shared_flow_project):
                                         except Exception as e:
                                             print(f"[DEBUG] Ошибка при получении опции {i+1}: {e}")
                                     
-                                    # Ищем "1. condition_name"
                                     try:
                                         condition_option = page.get_by_text("1. condition_name", exact=True)
                                         if condition_option.is_visible():
@@ -641,7 +635,6 @@ def test_flow_split(login_page, shared_flow_project):
                                             time.sleep(0.5)
                                             print("[SUCCESS] Выбрано условие '1. condition_name'")
                                         else:
-                                            # Выбираем первую опцию
                                             first_option = options.first
                                             first_option.click()
                                             time.sleep(0.5)
@@ -655,7 +648,6 @@ def test_flow_split(login_page, shared_flow_project):
                         except Exception as e:
                             print(f"[WARN] Ошибка при работе с выпадающим списком: {e}")
                         
-                        # Закрываем сайдбар
                         print("[INFO] Закрываем сайдбар")
                         try:
                             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -666,7 +658,6 @@ def test_flow_split(login_page, shared_flow_project):
                         except Exception as e:
                             print(f"[WARN] Не удалось закрыть сайдбар: {e}")
                         
-                        # Сбрасываем диаграмму
                         print("[INFO] Сбрасываем диаграмму")
                         try:
                             reset_button = page.get_by_role("button", name="diagram_reset_button")
@@ -677,7 +668,6 @@ def test_flow_split(login_page, shared_flow_project):
                         except Exception as e:
                             print(f"[WARN] Ошибка при сбросе диаграммы: {e}")
                         
-                        # Запускаем диаграмму
                         print("[INFO] Запускаем диаграмму")
                         try:
                             play_button = page.get_by_role("button", name="diagram_play_button")
@@ -704,7 +694,7 @@ def test_flow_split(login_page, shared_flow_project):
             process_tab = page.get_by_text("Процесс", exact=True)
             if process_tab.is_visible():
                 try:
-                    active_tab = page.locator('.active, [aria-selected="true"]')
+                    active_tab = page.locator(DiagramLocators.ACTIVE_TAB)
                     if active_tab.count() > 0:
                         tab_text = active_tab.first.text_content()
                         if "Процесс" in tab_text:
@@ -756,7 +746,7 @@ def test_flow_split(login_page, shared_flow_project):
                     print(f"[WARN] Ошибка при заполнении поля 'Данные': {e}")
                     
                 try:
-                    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+                    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
                     if details_panel.is_visible():
                         switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
                         if switcher.is_visible():
@@ -789,7 +779,7 @@ def test_flow_split(login_page, shared_flow_project):
             print("[ERROR] Диаграмма не выполнилась успешно")
         
         try:
-            toast = page.locator('.Toast__Toast___ZqZzU[aria-label="toast"]')
+            toast = page.locator(ModalLocators.TOAST_SPECIFIC)
             try:
                 toast.wait_for(state="visible", timeout=5000)  # Уменьшили timeout
                 print("[INFO] Тост о завершении диаграммы появился")

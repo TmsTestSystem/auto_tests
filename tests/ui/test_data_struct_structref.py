@@ -3,6 +3,10 @@ import pytest
 from pages.file_panel_page import FilePanelPage
 from pages.project_page import ProjectPage
 from pages.data_struct_page import DataStructPage
+from locators import (
+    FilePanelLocators, DiagramLocators, CanvasLocators, 
+    ComponentLocators, ModalLocators, ToolbarLocators
+)
 
 def test_create_schema_with_struct_refs(login_page):
     page = login_page
@@ -12,23 +16,18 @@ def test_create_schema_with_struct_refs(login_page):
     project_page.goto_first_available_project()
     file_panel.open_file_panel()
     
-    # Используем готовый метод для создания файла структуры данных
     file_name = file_panel.create_data_structure_file()
     assert file_name is not None, "Не удалось создать файл структуры данных"
     
-    # Открываем созданный файл (кликаем по нему в дереве)
-    page.get_by_role("treeitem", name=f"/{file_name}").click()
+    page.locator(FilePanelLocators.get_treeitem_by_name(file_name)).click()
     time.sleep(1)
     
-    # Создаем первую схему
     schema1_name = f"schema1_{int(time.time())}"
     data_struct.create_schema(schema1_name)
     
-    # Создаем вторую схему
     schema2_name = f"schema2_{int(time.time())}"
     data_struct.create_schema(schema2_name)
     
-    # Кликаем по второй схеме
     data_struct.click_schema_in_tree(schema2_name)
     time.sleep(0.5)
     data_struct.click_create_attribute_button()

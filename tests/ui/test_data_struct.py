@@ -3,6 +3,10 @@ import pytest
 from pages.file_panel_page import FilePanelPage
 from pages.project_page import ProjectPage
 from pages.data_struct_page import DataStructPage
+from locators import (
+    FilePanelLocators, DiagramLocators, CanvasLocators, 
+    ComponentLocators, ModalLocators, ToolbarLocators
+)
 
 def test_create_data_struct_and_add_attribute(login_page):
     page = login_page
@@ -12,19 +16,15 @@ def test_create_data_struct_and_add_attribute(login_page):
     project_page.goto_first_available_project()
     file_panel.open_file_panel()
     
-    # Используем готовый метод для создания файла структуры данных
     file_name = file_panel.create_data_structure_file()
     assert file_name is not None, "Не удалось создать файл структуры данных"
     
-    # Открываем созданный файл (кликаем по нему в дереве)
-    page.get_by_role("treeitem", name=f"/{file_name}").click()
+    page.locator(FilePanelLocators.get_treeitem_by_name(file_name)).click()
     time.sleep(1)
     
-    # Создаем схему
     schema_name = f"schema_{int(time.time())}"
     data_struct.create_schema(schema_name)
     
-    # Ждем появления кнопки создания атрибутов
     page.wait_for_selector('button[aria-label="datastructureeditor_create_attribute_button"]', timeout=10000)
     time.sleep(0.5)
     file_panel.fill_schema_description("Описание схемы автотестом")

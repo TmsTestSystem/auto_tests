@@ -10,7 +10,10 @@ from pages.file_panel_page import FilePanelPage
 from pages.canvas_utils import CanvasUtils
 from pages.diagram_page import DiagramPage
 from conftest import save_screenshot
-# from fake_http_server import create_fake_server  # Больше не используется
+from locators import (
+    FilePanelLocators, DiagramLocators, CanvasLocators, 
+    ComponentLocators, ModalLocators, ToolbarLocators
+)
 
 
 @pytest.fixture(scope="function")
@@ -21,7 +24,6 @@ def api_server():
     import requests
     import urllib3
     
-    # Отключаем предупреждения о небезопасных запросах
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     
     try:
@@ -57,7 +59,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     diagram_page = DiagramPage(page)
 
     try:
-        is_open = page.get_by_label("board_toolbar_panel").is_visible()
+        is_open = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL).is_visible()
     except Exception:
         is_open = False
     if not is_open:
@@ -67,7 +69,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
 
     print("[INFO] Шаг 1: Открытие диаграммы")
 
-    test_flow_folder = page.locator('[aria-label="treeitem_label"]:has-text("test_flow_component")')
+    test_flow_folder = page.locator(FilePanelLocators.get_treeitem_by_name("test_flow_component"))
     assert test_flow_folder.count() > 0, "Папка 'test_flow_component' не найдена!"
     test_flow_folder.click()
     time.sleep(1)
@@ -80,7 +82,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     
     diagram_file = None
     for filename in diagram_files:
-        file_locator = page.locator(f'[aria-label="treeitem_label"]:has-text("{filename}")')
+        file_locator = page.locator(FilePanelLocators.get_treeitem_by_name(filename))
         if file_locator.count() > 0:
             diagram_file = file_locator
             print(f"[INFO] Найдена диаграмма: {filename}")
@@ -91,7 +93,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     time.sleep(2)
     print("[INFO] Диаграмма открыта")
 
-    canvas = page.locator('canvas').first
+    canvas = page.locator(CanvasLocators.CANVAS).first
     canvas.wait_for(state="visible", timeout=10000)
     time.sleep(2)
     print("[INFO] Canvas диаграммы загружен")
@@ -107,13 +109,13 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     assert http_get_found, "Компонент 'Http_GET' не найден на канвасе!"
     print("[INFO] Компонент 'Http_GET' найден")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт")
 
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
-        url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
+        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
     
     assert url_field.count() > 0, "Поле 'URL' не найдено!"
     get_url = f'"{api_server["users_endpoint"]}/2?_limit=1&_fields=id,name,email"'
@@ -124,7 +126,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
-            method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
+            method_field = page.locator(ComponentLocators.METHOD_FIELD_FALLBACK)
         
         if method_field.count() > 0:
             method_field.click()
@@ -156,12 +158,12 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     assert http_post_found, "Компонент 'Http_POST' не найден на канвасе!"
     print("[INFO] Компонент 'Http_POST' найден")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
 
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
-        url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
+        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
     
     post_url = f'"{api_server["users_endpoint"]}?_fields=id,name,email"'
     url_field.fill(post_url)
@@ -171,7 +173,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
-            method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
+            method_field = page.locator(ComponentLocators.METHOD_FIELD_FALLBACK)
         
         if method_field.count() > 0:
             method_field.click()
@@ -239,7 +241,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     try:
         body_field = page.get_by_role("textbox", name="body")
         if body_field.count() == 0:
-            body_field = page.locator('textarea[name="body"], input[name="body"]')
+            body_field = page.locator(ComponentLocators.HTTP_BODY_FIELD)
         
         if body_field.count() > 0:
             post_body = '{"name": "Test User", "username": "testuser", "email": "test@example.com"}'
@@ -265,12 +267,12 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     assert http_put_found, "Компонент 'Http_PUT' не найден на канвасе!"
     print("[INFO] Компонент 'Http_PUT' найден")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
 
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
-        url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
+        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
     
     put_url = f'"{api_server["users_endpoint"]}/2?_fields=id,name,email"'
     url_field.fill(put_url)
@@ -280,7 +282,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
-            method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
+            method_field = page.locator(ComponentLocators.METHOD_FIELD_FALLBACK)
         
         if method_field.count() > 0:
             method_field.click()
@@ -337,7 +339,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     try:
         body_field = page.get_by_role("textbox", name="body")
         if body_field.count() == 0:
-            body_field = page.locator('textarea[name="body"], input[name="body"]')
+            body_field = page.locator(ComponentLocators.HTTP_BODY_FIELD)
         
         if body_field.count() > 0:
             put_body = '{"name": "Updated User", "username": "updateduser", "email": "updated@example.com"}'
@@ -363,12 +365,12 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     assert http_patch_found, "Компонент 'Http_PATCH' не найден на канвасе!"
     print("[INFO] Компонент 'Http_PATCH' найден")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
 
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
-        url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
+        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
     
     patch_url = f'"{api_server["users_endpoint"]}/2?_fields=id,name,email"'
     url_field.fill(patch_url)
@@ -378,7 +380,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
-            method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
+            method_field = page.locator(ComponentLocators.METHOD_FIELD_FALLBACK)
         
         if method_field.count() > 0:
             method_field.click()
@@ -435,7 +437,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     try:
         body_field = page.get_by_role("textbox", name="body")
         if body_field.count() == 0:
-            body_field = page.locator('textarea[name="body"], input[name="body"]')
+            body_field = page.locator(ComponentLocators.HTTP_BODY_FIELD)
         
         if body_field.count() > 0:
             patch_body = '{"email": "patched@example.com"}'
@@ -461,12 +463,12 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     assert http_del_found, "Компонент 'Http_DEL' не найден на канвасе!"
     print("[INFO] Компонент 'Http_DEL' найден")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
 
     url_field = page.get_by_role("textbox", name="config.url")
     if url_field.count() == 0:
-        url_field = page.locator('textarea[name="config.url"], input[name="config.url"]')
+        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
     
     del_url = f'"{api_server["users_endpoint"]}/2?_fields=id"'
     url_field.fill(del_url)
@@ -476,7 +478,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     try:
         method_field = page.get_by_role("textbox", name="config.method")
         if method_field.count() == 0:
-            method_field = page.locator('textarea[name="config.method"], select[name="config.method"]')
+            method_field = page.locator(ComponentLocators.METHOD_FIELD_FALLBACK)
         
         if method_field.count() > 0:
             method_field.click()
@@ -509,7 +511,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     assert output_found, "Компонент 'Output' не найден на канвасе!"
     print("[INFO] Компонент 'Output' найден")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт для Output")
 
@@ -520,7 +522,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
             time.sleep(1)
             print("[INFO] Кнопка раскрытия поля 'Данные' нажата")
         else:
-            expression_button = page.locator('button[aria-label*="expression"], button[title*="expression"]')
+            expression_button = page.locator(ComponentLocators.HTTP_EXPRESSION_BUTTON)
             if expression_button.count() > 0:
                 expression_button.first.click()
                 time.sleep(1)
@@ -531,7 +533,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
         print(f"[WARN] Ошибка при нажатии кнопки раскрытия: {e}")
 
     try:
-        modal = page.locator('[role="dialog"], .modal, .expression-modal').first
+        modal = page.locator(ModalLocators.EXPRESSION_MODAL).first
         modal.wait_for(state="visible", timeout=10000)
         print("[INFO] Модальное окно для редактирования выражения открыто")
     except Exception as e:
@@ -540,7 +542,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     try:
         editor_field = page.get_by_role("textbox", name="editor_view")
         if editor_field.count() == 0:
-            editor_field = page.locator('.monaco-editor textarea, .view-lines, [data-testid="editor"]')
+            editor_field = page.locator(ModalLocators.MONACO_EDITOR)
         
         if editor_field.count() > 0:
             all_responses_json = '''{"Get": $node.Http_GET.response.body,"Post": $node.Http_POST.response.body,"Put": $node.Http_PUT.response.body,"Patch": $node.Http_PATCH.response.body,"Delete": $node.Http_DEL.response.body,"summary": {"total_requests": 5,"methods": ["GET", "POST", "PUT", "PATCH", "DELETE"],"api_url": "''' + api_server["base_url"] + '''"}}'''
@@ -592,12 +594,12 @@ def test_http_flow(login_page, shared_flow_project, api_server):
 
     print("[INFO] Шаг 9: Проверка результатов в Output компоненте")
 
-    canvas = page.locator('canvas').first
+    canvas = page.locator(CanvasLocators.CANVAS).first
     canvas.dblclick()
     time.sleep(1)
     print("[INFO] Двойной клик по канвасу выполнен")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Сайдбар открыт")
 
@@ -620,7 +622,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
             time.sleep(1)
             print("[INFO] Кнопка 'formitem_full_view_button' (nth(1)) нажата")
 
-            json_modal = page.locator('[role="dialog"]:has-text("Просмотр JSON")')
+            json_modal = page.locator(ModalLocators.JSON_MODAL)
             json_modal.wait_for(state="visible", timeout=10000)
             print("[INFO] Модальное окно 'Просмотр JSON' открыто")
             
@@ -628,7 +630,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
             
             time.sleep(3)
 
-            view_lines = page.locator('[role="dialog"] .view-lines')
+            view_lines = page.locator(ModalLocators.JSON_MODAL_VIEW_LINES)
             assert view_lines.count() > 0, "Monaco Editor не найден в модальном окне!"
             
             json_text = view_lines.inner_text()
@@ -677,7 +679,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
             except Exception as e:
                 raise Exception(f"Ошибка проверки JSON данных: {e}")
 
-            close_button = page.locator('[role="dialog"] button[aria-label="close"], [role="dialog"] .close-button')
+            close_button = page.locator(ModalLocators.MODAL_CLOSE_BUTTON)
             if close_button.count() > 0:
                 close_button.first.click()
                 time.sleep(1)

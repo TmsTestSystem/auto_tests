@@ -9,6 +9,10 @@ from pages.canvas_utils import CanvasUtils
 from pages.db_connector_page import DBConnectorPage
 from pages.diagram_page import DiagramPage
 from conftest import save_screenshot
+from locators import (
+    FilePanelLocators, DiagramLocators, CanvasLocators, 
+    ComponentLocators, ModalLocators, ToolbarLocators
+)
 
 
 def test_flow_query(login_page, shared_flow_project):
@@ -29,7 +33,7 @@ def test_flow_query(login_page, shared_flow_project):
     data_struct = DataStructPage(page)
 
     try:
-        is_open = page.get_by_label("board_toolbar_panel").is_visible()
+        is_open = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL).is_visible()
     except Exception:
         is_open = False
     if not is_open:
@@ -37,10 +41,9 @@ def test_flow_query(login_page, shared_flow_project):
         time.sleep(0.5)
     print("[INFO] Файловая панель открыта")
 
-    # 1. Создаем файл базы данных 'db_query' в папке 'db_connection'
     print("[INFO] Шаг 1: Создание файла базы данных 'db_query' в папке 'db_connection'")
 
-    db_connection_folder = page.locator('[aria-label="treeitem_label"]:has-text("db_connection")')
+    db_connection_folder = page.locator(FilePanelLocators.get_treeitem_by_name("db_connection"))
     assert db_connection_folder.count() > 0, "Папка 'db_connection' не найдена в файловой панели!"
     print("[INFO] Папка 'db_connection' найдена")
     
@@ -56,7 +59,7 @@ def test_flow_query(login_page, shared_flow_project):
 
     time.sleep(2)
     
-    db_menu = page.locator('[aria-label="database_connection_info"]')
+    db_menu = page.locator(FilePanelLocators.DATABASE_CONNECTION_INFO)
     assert db_menu.count() > 0, "Меню 'Подключение к БД' не найдено в подменю!"
     db_menu.click()
     time.sleep(1)
@@ -72,10 +75,9 @@ def test_flow_query(login_page, shared_flow_project):
     time.sleep(2)
     print(f"[INFO] Создан файл базы данных '{db_file_name}'")
 
-    # 2. Настраиваем подключение к базе данных
     print("[INFO] Шаг 2: Настройка подключения к базе данных")
 
-    db_file_item = page.locator(f'[aria-label="treeitem_label"]:has-text("{db_file_name}")')
+    db_file_item = page.locator(FilePanelLocators.get_treeitem_by_name(db_file_name))
     assert db_file_item.is_visible(), f"Файл базы данных '{db_file_name}' не найден!"
     db_file_item.dblclick()
     time.sleep(2)
@@ -92,21 +94,21 @@ def test_flow_query(login_page, shared_flow_project):
 
     print("[INFO] Шаг 3: Открытие диаграммы 'test_query.df.json' в папке 'test_flow_component'")
 
-    test_flow_folder = page.locator('[aria-label="treeitem_label"]:has-text("test_flow_component")')
+    test_flow_folder = page.locator(FilePanelLocators.get_treeitem_by_name("test_flow_component"))
     assert test_flow_folder.count() > 0, "Папка 'test_flow_component' не найдена в файловой панели!"
     print("[INFO] Папка 'test_flow_component' найдена")
     test_flow_folder.click()
     time.sleep(1)
     print("[INFO] Клик по папке 'test_flow_component' выполнен")
 
-    test_query_file = page.locator('[aria-label="treeitem_label"]:has-text("test_query.df.json")')
+    test_query_file = page.locator(FilePanelLocators.get_treeitem_by_name("test_query.df.json"))
     assert test_query_file.count() > 0, "Файл 'test_query.df.json' не найден в папке!"
     print("[INFO] Файл 'test_query.df.json' найден")
     test_query_file.dblclick()
     time.sleep(2)
     print("[INFO] Диаграмма 'test_query.df.json' открыта")
 
-    canvas = page.locator('canvas').first
+    canvas = page.locator(CanvasLocators.CANVAS).first
     canvas.wait_for(state="visible", timeout=10000)
     time.sleep(2)
     print("[INFO] Canvas диаграммы загружен")
@@ -122,7 +124,7 @@ def test_flow_query(login_page, shared_flow_project):
         print(f"[INFO] Файловая панель уже закрыта или не найдена: {e}")
 
     try:
-        details_panel = page.locator('[aria-label="diagram_details_panel"]')
+        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
             if switcher.is_visible():
@@ -139,7 +141,7 @@ def test_flow_query(login_page, shared_flow_project):
     assert query_found, "Компонент 'Query' не найден на канвасе!"
     print("[INFO] Компонент 'Query' найден и двойной клик выполнен")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт")
 
@@ -189,7 +191,7 @@ def test_flow_query(login_page, shared_flow_project):
     print(f"[INFO] SQL запрос введен: {sql_query}")
 
     try:
-        details_panel = page.locator('[aria-label="diagram_details_panel"]')
+        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
         if details_panel.is_visible():
             switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
             if switcher.is_visible():
@@ -205,13 +207,13 @@ def test_flow_query(login_page, shared_flow_project):
     assert output_found, "Компонент 'Output' не найден на канвасе!"
     print("[INFO] Компонент 'Output' найден и двойной клик выполнен")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт")
 
     data_field = page.get_by_role("textbox", name="data")
     if data_field.count() == 0:
-        data_field = page.locator('input[name="data"], textarea[name="data"]')
+        data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK)
     
     assert data_field.count() > 0, "Поле 'Данные' не найдено!"
     data_field.fill("$node.Query.data[0]")
@@ -237,12 +239,12 @@ def test_flow_query(login_page, shared_flow_project):
 
     print("[INFO] Шаг 9: Проверка JSON данных в модальном окне")
 
-    canvas = page.locator('canvas').first
+    canvas = page.locator(CanvasLocators.CANVAS).first
     canvas.dblclick()
     time.sleep(1)
     print("[INFO] Двойной клик по канвасу выполнен")
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Сайдбар открыт")
 
@@ -264,7 +266,7 @@ def test_flow_query(login_page, shared_flow_project):
     time.sleep(1)
     print("[INFO] Кнопка 'formitem_full_view_button' нажата")
 
-    json_modal = page.locator('[role="dialog"]:has-text("Просмотр JSON")')
+    json_modal = page.locator(ModalLocators.JSON_MODAL)
     json_modal.wait_for(state="visible", timeout=10000)
     print("[INFO] Модальное окно 'Просмотр JSON' открыто")
     
@@ -274,7 +276,7 @@ def test_flow_query(login_page, shared_flow_project):
 
     json_text = ""
     
-    view_lines = page.locator('[role="dialog"] .view-lines')
+    view_lines = page.locator(ModalLocators.JSON_MODAL_VIEW_LINES)
     assert view_lines.count() > 0, "Monaco Editor не найден в модальном окне!"
     
     json_text = view_lines.inner_text()
@@ -313,7 +315,7 @@ def test_flow_query(login_page, shared_flow_project):
     except Exception as e:
         raise Exception(f"Ошибка проверки JSON данных: {e}")
 
-    close_button = page.locator('[role="dialog"] button[aria-label="close"], [role="dialog"] .close-button')
+    close_button = page.locator(ModalLocators.MODAL_CLOSE_BUTTON)
     if close_button.count() > 0:
         close_button.first.click()
         time.sleep(1)

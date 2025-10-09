@@ -4,6 +4,10 @@ from pages.login_page import LoginPage
 from dotenv import load_dotenv
 import os
 from pathlib import Path
+from locators import (
+    FilePanelLocators, DiagramLocators, CanvasLocators, 
+    ComponentLocators, ModalLocators, ToolbarLocators
+)
 
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path, override=True)

@@ -6,6 +6,14 @@ from pages.diagram_page import DiagramPage
 from pages.canvas_utils import CanvasUtils
 from pages.connection_page import ConnectionPage
 from conftest import save_screenshot, get_project_by_code, delete_project_by_id
+from locators import (
+    FilePanelLocators,
+    DiagramLocators,
+    CanvasLocators,
+    ComponentLocators,
+    ModalLocators,
+    ToolbarLocators
+)
 
 
 def test_flow_cycle(login_page, shared_flow_project):
@@ -25,15 +33,12 @@ def test_flow_cycle(login_page, shared_flow_project):
 
     print("[INFO] Тест test_flow_cycle начат")
 
-    # Шаг 1: Создание Python скрипта для циклических операций
     print("[INFO] Шаг 1: Создание Python скрипта для циклических операций")
     
-    # Открываем файловую панель
     file_panel.open_file_panel()
     time.sleep(1)
     
-    # Проверяем существование папки scripts
-    scripts_folder = page.locator('[aria-label="treeitem_label"]:has-text("scripts")')
+    scripts_folder = page.locator(FilePanelLocators.get_treeitem_by_name("scripts"))
     if scripts_folder.count() > 0:
         print("[INFO] Папка 'scripts' найдена")
         scripts_folder.first.click(button="right")
@@ -47,12 +52,11 @@ def test_flow_cycle(login_page, shared_flow_project):
         name_input.fill("scripts")
         name_input.press("Enter")
         time.sleep(1)
-        scripts_folder = page.locator('[aria-label="treeitem_label"]:has-text("scripts")')
+        scripts_folder = page.locator(FilePanelLocators.get_treeitem_by_name("scripts"))
         scripts_folder.first.click(button="right")
 
     time.sleep(1)
 
-    # Создаем Python файл
     create_menu = page.get_by_text("Создать", exact=True)
     assert create_menu.is_visible(), "Меню 'Создать' не найдено в контекстном меню!"
     create_menu.click()
@@ -70,7 +74,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     time.sleep(2)
     print("[INFO] Создан Python файл 'cycle_functions.py'")
 
-    # Заполняем Python файл содержимым
     print("[INFO] Заполнение Python скрипта содержимым")
     
     try:
@@ -85,14 +88,12 @@ def test_flow_cycle(login_page, shared_flow_project):
     editor.wait_for(state="visible", timeout=10000)
     time.sleep(1)
 
-    # Загружаем Python код из файла
     import os
     script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "scripts", "cycle_functions.py")
     with open(script_path, 'r', encoding='utf-8') as f:
         python_code = f.read()
     print(f"[INFO] Python код загружен из файла: {script_path}")
 
-    # Вставляем код через буфер обмена
     try:
         print("[INFO] Вставляем код через буфер обмена...")
         
@@ -152,11 +153,9 @@ def test_flow_cycle(login_page, shared_flow_project):
     time.sleep(1)
     print("[SUCCESS] Python скрипт создан и сохранен успешно!")
 
-    # Шаг 2: Открытие диаграммы test_cycle.df.json
     print("[INFO] Шаг 2: Открытие диаграммы test_cycle.df.json")
 
-    # Ищем папку test_flow_component
-    test_flow_component_folder = page.locator('[aria-label="treeitem_label"]:has-text("test_flow_component")')
+    test_flow_component_folder = page.locator(FilePanelLocators.get_treeitem_by_name("test_flow_component"))
     if test_flow_component_folder.count() > 0:
         print("[INFO] Папка 'test_flow_component' найдена")
         test_flow_component_folder.first.click()
@@ -165,8 +164,7 @@ def test_flow_cycle(login_page, shared_flow_project):
         print("[ERROR] Папка 'test_flow_component' не найдена!")
         raise Exception("Папка test_flow_component не существует в проекте")
 
-    # Ищем файл test_cycle.df.json
-    test_cycle_file = page.locator('[aria-label="treeitem_label"]:has-text("test_cycle.df.json")')
+    test_cycle_file = page.locator(FilePanelLocators.get_treeitem_by_name("test_cycle.df.json"))
     if test_cycle_file.count() > 0:
         print("[INFO] Файл 'test_cycle.df.json' найден")
         test_cycle_file.first.dblclick()  # Двойной клик для открытия
@@ -178,17 +176,14 @@ def test_flow_cycle(login_page, shared_flow_project):
     print("[INFO] Ожидание загрузки диаграммы...")
     time.sleep(3)
 
-    # Закрываем панели
     diagram_page.close_panels()
     time.sleep(3)
     
     print("[SUCCESS] Диаграмма test_cycle.df.json открыта, панели закрыты!")
 
-    # Шаг 3: Настройка компонента Function на canvas
     print("[INFO] Шаг 3: Настройка компонента Function на canvas")
 
-    # Ищем компонент Function на канвасе
-    function_component = page.locator('text="Function"')
+    function_component = page.locator(DiagramLocators.FUNCTION_COMPONENT)
     if function_component.count() > 0:
         print("[INFO] Компонент Function найден на canvas")
         function_component.first.dblclick()  # Двойной клик
@@ -198,7 +193,6 @@ def test_flow_cycle(login_page, shared_flow_project):
         print("[ERROR] Компонент Function не найден на canvas!")
         raise Exception("Компонент Function не найден в диаграмме")
 
-    # Открываем модалку для выбора Python скрипта
     print("[INFO] Открытие модалки для выбора Python скрипта")
     try:
         select_file_button = page.get_by_role("button", name="textfield_select_file_button")
@@ -212,10 +206,9 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при открытии модалки: {e}")
 
-    # Выбираем Python скрипт cycle_functions.py
     print("[INFO] Выбор Python скрипта cycle_functions.py")
     try:
-        python_script = page.locator('[aria-label="treeitem_label"]:has-text("cycle_functions.py")')
+        python_script = page.locator(FilePanelLocators.get_treeitem_by_name("cycle_functions.py"))
         if python_script.count() > 0:
             python_script.first.click()
             time.sleep(0.5)
@@ -226,7 +219,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при выборе скрипта: {e}")
 
-    # Подтверждаем выбор файла
     print("[INFO] Подтверждение выбора файла")
     try:
         select_button = page.get_by_role("button", name="filemanager_select_button")
@@ -240,7 +232,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при нажатии кнопки 'Выбрать': {e}")
 
-    # Выбираем функцию (например, count_to_n)
     print("[INFO] Выбор функции count_to_n")
     try:
         function_field = page.get_by_role("textbox", name="config.function")
@@ -265,12 +256,10 @@ def test_flow_cycle(login_page, shared_flow_project):
 
     print("[SUCCESS] Компонент Function настроен успешно!")
 
-    # Шаг 4: Заполнение входных данных для функции
     print("[INFO] Шаг 4: Заполнение входных данных для функции count_to_n")
 
     time.sleep(2)
 
-    # Заполняем параметр n для функции count_to_n
     print("[INFO] Заполнение параметра n")
     try:
         arg_n_field = page.get_by_role("textbox", name="inputs_config.n.value")
@@ -285,29 +274,22 @@ def test_flow_cycle(login_page, shared_flow_project):
 
     print("[SUCCESS] Все входные данные заполнены!")
 
-    # Шаг 5: Настройка компонента Loop на canvas
     print("[INFO] Шаг 5: Настройка компонента Loop на canvas")
 
-    # Ищем компонент Loop на канвасе (осторожно, не кликаем по Function внутри)
     print("[INFO] Поиск компонента Loop на канвасе")
     
-    # Сначала попробуем найти Loop по тексту, но не кликаем сразу
-    loop_components = page.locator('text="Loop"')
+    loop_components = page.locator(CanvasLocators.get_component_by_text("Loop"))
     loop_found = False
     
     if loop_components.count() > 0:
         print(f"[INFO] Найдено {loop_components.count()} компонентов с текстом 'Loop'")
         
-        # Ищем компонент Loop, который НЕ содержит Function внутри
         for i in range(loop_components.count()):
             try:
                 loop_component = loop_components.nth(i)
                 if loop_component.is_visible():
-                    # Проверяем, что это именно компонент Loop, а не текст внутри Function
-                    # Попробуем кликнуть по краю компонента, а не по центру
                     loop_box = loop_component.bounding_box()
                     if loop_box:
-                        # Кликаем по левому краю компонента Loop
                         edge_x = loop_box['x'] + 10  # 10px от левого края
                         edge_y = loop_box['y'] + loop_box['height'] / 2  # по центру по вертикали
                         
@@ -315,10 +297,8 @@ def test_flow_cycle(login_page, shared_flow_project):
                         page.mouse.click(edge_x, edge_y)
                         time.sleep(1)
                         
-                        # Проверяем, открылся ли правый сайдбар для Loop (а не для Function)
-                        details_panel = page.locator('[aria-label="diagram_details_panel"]')
+                        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
                         if details_panel.is_visible():
-                            # Проверяем, что в сайдбаре есть заголовок Loop (используем более точный селектор)
                             loop_title = page.get_by_role("heading", name="diagram_element_name")
                             if loop_title.is_visible():
                                 title_text = loop_title.text_content()
@@ -331,7 +311,6 @@ def test_flow_cycle(login_page, shared_flow_project):
                             else:
                                 print("[WARN] Заголовок компонента не найден в сайдбаре")
                             
-                            # Закрываем сайдбар и пробуем дальше
                             details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
                             if details_panel_switcher.is_visible():
                                 details_panel_switcher.click()
@@ -344,12 +323,10 @@ def test_flow_cycle(login_page, shared_flow_project):
     if not loop_found:
         print("[WARN] Не удалось найти компонент Loop через текст, пробуем альтернативные методы")
         
-        # Альтернативный метод - поиск по координатам канваса
-        canvas = page.locator('canvas').first
+        canvas = page.locator(CanvasLocators.CANVAS)
         if canvas.is_visible():
             canvas_box = canvas.bounding_box()
             if canvas_box:
-                # Пробуем кликнуть в разных местах канваса, где может быть Loop
                 positions = [
                     {"x": canvas_box['x'] + canvas_box['width'] * 0.3, "y": canvas_box['y'] + canvas_box['height'] * 0.3},  # Левый верх
                     {"x": canvas_box['x'] + canvas_box['width'] * 0.7, "y": canvas_box['y'] + canvas_box['height'] * 0.3},  # Правый верх
@@ -362,8 +339,7 @@ def test_flow_cycle(login_page, shared_flow_project):
                         canvas.click(position=pos)
                         time.sleep(1)
                         
-                        # Проверяем, открылся ли сайдбар для Loop
-                        details_panel = page.locator('[aria-label="diagram_details_panel"]')
+                        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
                         if details_panel.is_visible():
                             loop_title = page.get_by_role("heading", name="diagram_element_name")
                             if loop_title.is_visible():
@@ -375,7 +351,6 @@ def test_flow_cycle(login_page, shared_flow_project):
                                 else:
                                     print(f"[WARN] Сайдбар открылся для компонента: {title_text}")
                             
-                            # Закрываем сайдбар и пробуем дальше
                             details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
                             if details_panel_switcher.is_visible():
                                 details_panel_switcher.click()
@@ -389,11 +364,9 @@ def test_flow_cycle(login_page, shared_flow_project):
         print("[ERROR] Компонент Loop не найден на canvas!")
         raise Exception("Компонент Loop не найден в диаграмме")
 
-    # Настройка компонента Loop
     print("[INFO] Настройка компонента Loop")
     
-    # Проверяем, что правый сайдбар открыт для Loop
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     if not details_panel.is_visible():
         print("[WARN] Правый сайдбар не открыт, пытаемся открыть")
         details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -403,11 +376,9 @@ def test_flow_cycle(login_page, shared_flow_project):
 
     print("[SUCCESS] Компонент Loop найден и готов к настройке!")
 
-    # Шаг 6: Настройка параметров цикла Loop
     print("[INFO] Шаг 6: Настройка параметров цикла Loop")
     
-    # Проверяем, что правый сайдбар открыт для Loop
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     if not details_panel.is_visible():
         print("[WARN] Правый сайдбар не открыт, пытаемся открыть")
         details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -415,18 +386,14 @@ def test_flow_cycle(login_page, shared_flow_project):
             details_panel_switcher.click()
             time.sleep(1)
 
-    # Настройка начала цикла (loop_start)
     print("[INFO] Настройка начала цикла (loop_start)")
     try:
-        # Кликаем по полю loop_start
         loop_start_field = page.locator(".TextField__TextField___-71sY.TextField__TextField_invalid___KA8-t > .TextField__InputWrapper___anui0")
         if loop_start_field.is_visible():
             loop_start_field.click()
             time.sleep(0.5)
             print("[INFO] Поле loop_start открыто")
             
-            # Ищем компонент Function внутри цикла
-            # Сначала пробуем найти по тексту "Function"
             function_option = page.get_by_role("treeitem").locator("div").filter(has_text="Function").first
             if function_option.is_visible():
                 function_option.click()
@@ -434,7 +401,6 @@ def test_flow_cycle(login_page, shared_flow_project):
                 print("[INFO] Компонент Function выбран для loop_start")
             else:
                 print("[WARN] Компонент Function не найден в списке, пробуем альтернативный метод")
-                # Пробуем найти по TreeItem__LabelPrimary
                 function_label = page.locator('.TreeItem__LabelPrimary___vzajD[aria-label="treeitem_label"]:has-text("Function")').first
                 if function_label.is_visible():
                     function_label.click()
@@ -447,7 +413,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при настройке loop_start: {e}")
 
-    # Добавляем элемент в список
     print("[INFO] Добавление элемента в список")
     try:
         add_button = page.get_by_role("button", name="extendable_list_add_button")
@@ -460,24 +425,20 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при добавлении элемента: {e}")
 
-    # Настройка конца цикла (loop_end)
     print("[INFO] Настройка конца цикла (loop_end)")
     try:
-        # Кликаем по полю loop_end
         loop_end_field = page.get_by_role("textbox", name="config.loop_end.0")
         if loop_end_field.is_visible():
             loop_end_field.click()
             time.sleep(0.5)
             print("[INFO] Поле loop_end открыто")
             
-            # Ищем компонент Function внутри цикла для loop_end
             function_option = page.get_by_role("treeitem").locator("div").filter(has_text="Function").first
             if function_option.is_visible():
                 function_option.click()
                 time.sleep(0.5)
                 print("[INFO] Компонент Function выбран для loop_end")
             else:
-                # Пробуем найти по TreeItem__LabelPrimary
                 function_label = page.locator('.TreeItem__LabelPrimary___vzajD[aria-label="treeitem_label"]:has-text("Function")').first
                 if function_label.is_visible():
                     function_label.click()
@@ -490,17 +451,14 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при настройке loop_end: {e}")
 
-    # Настройка итератора (inputs_config)
     print("[INFO] Настройка итератора цикла")
     try:
-        # Ищем поле для итератора
         iterator_field = page.get_by_role("textbox", name="inputs_config.")
         if iterator_field.is_visible():
             iterator_field.click()
             time.sleep(0.5)
             print("[INFO] Поле итератора открыто")
             
-            # Заполняем массив данных для итерации
             iterator_field.fill("[1,2,3,4]")
             time.sleep(0.5)
             print("[INFO] Итератор заполнен данными [1,2,3,4]")
@@ -511,10 +469,8 @@ def test_flow_cycle(login_page, shared_flow_project):
 
     print("[SUCCESS] Параметры цикла Loop настроены успешно!")
 
-    # Шаг 7: Закрытие сайдбара и настройка компонента Output
     print("[INFO] Шаг 7: Закрытие сайдбара и настройка компонента Output")
     
-    # Закрываем правый сайдбар
     print("[INFO] Закрытие правого сайдбара")
     try:
         details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -527,9 +483,8 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при закрытии правого сайдбара: {e}")
 
-    # Ищем компонент Output на канвасе
     print("[INFO] Поиск компонента Output на канвасе")
-    output_component = page.locator('text="Output"')
+    output_component = page.locator(ComponentLocators.OUTPUT)
     if output_component.count() > 0:
         print("[INFO] Компонент Output найден на canvas")
         output_component.first.click()
@@ -539,7 +494,6 @@ def test_flow_cycle(login_page, shared_flow_project):
         print("[ERROR] Компонент Output не найден на canvas!")
         raise Exception("Компонент Output не найден в диаграмме")
 
-    # Открываем правый сайдбар для настройки Output
     print("[INFO] Открытие правого сайдбара для настройки Output")
     try:
         details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -552,7 +506,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при открытии правого сайдбара: {e}")
 
-    # Настройка поля 'Данные' в компоненте Output
     print("[INFO] Настройка поля 'Данные' в компоненте Output")
     try:
         data_field = page.get_by_role("textbox", name="inputs_config.data.value")
@@ -568,10 +521,8 @@ def test_flow_cycle(login_page, shared_flow_project):
 
     print("[SUCCESS] Компонент Output настроен успешно!")
 
-    # Шаг 8: Запуск диаграммы
     print("[INFO] Шаг 8: Запуск диаграммы")
 
-    # Закрываем правый сайдбар перед запуском
     print("[INFO] Закрытие правого сайдбара перед запуском")
     try:
         details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -582,17 +533,15 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при закрытии правого сайдбара: {e}")
 
-    # Запускаем диаграмму и ожидаем завершения
     print("[INFO] Запуск диаграммы и ожидание завершения")
     success = diagram_page.run_diagram_and_wait()
     
     assert success, "Диаграмма не выполнилась успешно!"
     print("[SUCCESS] Диаграмма выполнена успешно!")
 
-    # После выполнения диаграммы ищем компонент Output и открываем его сайдбар
     print("[INFO] Поиск компонента Output после выполнения диаграммы")
     try:
-        output_component = page.locator('text="Output"')
+        output_component = page.locator(ComponentLocators.OUTPUT)
         if output_component.count() > 0:
             output_component.first.click()
             time.sleep(1)
@@ -603,7 +552,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при поиске компонента Output: {e}")
 
-    # Открываем правый сайдбар для компонента Output
     print("[INFO] Открытие правого сайдбара для компонента Output")
     try:
         details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
@@ -616,7 +564,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при открытии правого сайдбара: {e}")
 
-    # Переключаемся на вкладку "Процесс"
     print("[INFO] Переход на вкладку 'Процесс'")
     try:
         process_tab = page.get_by_text("Процесс", exact=True)
@@ -629,7 +576,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при переходе на вкладку 'Процесс': {e}")
 
-    # Переключаемся на подвкладку "Анализ"
     print("[INFO] Переход на подвкладку 'Анализ'")
     try:
         analysis_tab = page.get_by_text("Анализ")
@@ -642,7 +588,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при переходе на подвкладку 'Анализ': {e}")
 
-    # Нажимаем кнопку для просмотра результата
     print("[INFO] Поиск кнопки для просмотра результата")
     try:
         full_view_button = page.get_by_role("button", name="formitem_full_view_button").nth(1)

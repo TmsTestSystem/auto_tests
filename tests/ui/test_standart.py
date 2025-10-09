@@ -6,6 +6,10 @@ from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
 from pages.diagram_page import DiagramPage
 from conftest import save_screenshot, get_project_by_code, delete_project_by_id
+from locators import (
+    FilePanelLocators, DiagramLocators, CanvasLocators, 
+    ComponentLocators, ModalLocators, ToolbarLocators
+)
 
 
 def test_flow_standart(login_page, shared_flow_project):
@@ -21,15 +25,15 @@ def test_flow_standart(login_page, shared_flow_project):
     assert project_page.goto_project(project_code), f"Проект с кодом {project_code} не найден!"
     time.sleep(2)
 
-    page.get_by_role("button", name="board_toolbar_filemanager_button").click()
+    page.locator(ToolbarLocators.FILE_MANAGER_BUTTON).click()
     time.sleep(1)
 
-    folder = page.locator('[aria-label="/test_flow_component"]')
+    folder = page.locator(FilePanelLocators.get_treeitem_by_path("test_flow_component"))
     folder.wait_for(state="visible", timeout=15000)
     folder.click()
     time.sleep(1)
 
-    board_panel = page.get_by_label("board_toolbar_panel")
+    board_panel = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL)
     file_item = board_panel.get_by_text("test_standart.df.json")
     file_item.wait_for(state="visible", timeout=10000)
     file_item.dblclick()
@@ -41,7 +45,7 @@ def test_flow_standart(login_page, shared_flow_project):
     try:
         is_open = False
         try:
-            is_open = page.get_by_label("board_toolbar_panel").is_visible()
+            is_open = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL).is_visible()
         except Exception:
             is_open = False
         if not is_open:
@@ -50,7 +54,7 @@ def test_flow_standart(login_page, shared_flow_project):
     except Exception:
         pass
     
-    shema_folder = page.locator('[aria-label="treeitem_label"]:has-text("shema")')
+    shema_folder = page.locator(FilePanelLocators.get_treeitem_by_name("shema"))
     assert shema_folder.count() > 0, "Папка 'shema' не найдена в проекте!"
     print("[INFO] Папка 'shema' найдена")
     shema_folder.first.click(button="right")
@@ -82,14 +86,14 @@ def test_flow_standart(login_page, shared_flow_project):
 
     try:
         file_panel.open_file_panel()
-        possible = page.locator('[aria-label="treeitem_label"]').filter(has_text=data_struct_name)
+        possible = page.locator(FilePanelLocators.TREEITEM_LABEL).filter(has_text=data_struct_name)
         if possible.count():
             possible.first.hover()
     except Exception:
         pass
     time.sleep(1)
     
-    data_struct_item = page.locator('[aria-label="treeitem_label"]').filter(has_text=data_struct_name)
+    data_struct_item = page.locator(FilePanelLocators.TREEITEM_LABEL).filter(has_text=data_struct_name)
     if data_struct_item.count() > 0:
         data_struct_item.first.click()
         time.sleep(1)
@@ -98,7 +102,7 @@ def test_flow_standart(login_page, shared_flow_project):
     schema_name = f"test_schema_{int(time.time())}"
     data_struct.create_schema(schema_name)
 
-    details_panel = page.locator('[aria-label="diagram_details_panel"]')
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     if not details_panel.is_visible():
         switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
         if switcher.is_visible():
@@ -148,14 +152,14 @@ def test_flow_standart(login_page, shared_flow_project):
     print(f"[SUCCESS] Создана схема '{schema_name}' с {len(attributes)} атрибутами")
     
     try:
-        test_standart_tab = page.locator('[aria-label*="test_standart"], [data-tooltip*="test_standart"]').first
+        test_standart_tab = page.locator(ToolbarLocators.TABS).filter(has_text="test_standart").first
         if test_standart_tab.is_visible():
             test_standart_tab.click()
             time.sleep(1)
             print("[INFO] Возврат на вкладку 'test_standart' выполнен")
         else:
             try:
-                board_panel = page.get_by_label("board_toolbar_panel")
+                board_panel = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL)
                 standart_file = board_panel.get_by_text("test_standart.df.json").first
                 standart_file.click()
                 time.sleep(1)
