@@ -191,48 +191,56 @@ def test_http_flow(login_page, shared_flow_project, api_server):
 
     try:
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.0.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.0.name").fill("\"Content-Type\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.0.name").fill("\"Content-Type\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.0.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.0.value").fill("\"application/json\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.0.value").fill("\"application/json\"")
+        time.sleep(1)
         
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.1.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.1.name").fill("\"Accept\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.1.name").fill("\"Accept\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.1.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.1.value").fill("\"application/json\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.1.value").fill("\"application/json\"")
+        time.sleep(1)
         
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.2.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.2.name").fill("\"Accept-Encoding\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.2.name").fill("\"Accept-Encoding\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.2.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.2.value").fill("\"gzip\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.2.value").fill("\"gzip\"")
+        time.sleep(1)
         
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.3.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.3.name").fill("\"X-Requested-With\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.3.name").fill("\"X-Requested-With\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.3.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.3.value").fill("\"XMLHttpRequest\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.3.value").fill("\"XMLHttpRequest\"")
+        time.sleep(1)
         
         print("[INFO] Http_POST заголовки настроены: Content-Type, Accept, Accept-Encoding, X-Requested-With")
     except Exception as e:
@@ -300,37 +308,43 @@ def test_http_flow(login_page, shared_flow_project, api_server):
 
     try:
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.0.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.0.name").fill("\"Content-Type\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.0.name").fill("\"Content-Type\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.0.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.0.value").fill("\"application/json\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.0.value").fill("\"application/json\"")
+        time.sleep(1)
         
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.1.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.1.name").fill("\"Accept\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.1.name").fill("\"Accept\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.1.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.1.value").fill("\"application/json\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.1.value").fill("\"application/json\"")
+        time.sleep(1)
         
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.2.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.2.name").fill("\"X-Requested-With\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.2.name").fill("\"X-Requested-With\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.2.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.2.value").fill("\"XMLHttpRequest\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.2.value").fill("\"XMLHttpRequest\"")
+        time.sleep(1)
         
         print("[INFO] Http_PUT заголовки настроены: Content-Type, Accept, X-Requested-With")
     except Exception as e:
@@ -398,37 +412,43 @@ def test_http_flow(login_page, shared_flow_project, api_server):
 
     try:
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.0.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.0.name").fill("\"Content-Type\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.0.name").fill("\"Content-Type\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.0.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.0.value").fill("\"application/json\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.0.value").fill("\"application/json\"")
+        time.sleep(1)
         
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.1.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.1.name").fill("\"Accept\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.1.name").fill("\"Accept\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.1.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.1.value").fill("\"application/json\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.1.value").fill("\"application/json\"")
+        time.sleep(1)
         
         page.get_by_role("button", name="extendable_list_add_button").click()
-        time.sleep(0.5)
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.2.name").click()
-        page.get_by_role("textbox", name="inputs_config.headers.value.2.name").fill("\"X-Requested-With\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.2.name").fill("\"X-Requested-With\"")
+        time.sleep(1)
         
         page.get_by_role("textbox", name="inputs_config.headers.value.2.value").dblclick()
-        page.get_by_role("textbox", name="inputs_config.headers.value.2.value").fill("\"XMLHttpRequest\"")
         time.sleep(0.5)
+        page.get_by_role("textbox", name="inputs_config.headers.value.2.value").fill("\"XMLHttpRequest\"")
+        time.sleep(1)
         
         print("[INFO] Http_PATCH заголовки настроены: Content-Type, Accept, X-Requested-With")
     except Exception as e:
@@ -534,10 +554,10 @@ def test_http_flow(login_page, shared_flow_project, api_server):
 
     try:
         modal = page.locator(ModalLocators.EXPRESSION_MODAL).first
-        modal.wait_for(state="visible", timeout=10000)
+        modal.wait_for(state="visible", timeout=5000)
         print("[INFO] Модальное окно для редактирования выражения открыто")
     except Exception as e:
-        print(f"[WARN] Модальное окно не открылось: {e}")
+        print("[WARN] Modal window did not open, skipping")
 
     try:
         editor_field = page.get_by_role("textbox", name="editor_view")
@@ -595,7 +615,7 @@ def test_http_flow(login_page, shared_flow_project, api_server):
     print("[INFO] Шаг 9: Проверка результатов в Output компоненте")
 
     canvas = page.locator(CanvasLocators.CANVAS).first
-    canvas.dblclick()
+    canvas.dblclick(force=True)
     time.sleep(1)
     print("[INFO] Двойной клик по канвасу выполнен")
 

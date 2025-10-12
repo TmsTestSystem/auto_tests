@@ -240,7 +240,7 @@ def test_flow_query(login_page, shared_flow_project):
     print("[INFO] Шаг 9: Проверка JSON данных в модальном окне")
 
     canvas = page.locator(CanvasLocators.CANVAS).first
-    canvas.dblclick()
+    canvas.dblclick(force=True)
     time.sleep(1)
     print("[INFO] Двойной клик по канвасу выполнен")
 

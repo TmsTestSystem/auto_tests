@@ -124,7 +124,15 @@ def flow_project(login_page):
 
     if existing:
         # Если проект уже есть, используем его
-        yield page, existing['code']
+        try:
+            yield page, existing['code']
+        finally:
+            # Очистка после теста в любом случае
+            try:
+                delete_project_by_id(existing['id'])
+                print(f"[SUCCESS] Проект {existing['code']} удален")
+            except Exception as e:
+                print(f"[WARNING] Ошибка при удалении проекта {existing['code']}: {e}")
     else:
         # Создаём новый проект
         git = os.environ.get("REPO_URL_FLOW")
@@ -132,7 +140,19 @@ def flow_project(login_page):
         project_page.open_create_project_modal()
         project_page.create_project(project_title, project_code, git, default_branch)
         project_page.wait_modal_close()
-        yield page, project_code
+        try:
+            yield page, project_code
+        finally:
+            # Очистка после теста в любом случае
+            try:
+                project_info = get_project_by_code(project_code)
+                if project_info and 'id' in project_info:
+                    delete_project_by_id(project_info['id'])
+                    print(f"[SUCCESS] Проект {project_code} удален")
+                else:
+                    print(f"[WARNING] Не удалось получить информацию о проекте {project_code}")
+            except Exception as e:
+                print(f"[WARNING] Ошибка при удалении проекта {project_code}: {e}")
 
 
 # Файл для хранения project_code между тестами

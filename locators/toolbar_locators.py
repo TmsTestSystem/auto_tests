@@ -22,6 +22,8 @@ class ToolbarLocators:
     
     # Кнопки действий
     RUN_DIAGRAM_BUTTON = 'button[aria-label*="run"], button[title*="запуск"], button[title*="выполнить"]'
+    DIAGRAM_PLAY_BUTTON = 'button[aria-label="diagram_play_button"]'
+    TOOLBAR_RUN_BUTTON = 'button[aria-label="toolbar_run_button"]'
     
     # Панели интерфейса
     LEFT_PANEL = '.left-panel, .sidebar-left, [data-panel="left"]'

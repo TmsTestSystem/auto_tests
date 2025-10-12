@@ -10,6 +10,13 @@ class ModalLocators:
     MODAL_CONTAINER = '[data-testid="Modal__Container"]'
     JSON_VIEW_MODAL = 'text="Просмотр JSON"'
     
+    # Структура данных
+    SCHEMA_TYPE_FIELD = 'textbox[name="schema.type"]'
+    DATASTRUCTURE_SELECT_BUTTON = 'button[aria-label="datastructureview_select_button"]'
+    DATASTRUCTURE_SETTINGS_SUBMIT_BUTTON = 'button[aria-label="datastructureeditor_settings_submit_button"]'
+    DATASTRUCTURE_POPUP_SELECT_BUTTON = 'button[aria-label="datastructureeditor_popup_select_button"]'
+    POPUP_TYPE_FIELD = 'textbox[name="popup.type"]'
+    
     # Элементы в модальных окнах
     JSON_CONTENT = 'pre, code, .json-content'
     RESPONSE_SECTION = 'text="Ответ"'

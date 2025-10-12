@@ -30,6 +30,17 @@ class ComponentLocators:
     SELECT_FILE_BUTTON = 'button[aria-label="textfield_select_file_button"]'
     ADD_BUTTON = 'button[aria-label="extendable_list_add_button"]'
     
+    # Переменные в Input компоненте
+    VARIABLES_CREATE_BUTTON = 'button[aria-label="variables_create_button"]'
+    VARIABLES_ITEM_SETTINGS_BUTTON = 'button[aria-label="variables_item_settings_button"]'
+    
+    # Assignment компонент
+    ASSIGNMENT_TARGET_FIELD = 'textbox[name="config.assignments.{i}.target"]'
+    ASSIGNMENT_VALUE_FIELD = 'textbox[name="config.assignments.{i}.value"]'
+    
+    # Output компонент
+    OUTPUT_DATA_FIELD = 'textbox[name="config.data"]'
+    
     # Панель деталей
     DETAILS_PANEL = '[aria-label="diagram_details_panel"]'
     DETAILS_PANEL_SWITCHER = 'button[aria-label="diagram_details_panel_switcher"]'
