@@ -1,0 +1,82 @@
+{
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "7ab83d33-de37-4b10-83b8-badab2fb8d1a",
+      "loc": "1050 450",
+      "parent_component_key": null,
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "84d4671f-5846-4d35-92d0-689c7144fbd0",
+      "loc": "600 450",
+      "parent_component_key": null,
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "exchange": null,
+        "response_timeout": null,
+        "routing_key": null,
+        "wait_response": null
+      },
+      "description": null,
+      "inputs_config": {
+        "payload": {
+          "value": null
+        }
+      },
+      "key": "d181c50c-245a-4f3f-9e96-49053b453975",
+      "loc": "825 450",
+      "parent_component_key": null,
+      "title": "RmqConnector",
+      "type": "Elixir.Df.Diagram.Components.Rmq.Publish"
+    }
+  ],
+  "data": {},
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "84d4671f-5846-4d35-92d0-689c7144fbd0",
+      "key": "7bcff2cb-2fdf-43d3-b2a6-98da4c238b2a",
+      "title": "",
+      "to": "d181c50c-245a-4f3f-9e96-49053b453975"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "d181c50c-245a-4f3f-9e96-49053b453975",
+      "key": "c47cdcd0-cfd7-40e0-96dc-67cae3a89267",
+      "title": "",
+      "to": "7ab83d33-de37-4b10-83b8-badab2fb8d1a"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

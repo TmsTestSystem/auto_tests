@@ -1,0 +1,99 @@
+{
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "4b0cf30b-4989-4bda-8b45-3db497d9b33f",
+      "loc": "525 375",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "multi_match": null,
+        "patterns": null
+      },
+      "description": null,
+      "inputs_config": {},
+      "key": "6190e2b2-cefe-4c52-b077-44f142d60a5a",
+      "loc": "787.5 375",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Split",
+      "type": "Elixir.Df.Diagram.Components.Statement.Case"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "8ba609ca-940c-486b-8ce0-91bd3746b136",
+      "loc": "1087.5 375",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "beb43253-5de4-46e2-b887-bf773603cfa7",
+      "loc": "1087.5 225",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output2",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    }
+  ],
+  "data": "{}",
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "4b0cf30b-4989-4bda-8b45-3db497d9b33f",
+      "key": "04f8783b-8019-419e-ab1b-2f79265ca56c",
+      "title": "",
+      "to": "6190e2b2-cefe-4c52-b077-44f142d60a5a"
+    },
+    {
+      "config": {
+        "from": "otherwise"
+      },
+      "from": "6190e2b2-cefe-4c52-b077-44f142d60a5a",
+      "key": "186d9f52-5658-499d-acef-8b43a2774419",
+      "title": "otherwise",
+      "to": "8ba609ca-940c-486b-8ce0-91bd3746b136"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

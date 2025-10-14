@@ -390,4 +390,79 @@ class FilePanelPage(BasePage):
         comboboxes.nth(1).click()
         modal.locator(f'div[role="option"], div[role="treeitem"][aria-label="{value_type}"]').first.click()
         # Подтверждаем выбор
-        modal.get_by_role("button", name="Выбрать").click() 
+        modal.get_by_role("button", name="Выбрать").click()
+
+
+    def upload_zip_file(self, zip_file_path: str):
+        """Загружает ZIP файл через API эндпоинт"""
+        try:
+            import requests
+            import os
+            import sys
+            from pathlib import Path
+            
+            # Извлекаем project_code и branch из URL
+            current_url = self.page.url
+            url_parts = current_url.split('/')
+            project_index = url_parts.index('projects')
+            project_code = url_parts[project_index + 1]
+            
+            if 'branch' in url_parts:
+                branch_index = url_parts.index('branch')
+                branch = url_parts[branch_index + 1].split('?')[0]
+            else:
+                branch = 'master'
+            
+            # Получаем API URL и cookies
+            sys.path.insert(0, str(Path(__file__).parent.parent))
+            from conftest import get_auth_cookies, get_api_base_url
+            
+            base_url = get_api_base_url()
+            api_url = f"{base_url}/api/ide/{project_code}/branch/{branch}/git/repository/upload"
+            cookies = get_auth_cookies()
+            
+            # Отправляем ZIP файл
+            with open(zip_file_path, 'rb') as zip_file:
+                file_data = zip_file.read()
+                
+                headers = {
+                    'Accept': '*/*',
+                    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+                    'Content-Type': 'application/binary',
+                    'Origin': base_url,
+                    'Referer': current_url
+                }
+                
+                response = requests.post(api_url, data=file_data, headers=headers, cookies=cookies, timeout=60)
+                
+                if response.status_code == 200:
+                    time.sleep(3)
+                    self.page.wait_for_load_state('networkidle')
+                    time.sleep(2)
+                    
+                    # Проверяем импортированные файлы
+                    self.page.wait_for_selector('div[role="treeitem"]', timeout=10000)
+                    tree_items = self.page.query_selector_all('div[role="treeitem"]')
+                    imported_files = []
+                    for item in tree_items:
+                        aria_label = item.get_attribute('aria-label')
+                        if aria_label and aria_label.startswith('/'):
+                            imported_files.append(aria_label[1:])
+                    
+                    expected_files = ['README.md', 'config', 'test_flow_component']
+                    found_files = [f for f in expected_files if any(f in imported_file for imported_file in imported_files)]
+                    print(f"[FILE_PANEL] Импорт завершен, найдены файлы: {found_files}")
+                else:
+                    raise Exception(f"API запрос failed: {response.status_code}")
+            
+        except Exception as e:
+            print(f"[ERROR] Ошибка при загрузке ZIP файла {zip_file_path}: {e}")
+            raise
+
+    def import_project_zip(self, zip_file_path: str):
+        """Импорт ZIP архива проекта через API"""
+        try:
+            self.upload_zip_file(zip_file_path)
+        except Exception as e:
+            print(f"[ERROR] Ошибка при импорте проекта: {e}")
+            raise 

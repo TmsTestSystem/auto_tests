@@ -1,0 +1,77 @@
+{
+  "components": [
+    {
+      "config": {
+        "function": null,
+        "script_path": null,
+        "timeout": null
+      },
+      "description": null,
+      "inputs_config": {},
+      "key": "817e5613-1440-41db-b6ae-5b168ed25907",
+      "loc": "787.5 487.5",
+      "parent_component_key": null,
+      "title": "Function",
+      "type": "Elixir.Df.Diagram.Components.Code.Python"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "b4482616-9294-4eff-bfa7-e882f0979357",
+      "loc": "1012.5 487.5",
+      "parent_component_key": null,
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "d7af11e9-af4f-41f5-83c8-1cbf6c963052",
+      "loc": "600 487.5",
+      "parent_component_key": null,
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    }
+  ],
+  "data": {},
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "d7af11e9-af4f-41f5-83c8-1cbf6c963052",
+      "key": "5fbd9e29-6312-4b62-ac6f-58cd32ed9c11",
+      "title": "",
+      "to": "817e5613-1440-41db-b6ae-5b168ed25907"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "817e5613-1440-41db-b6ae-5b168ed25907",
+      "key": "f7465f3c-4d9c-4ba9-9e89-47318dbe834d",
+      "title": "",
+      "to": "b4482616-9294-4eff-bfa7-e882f0979357"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

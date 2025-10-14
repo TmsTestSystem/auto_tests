@@ -1,0 +1,94 @@
+{
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "4670352e-58c3-4887-ab9b-16cdd98a9e67",
+      "loc": "1050 487.5",
+      "parent_component_key": null,
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "function": null,
+        "script_path": null,
+        "timeout": null
+      },
+      "description": null,
+      "inputs_config": {},
+      "key": "9287f1d4-cbde-41b2-afb1-c508ce1d4ff7",
+      "loc": "787.5 450",
+      "parent_component_key": "cee2df16-98fd-47a0-8a04-58e4ef9c0dc9",
+      "title": "Function",
+      "type": "Elixir.Df.Diagram.Components.Code.Python"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "bd8df607-1a72-457d-9bf9-c63a396546c9",
+      "loc": "525 487.5",
+      "parent_component_key": null,
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "loop_end": null,
+        "loop_start": null
+      },
+      "description": null,
+      "inputs_config": {
+        "input_collection": {
+          "value": null
+        }
+      },
+      "key": "cee2df16-98fd-47a0-8a04-58e4ef9c0dc9",
+      "loc": "787.5 450",
+      "parent_component_key": null,
+      "title": "Loop",
+      "type": "Elixir.Df.Diagram.Components.Collections.ForEach"
+    }
+  ],
+  "data": {},
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "bd8df607-1a72-457d-9bf9-c63a396546c9",
+      "key": "894342d0-f843-488f-9959-0e67f3080e3a",
+      "title": "",
+      "to": "cee2df16-98fd-47a0-8a04-58e4ef9c0dc9"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "cee2df16-98fd-47a0-8a04-58e4ef9c0dc9",
+      "key": "df98ce6d-eb04-4958-84c0-e594a4f85934",
+      "title": "",
+      "to": "4670352e-58c3-4887-ab9b-16cdd98a9e67"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

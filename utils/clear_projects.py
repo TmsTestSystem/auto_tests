@@ -1,12 +1,16 @@
 import os
+import sys
 import time
 from pathlib import Path
 from dotenv import load_dotenv
 import requests
 import urllib3
 
+# Добавляем корневую папку проекта в путь для импорта модулей
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 # Загружаем переменные окружения из .env файла
-env_path = Path(__file__).parent / ".env"
+env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path, override=True)
 
 # Отключаем предупреждения о небезопасных запросах

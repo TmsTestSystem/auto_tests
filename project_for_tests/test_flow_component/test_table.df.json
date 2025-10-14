@@ -1,0 +1,75 @@
+{
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "7418ab2a-5376-4c96-8fb0-e035e9276997",
+      "loc": "937.5 487.5",
+      "parent_component_key": null,
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "c9ed53af-0cbc-468e-ae97-96c8754debb3",
+      "loc": "600 487.5",
+      "parent_component_key": null,
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "table_path": null
+      },
+      "description": null,
+      "inputs_config": {},
+      "key": "ec80a321-0a22-4ea3-ba94-7c873e42067d",
+      "loc": "750 487.5",
+      "parent_component_key": null,
+      "title": "DecisionTable",
+      "type": "Elixir.Df.Diagram.Components.DecisionTable"
+    }
+  ],
+  "data": {},
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "ec80a321-0a22-4ea3-ba94-7c873e42067d",
+      "key": "46c1d1fe-d3f7-4f43-9ae2-235367556076",
+      "title": "",
+      "to": "7418ab2a-5376-4c96-8fb0-e035e9276997"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "c9ed53af-0cbc-468e-ae97-96c8754debb3",
+      "key": "9a0be379-6835-4491-a3ed-edd8e6132d07",
+      "title": "",
+      "to": "ec80a321-0a22-4ea3-ba94-7c873e42067d"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

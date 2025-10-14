@@ -1,0 +1,79 @@
+{
+  "components": [
+    {
+      "config": {
+        "db_connection_path": null,
+        "params": null,
+        "query": null,
+        "sql_statement": null,
+        "timeout": null
+      },
+      "description": null,
+      "inputs_config": {},
+      "key": "52029963-57fe-4284-8ec9-287a4597573e",
+      "loc": "787.5 450",
+      "parent_component_key": null,
+      "title": "Query",
+      "type": "Elixir.Df.Diagram.Components.Db.Query"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "85379e68-685c-4c85-af12-93dd3262ddee",
+      "loc": "600 450",
+      "parent_component_key": null,
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "933c2b95-a987-47a7-ade3-d82246968e91",
+      "loc": "975 450",
+      "parent_component_key": null,
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    }
+  ],
+  "data": {},
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "85379e68-685c-4c85-af12-93dd3262ddee",
+      "key": "c6d9ecfa-d65f-4159-9865-bc13e164d056",
+      "title": "",
+      "to": "52029963-57fe-4284-8ec9-287a4597573e"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "52029963-57fe-4284-8ec9-287a4597573e",
+      "key": "eee7f317-c429-4ec8-b7ee-96b798e1f639",
+      "title": "",
+      "to": "933c2b95-a987-47a7-ade3-d82246968e91"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

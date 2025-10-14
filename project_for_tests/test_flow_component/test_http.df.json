@@ -1,0 +1,228 @@
+{
+  "components": [
+    {
+      "config": {
+        "method": null,
+        "proxy_url": null,
+        "timeout": null,
+        "url": null
+      },
+      "description": null,
+      "inputs_config": {
+        "body": {
+          "value": null
+        },
+        "headers": {
+          "value": []
+        }
+      },
+      "key": "012b3f0f-1abe-4674-92a4-1f48aa50706d",
+      "loc": "937.5 225",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Http_PUT",
+      "type": "Elixir.Df.Diagram.Components.Net.HTTP"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "452509be-260f-4354-b3d8-ac16b6809263",
+      "loc": "450 412.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "method": null,
+        "proxy_url": null,
+        "timeout": null,
+        "url": null
+      },
+      "description": null,
+      "inputs_config": {
+        "body": {
+          "value": null
+        },
+        "headers": {
+          "value": []
+        }
+      },
+      "key": "4a525174-f84c-488b-8eeb-ae4648c82a35",
+      "loc": "712.5 412.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Http_GET",
+      "type": "Elixir.Df.Diagram.Components.Net.HTTP"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "7024344b-b8d0-4fd4-bec6-e240c29b308a",
+      "loc": "1425 412.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "method": null,
+        "proxy_url": null,
+        "timeout": null,
+        "url": null
+      },
+      "description": null,
+      "inputs_config": {
+        "body": {
+          "value": null
+        },
+        "headers": {
+          "value": []
+        }
+      },
+      "key": "90c1bcc0-5991-4757-916e-a73abe89a65e",
+      "loc": "1425 225",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Http_DEL",
+      "type": "Elixir.Df.Diagram.Components.Net.HTTP"
+    },
+    {
+      "config": {
+        "method": null,
+        "proxy_url": null,
+        "timeout": null,
+        "url": null
+      },
+      "description": null,
+      "inputs_config": {
+        "body": {
+          "value": null
+        },
+        "headers": {
+          "value": []
+        }
+      },
+      "key": "d9fd7454-8445-48ca-89e1-440f9a99345c",
+      "loc": "1200 225",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Http_PATCH",
+      "type": "Elixir.Df.Diagram.Components.Net.HTTP"
+    },
+    {
+      "config": {
+        "method": null,
+        "proxy_url": null,
+        "timeout": null,
+        "url": null
+      },
+      "description": null,
+      "inputs_config": {
+        "body": {
+          "value": null
+        },
+        "headers": {
+          "value": []
+        }
+      },
+      "key": "ee8ae940-65d1-427c-9513-e1d157c912aa",
+      "loc": "712.5 225",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Http_POST",
+      "type": "Elixir.Df.Diagram.Components.Net.HTTP"
+    }
+  ],
+  "data": {},
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "ee8ae940-65d1-427c-9513-e1d157c912aa",
+      "key": "2c4cf5da-cd24-427a-866c-309598c5433b",
+      "title": "",
+      "to": "012b3f0f-1abe-4674-92a4-1f48aa50706d"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "452509be-260f-4354-b3d8-ac16b6809263",
+      "key": "54c3f8b1-493b-4aa6-a5d8-729a15dda2f7",
+      "title": "",
+      "to": "4a525174-f84c-488b-8eeb-ae4648c82a35"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "d9fd7454-8445-48ca-89e1-440f9a99345c",
+      "key": "5bd0b2a4-f18b-484b-a75d-ee5c948028bf",
+      "title": "",
+      "to": "90c1bcc0-5991-4757-916e-a73abe89a65e"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "90c1bcc0-5991-4757-916e-a73abe89a65e",
+      "key": "8cba12cd-abc1-4da4-b86a-8ac6f4fde0b4",
+      "title": "",
+      "to": "7024344b-b8d0-4fd4-bec6-e240c29b308a"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "4a525174-f84c-488b-8eeb-ae4648c82a35",
+      "key": "93c7b38b-53e6-41d1-bb15-62e1ea1df221",
+      "title": "",
+      "to": "ee8ae940-65d1-427c-9513-e1d157c912aa"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "012b3f0f-1abe-4674-92a4-1f48aa50706d",
+      "key": "a09a9f78-82ef-42ca-89c7-d4611da31a34",
+      "title": "",
+      "to": "d9fd7454-8445-48ca-89e1-440f9a99345c"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

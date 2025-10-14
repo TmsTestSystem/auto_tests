@@ -82,7 +82,7 @@ def login_page():
     assert email is not None, "LOGIN not set"
     assert password is not None, "PASSWORD not set"
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=False, args=['--start-maximized'])
         page = browser.new_page()
         login_page = LoginPage(page)
         login_page.goto()
@@ -134,12 +134,19 @@ def flow_project(login_page):
             except Exception as e:
                 print(f"[WARNING] Ошибка при удалении проекта {existing['code']}: {e}")
     else:
-        # Создаём новый проект
+        # Создаём новый проект с новым репозиторием и веткой Master
         git = os.environ.get("REPO_URL_FLOW")
-        default_branch = "main"
+        default_branch = "master"
         project_page.open_create_project_modal()
         project_page.create_project(project_title, project_code, git, default_branch)
         project_page.wait_modal_close()
+        
+        # Переходим в созданный проект
+        if not project_page.goto_project(project_code):
+            raise Exception(f"Не удалось перейти в созданный проект {project_code}")
+        
+        # Обязательный шаг импорта проекта
+        project_page.import_project()
         try:
             yield page, project_code
         finally:
@@ -189,14 +196,21 @@ def get_or_create_shared_project(login_page):
     unique = int(time.time())
     project_code = f"autotest_flow_shared_{unique}"
     project_title = f"Автотест Flow Shared {unique}"
-    repo_url = "git@gitlab.infra.b-pl.pro:ilya.kurilin/qa_auto_test.git"
+    repo_url = "/opt/app/empty_repo"
     
-    # Создаем проект через UI
+    # Создаем проект через UI с новым репозиторием и веткой Master
     from pages.project_page import ProjectPage
     project_page = ProjectPage(login_page)
     project_page.open_create_project_modal()
-    project_page.create_project(project_title, project_code, repo_url, "main")
+    project_page.create_project(project_title, project_code, repo_url, "master")
     project_page.wait_modal_close()
+    
+    # Переходим в созданный проект
+    if not project_page.goto_project(project_code):
+        raise Exception(f"Не удалось перейти в созданный проект {project_code}")
+    
+    # Обязательный шаг импорта проекта
+    project_page.import_project()
     
     # Сохраняем код проекта в файл для следующих тестов
     try:

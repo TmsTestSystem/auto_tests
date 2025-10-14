@@ -1,0 +1,94 @@
+{
+  "components": [
+    {
+      "config": {},
+      "description": null,
+      "inputs_config": {
+        "error": {
+          "value": null
+        }
+      },
+      "key": "24b46de3-56fb-4370-a164-78a440267ed9",
+      "loc": "1087.5 375",
+      "parent_component_key": null,
+      "title": "Catch",
+      "type": "Elixir.Df.Diagram.Components.Exceptions.Catch"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "36b202b3-ce08-4cd8-b6f9-b7f1e7545487",
+      "loc": "1087.5 562.5",
+      "parent_component_key": null,
+      "title": "Output2",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "cbb6711e-62d1-421a-a8e8-a87e955aa304",
+      "loc": "787.5 487.5",
+      "parent_component_key": null,
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "f4b6e213-4d96-4261-ba83-3f14fbf02a34",
+      "loc": "525 487.5",
+      "parent_component_key": null,
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    }
+  ],
+  "data": "{}",
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "24b46de3-56fb-4370-a164-78a440267ed9",
+      "key": "84338716-1bf8-4e3a-9e1f-0ebe25e99ceb",
+      "title": "",
+      "to": "36b202b3-ce08-4cd8-b6f9-b7f1e7545487"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "f4b6e213-4d96-4261-ba83-3f14fbf02a34",
+      "key": "cd44ef4b-37ad-4559-a0eb-bda418b06665",
+      "title": "",
+      "to": "cbb6711e-62d1-421a-a8e8-a87e955aa304"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

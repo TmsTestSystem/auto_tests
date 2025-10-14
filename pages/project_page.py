@@ -39,6 +39,41 @@ class ProjectPage(BasePage):
     def wait_modal_close(self):
         self.page.wait_for_selector(self.MODAL_FORM, state='detached', timeout=15000)
 
+    def import_project(self):
+        """
+        Обязательный шаг импорта проекта после создания.
+        Создает ZIP архив из папки project_for_tests и импортирует его через файловую панель.
+        """
+        try:
+            from utils.project_zip_utils import create_project_zip, get_project_folder_path, cleanup_temp_zip
+            from pages.file_panel_page import FilePanelPage
+            import tempfile
+            import os
+            
+            print("[PROJECT_IMPORT] Начинаю импорт проекта")
+            
+            # Получаем путь к папке project_for_tests
+            project_folder_path = get_project_folder_path()
+            
+            # Создаем временный ZIP архив
+            temp_zip_path = os.path.join(tempfile.gettempdir(), f"project_for_tests_{int(time.time())}.zip")
+            zip_path = create_project_zip(project_folder_path, temp_zip_path)
+            
+            try:
+                # Импортируем ZIP архив
+                file_panel = FilePanelPage(self.page)
+                file_panel.import_project_zip(zip_path)
+                
+                print("[PROJECT_IMPORT] Импорт проекта успешно завершен")
+                
+            finally:
+                # Удаляем временный ZIP архив
+                cleanup_temp_zip(zip_path)
+                
+        except Exception as e:
+            print(f"[ERROR] Ошибка при импорте проекта: {e}")
+            raise
+
     def find_project_in_list(self, title: str):
         self.page.wait_for_selector('div[aria-label="projects_card"]', timeout=10000)
         cards = self.page.query_selector_all('div[aria-label="projects_card"]')
@@ -50,6 +85,12 @@ class ProjectPage(BasePage):
         return None
 
     def goto_project(self, code: str):
+        # Проверяем, находимся ли мы уже в нужном проекте
+        current_url = self.page.url
+        if f'/projects/{code}/' in current_url or f'/projects/{code}?' in current_url:
+            print(f"[PROJECT_PAGE] Уже находимся в проекте {code}")
+            return True
+        
         # Обновляем страницу проектов и пытаемся найти ссылку, содержащую код
         self.goto()
         try:

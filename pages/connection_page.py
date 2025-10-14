@@ -214,15 +214,17 @@ class ConnectionPage:
             print(f"[ERROR] Ошибка при создании соединения: {e}")
             return False
     
-    def create_connection_by_coordinates(self, from_x, from_y, to_x, to_y):
+    def create_connection_by_coordinates(self, from_x, from_y, to_x, to_y, from_direction="bottom"):
         """
         Создает соединение между двумя точками по координатам
+        Ищет точку соединения внутри компонента (top, bottom, left, right)
         
         Args:
             from_x (float): X координата начальной точки
             from_y (float): Y координата начальной точки
             to_x (float): X координата конечной точки
             to_y (float): Y координата конечной точки
+            from_direction (str): Направление точки соединения (top, bottom, left, right)
             
         Returns:
             bool: True если соединение создано успешно
@@ -230,13 +232,28 @@ class ConnectionPage:
         print(f"[INFO] Создание соединения по координатам от ({from_x}, {from_y}) к ({to_x}, {to_y})")
         
         try:
-            # Начинаем перетаскивание
-            self.page.mouse.move(from_x, from_y)
+            # Ищем точку соединения внутри компонента
+            print(f"[INFO] Ищем точку соединения '{from_direction}' внутри компонента")
+            connection_point = self._find_connection_point_inside_component(from_x, from_y, from_direction)
+            
+            if connection_point:
+                print(f"[INFO] Найдена точка соединения '{from_direction}' в ({connection_point['x']}, {connection_point['y']})")
+                start_x, start_y = connection_point['x'], connection_point['y']
+            else:
+                print(f"[WARN] Точка соединения '{from_direction}' не найдена, используем координаты компонента")
+                start_x, start_y = from_x, from_y
+            
+            # Долгий тап на точке соединения
+            print(f"[INFO] Выполняем долгий тап на точке соединения '{from_direction}'")
+            self.page.mouse.move(start_x, start_y)
             time.sleep(0.2)
+            
+            # Долгий тап - держим кнопку мыши нажатой дольше
             self.page.mouse.down(button="left")
-            time.sleep(0.5)
+            time.sleep(1.5)  # Долгий тап
             
             # Перетаскиваем до целевой точки
+            print(f"[INFO] Перетаскиваем от ({start_x}, {start_y}) к ({to_x}, {to_y})")
             self.page.mouse.move(to_x, to_y)
             time.sleep(0.5)
             
@@ -244,12 +261,134 @@ class ConnectionPage:
             self.page.mouse.up(button="left")
             time.sleep(1)
             
-            print("[SUCCESS] Соединение создано по координатам")
+            print("[SUCCESS] Соединение создано по координатам (долгий тап)")
             return True
             
         except Exception as e:
             print(f"[ERROR] Ошибка при создании соединения по координатам: {e}")
             return False
+    
+    def _find_connection_point_near_coordinates(self, x, y, radius=50):
+        """
+        Ищет точку соединения в радиусе от указанных координат
+        
+        Args:
+            x (float): X координата центра поиска
+            y (float): Y координата центра поиска
+            radius (int): Радиус поиска в пикселях
+            
+        Returns:
+            dict: Координаты найденной точки соединения или None
+        """
+        try:
+            # Ищем элементы, которые могут быть точками соединения
+            connection_selectors = [
+                'circle[cx][cy]',  # SVG круги
+                'circle[fill]',    # Заполненные круги
+                'circle[stroke]',  # Круги с обводкой
+                '[class*="connection"]',  # Элементы с классом connection
+                '[class*="anchor"]',      # Элементы с классом anchor
+                '[class*="handle"]',      # Элементы с классом handle
+                'div[style*="position: absolute"]',  # Абсолютно позиционированные div
+                'svg > g > circle',      # Круги в SVG группах
+                'svg > circle',          # Прямые круги в SVG
+            ]
+            
+            for selector in connection_selectors:
+                try:
+                    elements = self.page.locator(selector).all()
+                    for element in elements:
+                        if element.is_visible():
+                            box = element.bounding_box()
+                            if box:
+                                # Проверяем, находится ли элемент в радиусе
+                                elem_x = box['x'] + box['width'] / 2
+                                elem_y = box['y'] + box['height'] / 2
+                                
+                                distance = ((elem_x - x) ** 2 + (elem_y - y) ** 2) ** 0.5
+                                if distance <= radius:
+                                    print(f"[DEBUG] Найдена потенциальная точка соединения: {selector} в ({elem_x}, {elem_y})")
+                                    return {'x': elem_x, 'y': elem_y}
+                except Exception as e:
+                    continue
+            
+            print("[DEBUG] Точки соединения не найдены")
+            return None
+            
+        except Exception as e:
+            print(f"[ERROR] Ошибка при поиске точки соединения: {e}")
+            return None
+    
+    def _find_connection_point_inside_component(self, x, y, direction, radius=100):
+        """
+        Ищет точку соединения внутри компонента по направлению
+        
+        Args:
+            x (float): X координата центра компонента
+            y (float): Y координата центра компонента
+            direction (str): Направление точки соединения (top, bottom, left, right)
+            radius (int): Радиус поиска в пикселях
+            
+        Returns:
+            dict: Координаты найденной точки соединения или None
+        """
+        try:
+            print(f"[DEBUG] Ищем точку соединения '{direction}' внутри компонента в радиусе {radius}px от ({x}, {y})")
+            
+            # Ищем текст с направлением внутри компонента
+            direction_element = self.page.get_by_text(direction, exact=True)
+            
+            if direction_element.is_visible():
+                # Получаем координаты элемента направления
+                box = direction_element.bounding_box()
+                if box:
+                    elem_x = box['x'] + box['width'] / 2
+                    elem_y = box['y'] + box['height'] / 2
+                    
+                    # Проверяем, находится ли элемент в радиусе от компонента
+                    distance = ((elem_x - x) ** 2 + (elem_y - y) ** 2) ** 0.5
+                    if distance <= radius:
+                        print(f"[DEBUG] Найдена точка соединения '{direction}' в ({elem_x}, {elem_y})")
+                        return {'x': elem_x, 'y': elem_y}
+                    else:
+                        print(f"[DEBUG] Точка '{direction}' найдена, но слишком далеко: расстояние {distance:.1f}px")
+                else:
+                    print(f"[DEBUG] Не удалось получить координаты элемента '{direction}'")
+            else:
+                print(f"[DEBUG] Точка соединения '{direction}' не найдена")
+            
+            # Fallback: ищем по другим селекторам
+            print(f"[DEBUG] Fallback: ищем точки соединения по альтернативным селекторам")
+            alternative_selectors = [
+                f'text="{direction}"',
+                f'[aria-label*="{direction}"]',
+                f'[title*="{direction}"]',
+                f'[class*="{direction}"]',
+            ]
+            
+            for selector in alternative_selectors:
+                try:
+                    elements = self.page.locator(selector).all()
+                    for element in elements:
+                        if element.is_visible():
+                            box = element.bounding_box()
+                            if box:
+                                elem_x = box['x'] + box['width'] / 2
+                                elem_y = box['y'] + box['height'] / 2
+                                
+                                distance = ((elem_x - x) ** 2 + (elem_y - y) ** 2) ** 0.5
+                                if distance <= radius:
+                                    print(f"[DEBUG] Найдена альтернативная точка '{direction}' через селектор '{selector}' в ({elem_x}, {elem_y})")
+                                    return {'x': elem_x, 'y': elem_y}
+                except Exception:
+                    continue
+            
+            print(f"[DEBUG] Точка соединения '{direction}' не найдена внутри компонента")
+            return None
+            
+        except Exception as e:
+            print(f"[ERROR] Ошибка при поиске точки соединения внутри компонента: {e}")
+            return None
     
     def find_and_click_connection_point(self, component_name, direction="right", timeout=5000):
         """

@@ -5,6 +5,7 @@ from pages.file_panel_page import FilePanelPage
 from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
 from pages.diagram_page import DiagramPage
+from pages.connection_page import ConnectionPage
 from conftest import save_screenshot, get_project_by_code, delete_project_by_id
 from locators import (
     FilePanelLocators, DiagramLocators, CanvasLocators, 
@@ -20,6 +21,7 @@ def test_flow_split(login_page, shared_flow_project):
     project_code = shared_flow_project
     project_page = ProjectPage(page)
     diagram_page = DiagramPage(page)
+    connection_page = ConnectionPage(page)
     
     print(f"[INFO] Начинаем тест Split в проекте: {project_code}")
     
@@ -28,6 +30,106 @@ def test_flow_split(login_page, shared_flow_project):
     
     file_panel = FilePanelPage(page)
     data_struct = DataStructPage(page)
+    
+    def create_precise_connection(from_component_name, to_component_name, from_direction="bottom", to_direction="top"):
+        """
+        Универсальный метод для создания соединений между компонентами
+        Алгоритм: кликаем на Split -> ищем точку -> делаем лонгтап по точке -> тянем курсор до Output2 -> отпускаем лонгтап
+        """
+        print(f"[INFO] Создание соединения: {from_component_name} ({from_direction}) -> {to_component_name} ({to_direction})")
+        
+        # Находим компоненты
+        from_component = page.get_by_text(from_component_name).first
+        to_component = page.get_by_text(to_component_name).first
+            
+        if not from_component.is_visible() or not to_component.is_visible():
+            print(f"[ERROR] Компоненты не найдены: {from_component_name} или {to_component_name}")
+            return False
+        
+        # ШАГ 1: Кликаем на исходный компонент (Split), чтобы появились точки соединения
+        print(f"[INFO] Шаг 1: Кликаем на компонент '{from_component_name}' для появления точек соединения")
+        
+        # Убеждаемся, что компонент видим и кликаем по нему
+        if from_component.is_visible():
+            from_component.click()
+            time.sleep(3)  # Увеличиваем время ожидания появления точек соединения
+            print(f"[SUCCESS] Шаг 1: Клик по компоненту '{from_component_name}' выполнен, ждем появления точек соединения")
+        else:
+            print(f"[ERROR] Шаг 1: Компонент '{from_component_name}' не видим для клика")
+            return False
+        
+        # ШАГ 2: Ищем точку соединения внутри компонента
+        print(f"[INFO] Шаг 2: Ищем точку соединения '{from_direction}' внутри компонента '{from_component_name}'")
+        
+        # Получаем координаты исходного компонента
+        from_box = from_component.bounding_box()
+        if not from_box:
+            print(f"[ERROR] Не удалось получить координаты компонента '{from_component_name}'")
+            return False
+        
+        # Ищем точку соединения внутри компонента
+        connection_point = connection_page._find_connection_point_inside_component(
+            from_box['x'] + from_box['width'] / 2, 
+            from_box['y'] + from_box['height'] / 2, 
+            from_direction, 
+            radius=100
+        )
+        
+        if connection_point:
+            start_x, start_y = connection_point['x'], connection_point['y']
+            print(f"[SUCCESS] Шаг 2: Найдена точка соединения '{from_direction}' в ({start_x:.1f}, {start_y:.1f})")
+        else:
+            # Fallback: вычисляем координаты точки соединения
+            print(f"[WARN] Шаг 2: Точка соединения '{from_direction}' не найдена, используем вычисленные координаты")
+            if from_direction == "bottom":
+                start_x = from_box['x'] + from_box['width'] / 2
+                start_y = from_box['y'] + from_box['height']
+            elif from_direction == "top":
+                start_x = from_box['x'] + from_box['width'] / 2
+                start_y = from_box['y']
+            elif from_direction == "right":
+                start_x = from_box['x'] + from_box['width']
+                start_y = from_box['y'] + from_box['height'] / 2
+            elif from_direction == "left":
+                start_x = from_box['x']
+                start_y = from_box['y'] + from_box['height'] / 2
+            else:
+                start_x = from_box['x'] + from_box['width'] / 2
+                start_y = from_box['y'] + from_box['height'] / 2
+        
+        # ШАГ 3: Получаем координаты целевого компонента
+        to_box = to_component.bounding_box()
+        if not to_box:
+            print(f"[ERROR] Не удалось получить координаты компонента '{to_component_name}'")
+            return False
+            
+        if to_direction == "bottom":
+            to_x = to_box['x'] + to_box['width'] / 2
+            to_y = to_box['y'] + to_box['height']
+        elif to_direction == "top":
+            to_x = to_box['x'] + to_box['width'] / 2
+            to_y = to_box['y']
+        elif to_direction == "right":
+            to_x = to_box['x'] + to_box['width']
+            to_y = to_box['y'] + to_box['height'] / 2
+        elif to_direction == "left":
+            to_x = to_box['x']
+            to_y = to_box['y'] + to_box['height'] / 2
+        else:
+            to_x = to_box['x'] + to_box['width'] / 2
+            to_y = to_box['y'] + to_box['height'] / 2
+            
+        print(f"[INFO] Шаг 3: Координаты соединения: от ({start_x:.1f}, {start_y:.1f}) к ({to_x:.1f}, {to_y:.1f})")
+            
+        # ШАГ 4: Делаем лонгтап по точке -> тянем курсор -> отпускаем лонгтап
+        print(f"[INFO] Шаг 4: Выполняем лонгтап по точке соединения и перетаскиваем до целевого компонента")
+        success = connection_page.create_connection_by_coordinates(start_x, start_y, to_x, to_y, from_direction)
+        
+        if success:
+            print(f"[SUCCESS] Соединение создано: {from_component_name} -> {to_component_name}")
+        else:
+            print(f"[ERROR] Не удалось создать соединение: {from_component_name} -> {to_component_name}")
+        return success
     
     try:
         is_open = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL).is_visible()
@@ -119,6 +221,28 @@ def test_flow_split(login_page, shared_flow_project):
         print(f"[INFO] Создан атрибут {idx}: {attr['name']} ({attr['type']})")
     
     print("[INFO] Схема с атрибутами создана")
+    
+    print("[INFO] Шаг 2.1: Закрытие структуры данных после создания")
+    
+    try:
+        # Закрываем структуру данных
+        structure_tab = page.get_by_role("button", name="file=%2Fshema%2Fshema_for_split.ds.json")
+        if structure_tab.is_visible():
+            structure_tab.click(button="right")
+            time.sleep(0.5)
+            print("[INFO] Правый клик по вкладке структуры данных выполнен")
+            
+            close_tab = page.get_by_role("treeitem", name="closeTab").locator("div").nth(1)
+            if close_tab.is_visible():
+                close_tab.click()
+                time.sleep(0.5)
+                print("[SUCCESS] Структура данных закрыта")
+            else:
+                print("[WARN] Кнопка закрытия вкладки не найдена")
+        else:
+            print("[WARN] Вкладка структуры данных не найдена для закрытия")
+    except Exception as e:
+        print(f"[WARN] Ошибка при закрытии структуры данных: {str(e)}")
     
     print("[INFO] Шаг 3: Открытие диаграммы 'test_split.df.json' в папке 'test_flow_component'")
     
@@ -309,7 +433,25 @@ def test_flow_split(login_page, shared_flow_project):
     except Exception as e:
         print(f"[INFO] Ошибка при закрытии правого сайдбара: {e}")
     
-    print("[INFO] Шаг 11: Поиск стрелки, выходящей из Split компонента")
+    print("[INFO] Шаг 11: Создание соединения Split -> Output2")
+    
+    # Создаем соединение Split -> Output2 используя наш универсальный метод
+    try:
+        # Сначала делаем скриншот до клика на Split
+        save_screenshot(page, f"before_split_click_{project_code}")
+        
+        success = create_precise_connection("Split", "Output2", "bottom", "top")
+        if success:
+            print("[SUCCESS] Соединение Split -> Output2 создано успешно")
+            save_screenshot(page, f"split_to_output2_connection_{project_code}")
+        else:
+            print("[WARN] Не удалось создать соединение Split -> Output2")
+            save_screenshot(page, f"split_to_output2_connection_failed_{project_code}")
+    except Exception as e:
+        print(f"[ERROR] Ошибка при создании соединения Split -> Output2: {e}")
+        save_screenshot(page, f"split_to_output2_connection_error_{project_code}")
+    
+    print("[INFO] Шаг 11.1: Поиск стрелки, выходящей из Split компонента")
     
     if not canvas_utils.find_arrow_by_component("Split"):
         print("[WARN] Не удалось найти стрелку через утилиту, пробуем альтернативные методы")
@@ -478,32 +620,6 @@ def test_flow_split(login_page, shared_flow_project):
     
     try:
         time.sleep(2)
-        
-        try:
-            process_tab = page.get_by_text("Процесс", exact=True)
-            if process_tab.is_visible():
-                try:
-                    active_tab = page.locator(DiagramLocators.ACTIVE_TAB)
-                    if active_tab.count() > 0:
-                        tab_text = active_tab.first.text_content()
-                        if "Процесс" in tab_text:
-                            print("[INFO] Уже находимся на вкладке 'Процесс'")
-                        else:
-                            process_tab.click()
-                            time.sleep(0.5)
-                            print("[INFO] Переключились на вкладку 'Процесс'")
-                    else:
-                        process_tab.click()
-                        time.sleep(0.5)
-                        print("[INFO] Переключились на вкладку 'Процесс'")
-                except Exception:
-                    process_tab.click()
-                    time.sleep(0.5)
-                    print("[INFO] Переключились на вкладку 'Процесс' (fallback)")
-            else:
-                print("[WARN] Вкладка 'Процесс' не найдена")
-        except Exception as e:
-            print(f"[WARN] Не удалось переключиться на вкладку 'Процесс': {e}")
         
         print("[INFO] Настройка компонента Output2 перед повторным запуском")
         
@@ -685,36 +801,10 @@ def test_flow_split(login_page, shared_flow_project):
                 else:
                     print("[WARN] Сайдбар стрелки не открылся")
     except Exception as e:
-        print(f"[WARN] Ошибка при заполнении условия стрелки: {e}")
+        print(f"[WARN] Ошибка при заполнении условия стрелки: {str(e)}")
     
     try:
         time.sleep(2)
-        
-        try:
-            process_tab = page.get_by_text("Процесс", exact=True)
-            if process_tab.is_visible():
-                try:
-                    active_tab = page.locator(DiagramLocators.ACTIVE_TAB)
-                    if active_tab.count() > 0:
-                        tab_text = active_tab.first.text_content()
-                        if "Процесс" in tab_text:
-                            print("[INFO] Уже находимся на вкладке 'Процесс'")
-                        else:
-                            process_tab.click()
-                            time.sleep(0.5)
-                            print("[INFO] Переключились на вкладку 'Процесс'")
-                    else:
-                        process_tab.click()
-                        time.sleep(0.5)
-                        print("[INFO] Переключились на вкладку 'Процесс'")
-                except Exception:
-                    process_tab.click()
-                    time.sleep(0.5)
-                    print("[INFO] Переключились на вкладку 'Процесс' (fallback)")
-            else:
-                print("[WARN] Вкладка 'Процесс' не найдена")
-        except Exception as e:
-            print(f"[WARN] Не удалось переключиться на вкладку 'Процесс': {e}")
         
         print("[INFO] Настройка компонента Output2 перед повторным запуском")
         
@@ -768,7 +858,7 @@ def test_flow_split(login_page, shared_flow_project):
             time.sleep(1)
             print("[INFO] Диаграмма сброшена (reset)")
         except Exception as e:
-            print(f"[WARN] Не удалось нажать кнопку reset: {e}")
+            print(f"[WARN] Не удалось нажать кнопку reset: {str(e)}")
         
         success = diagram_page.run_diagram_and_wait(completion_timeout=15000)
         if success:
