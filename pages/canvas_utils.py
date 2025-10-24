@@ -37,7 +37,7 @@ class CanvasUtils:
                     component_label = self.page.get_by_text(title).first
                     
                 if component_label.is_visible():
-                    component_label.dblclick()
+                    component_label.dblclick(force=True)
                     time.sleep(1)
                     print(f"[SUCCESS] Двойной клик по компоненту '{title}' выполнен")
                     return True

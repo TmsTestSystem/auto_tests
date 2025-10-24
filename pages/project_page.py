@@ -26,18 +26,58 @@ class ProjectPage(BasePage):
         self.page.wait_for_selector(self.MODAL_FORM, timeout=10000)
 
     def create_project(self, title: str, code: str, git: str, default_branch: str):
-        for label, value in [
-            ('title', title),
-            ('code', code),
-            ('git', git),
-            ('default_branch', default_branch),
-        ]:
-            self.page.wait_for_selector(f"input[aria-label='{label}']", timeout=10000)
-            self.page.fill(f"input[aria-label='{label}']", value)
-        self.page.click(self.SUBMIT_BUTTON)
+        print(f"[DEBUG] Заполнение модального окна создания проекта:")
+        print(f"[DEBUG] - title: {title}")
+        print(f"[DEBUG] - code: {code}")
+        print(f"[DEBUG] - git: {git}")
+        print(f"[DEBUG] - default_branch: {default_branch}")
+        
+        # Используем новый метод с get_by_role для заполнения полей
+        try:
+            # Заполняем поле title
+            title_field = self.page.get_by_role("textbox", name="title")
+            title_field.wait_for(state="visible", timeout=10000)
+            title_field.fill(title)
+            print(f"[DEBUG] Поле title заполнено: {title}")
+            
+            # Заполняем поле code
+            code_field = self.page.get_by_role("textbox", name="code")
+            code_field.wait_for(state="visible", timeout=10000)
+            code_field.fill(code)
+            print(f"[DEBUG] Поле code заполнено: {code}")
+            
+            # Заполняем поле git
+            git_field = self.page.get_by_role("textbox", name="git")
+            git_field.wait_for(state="visible", timeout=10000)
+            git_field.fill(git)
+            print(f"[DEBUG] Поле git заполнено: {git}")
+            
+            # Заполняем поле default_branch
+            branch_field = self.page.get_by_role("textbox", name="default_branch")
+            branch_field.wait_for(state="visible", timeout=10000)
+            branch_field.fill(default_branch)
+            print(f"[DEBUG] Поле default_branch заполнено: {default_branch}")
+            
+            # Нажимаем кнопку отправки
+            self.page.click(self.SUBMIT_BUTTON)
+            print(f"[DEBUG] Кнопка отправки нажата")
+            
+        except Exception as e:
+            print(f"[ERROR] Ошибка при заполнении модального окна: {e}")
+            # Делаем скриншот для отладки
+            self.page.screenshot(path="screenshots/modal_filling_error.png")
+            raise
 
     def wait_modal_close(self):
-        self.page.wait_for_selector(self.MODAL_FORM, state='detached', timeout=15000)
+        print("[DEBUG] Ожидание закрытия модального окна...")
+        try:
+            self.page.wait_for_selector(self.MODAL_FORM, state='detached', timeout=30000)
+            print("[DEBUG] Модальное окно успешно закрыто")
+        except Exception as e:
+            print(f"[ERROR] Модальное окно не закрылось: {e}")
+            # Делаем скриншот для отладки
+            self.page.screenshot(path="screenshots/modal_timeout.png")
+            raise
 
     def import_project(self):
         """

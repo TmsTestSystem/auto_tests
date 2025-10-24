@@ -15,12 +15,11 @@ from locators import (
 )
 
 
-def test_flow_query(login_page, shared_flow_project):
+def test_flow_query(login_page, flow_project):
     """
     Тест для работы с компонентом Query
     """
-    page = login_page
-    project_code = shared_flow_project
+    page, project_code = flow_project
     project_page = ProjectPage(page)
     diagram_page = DiagramPage(page)
 
@@ -32,10 +31,7 @@ def test_flow_query(login_page, shared_flow_project):
     file_panel = FilePanelPage(page)
     data_struct = DataStructPage(page)
 
-    try:
-        is_open = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL).is_visible()
-    except Exception:
-        is_open = False
+    is_open = page.locator(ToolbarLocators.BOARD_TOOLBAR_PANEL).is_visible()
     if not is_open:
         file_panel.open_file_panel()
         time.sleep(0.5)
@@ -113,26 +109,20 @@ def test_flow_query(login_page, shared_flow_project):
     time.sleep(2)
     print("[INFO] Canvas диаграммы загружен")
 
-    try:
-        if page.get_by_label("board_toolbar_panel").is_visible():
-            file_manager_btn = page.get_by_role("button", name="board_toolbar_filemanager_button")
-            if file_manager_btn.is_visible():
-                file_manager_btn.click()
-                time.sleep(0.5)
-                print("[INFO] Файловая панель закрыта")
-    except Exception as e:
-        print(f"[INFO] Файловая панель уже закрыта или не найдена: {e}")
+    if page.get_by_label("board_toolbar_panel").is_visible():
+        file_manager_btn = page.get_by_role("button", name="board_toolbar_filemanager_button")
+        if file_manager_btn.is_visible():
+            file_manager_btn.click()
+            time.sleep(0.5)
+            print("[INFO] Файловая панель закрыта")
 
-    try:
-        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
-        if details_panel.is_visible():
-            switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
-            if switcher.is_visible():
-                switcher.click()
-                time.sleep(0.5)
-                print("[INFO] Правый сайдбар закрыт")
-    except Exception as e:
-        print(f"[INFO] Правый сайдбар уже закрыт или не найден: {e}")
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
+    if details_panel.is_visible():
+        switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
+        if switcher.is_visible():
+            switcher.click()
+            time.sleep(0.5)
+            print("[INFO] Правый сайдбар закрыт")
 
     print("[INFO] Шаг 4: Поиск и настройка компонента Query на канвасе")
 
@@ -190,16 +180,13 @@ def test_flow_query(login_page, shared_flow_project):
     time.sleep(1)
     print(f"[INFO] SQL запрос введен: {sql_query}")
 
-    try:
-        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
-        if details_panel.is_visible():
-            switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
-            if switcher.is_visible():
-                switcher.click()
-                time.sleep(0.5)
-                print("[INFO] Правый сайдбар закрыт")
-    except Exception as e:
-        print(f"[INFO] Правый сайдбар уже закрыт или не найден: {e}")
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
+    if details_panel.is_visible():
+        switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
+        if switcher.is_visible():
+            switcher.click()
+            time.sleep(0.5)
+            print("[INFO] Правый сайдбар закрыт")
 
     print("[INFO] Шаг 7: Настройка компонента Output")
 
@@ -290,30 +277,24 @@ def test_flow_query(login_page, shared_flow_project):
     print(f"[INFO] Очищенный JSON (длина: {len(json_text_clean)}): {json_text_clean[:200]}...")
 
     import json
-    try:
-        json_data = json.loads(json_text_clean)
-        print("[INFO] JSON успешно распарсен")
-        
-        assert "data" in json_data, "Поле 'data' не найдено в JSON"
-        assert "error" in json_data, "Поле 'error' не найдено в JSON"
-        
-        data = json_data["data"]
-        
-        assert data["code"] == project_code, f"Код проекта не совпадает: ожидался '{project_code}', получен '{data['code']}'"
-        assert data["default_branch"] == "main", f"Ветка по умолчанию не 'main': {data['default_branch']}"
-        assert data["deleted_at"] is None, f"Проект удален: {data['deleted_at']}"
-        assert "id" in data, "Поле 'id' не найдено в данных проекта"
-        assert isinstance(data["id"], int), "Поле 'id' должно быть числом"
-        
-        print("[INFO] Все проверки JSON данных пройдены успешно!")
-        print(f"[INFO] Код проекта: {data['code']}")
-        print(f"[INFO] ID проекта: {data['id']}")
-        print(f"[INFO] Ветка по умолчанию: {data['default_branch']}")
-        
-    except json.JSONDecodeError as e:
-        raise Exception(f"Ошибка парсинга JSON: {e}")
-    except Exception as e:
-        raise Exception(f"Ошибка проверки JSON данных: {e}")
+    json_data = json.loads(json_text_clean)
+    print("[INFO] JSON успешно распарсен")
+    
+    assert "data" in json_data, "Поле 'data' не найдено в JSON"
+    assert "error" in json_data, "Поле 'error' не найдено в JSON"
+    
+    data = json_data["data"]
+    
+    assert data["code"] == project_code, f"Код проекта не совпадает: ожидался '{project_code}', получен '{data['code']}'"
+    assert data["default_branch"] == "master", f"Ветка по умолчанию не 'master': {data['default_branch']}"
+    assert data["deleted_at"] is None, f"Проект удален: {data['deleted_at']}"
+    assert "id" in data, "Поле 'id' не найдено в данных проекта"
+    assert isinstance(data["id"], int), "Поле 'id' должно быть числом"
+    
+    print("[INFO] Все проверки JSON данных пройдены успешно!")
+    print(f"[INFO] Код проекта: {data['code']}")
+    print(f"[INFO] ID проекта: {data['id']}")
+    print(f"[INFO] Ветка по умолчанию: {data['default_branch']}")
 
     close_button = page.locator(ModalLocators.MODAL_CLOSE_BUTTON)
     if close_button.count() > 0:

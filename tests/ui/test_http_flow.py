@@ -40,13 +40,12 @@ def api_server():
         pytest.fail(f"Failed to connect to JSONPlaceholder API: {e}")
 
 
-def test_http_flow(login_page, shared_flow_project, api_server):
+def test_http_flow(login_page, flow_project, api_server):
     """
     Тест для последовательности HTTP методов:
     Input → Http_GET → Http_POST → Http_PUT → Http_PATCH → Http_DEL → Output
     """
-    page = login_page
-    project_code = shared_flow_project
+    page, project_code = flow_project
     project_page = ProjectPage(page)
 
     print(f"[INFO] Запуск теста HTTP Flow Sequence в проекте: {project_code}")

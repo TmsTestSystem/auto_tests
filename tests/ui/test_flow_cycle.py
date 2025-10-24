@@ -16,12 +16,11 @@ from locators import (
 )
 
 
-def test_flow_cycle(login_page, shared_flow_project):
+def test_flow_cycle(login_page, flow_project):
     """
     Тест для создания циклического процесса на диаграмме
     """
-    page = login_page
-    project_code = shared_flow_project
+    page, project_code = flow_project
     project_page = ProjectPage(page)
     file_panel = FilePanelPage(page)
     diagram_page = DiagramPage(page)
@@ -34,9 +33,6 @@ def test_flow_cycle(login_page, shared_flow_project):
     print("[INFO] Тест test_flow_cycle начат")
 
     print("[INFO] Шаг 1: Создание Python скрипта для циклических операций")
-    
-    file_panel.open_file_panel()
-    time.sleep(1)
     
     scripts_folder = page.locator(FilePanelLocators.get_treeitem_by_name("scripts"))
     if scripts_folder.count() > 0:

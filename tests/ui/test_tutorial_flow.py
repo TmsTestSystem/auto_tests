@@ -12,7 +12,7 @@ from locators import (
 )
 
 
-def test_tutorial_flow(login_page, shared_flow_project):
+def test_tutorial_flow(login_page, flow_project):
     """
     Тест для создания схемы процесса согласно пошаговому гайду:
     1. Старт процесса
@@ -22,8 +22,7 @@ def test_tutorial_flow(login_page, shared_flow_project):
     5. Функция 2
     6. Конец процесса
     """
-    page = login_page
-    project_code = shared_flow_project
+    page, project_code = flow_project
     project_page = ProjectPage(page)
     file_panel = FilePanelPage(page)
     diagram_page = DiagramPage(page)
@@ -40,8 +39,6 @@ def test_tutorial_flow(login_page, shared_flow_project):
     time.sleep(5)
 
     print("[INFO] Шаг 1: Создание файла 'Процесс' в корне проекта")
-    file_panel.open_file_panel()
-    time.sleep(1)
     
     process_name = file_panel.create_process_file()
     if process_name is None:

@@ -25,7 +25,6 @@ def test_assignment_flow(login_page, flow_project):
     time.sleep(2)
     
     # Создание структуры данных
-    file_panel.open_file_panel()
     file_name = file_panel.create_data_structure_file()
     assert file_name is not None, "Не удалось создать файл структуры данных"
     

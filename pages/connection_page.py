@@ -124,23 +124,26 @@ class ConnectionPage:
         center_x = component_box['x'] + component_box['width'] / 2
         center_y = component_box['y'] + component_box['height'] / 2
         
+        # Отступ от центра компонента на 33px в нужном направлении
+        offset = 33
+        
         if direction == "right":
-            x = component_box['x'] + component_box['width']
+            x = center_x + offset
             y = center_y
         elif direction == "left":
-            x = component_box['x']
+            x = center_x - offset
             y = center_y
         elif direction == "top":
             x = center_x
-            y = component_box['y']
+            y = center_y - offset
         elif direction == "bottom":
             x = center_x
-            y = component_box['y'] + component_box['height']
+            y = center_y + offset
         else:
             x = center_x
             y = center_y
         
-        print(f"[INFO] Вычислены координаты точки соединения '{direction}': ({x}, {y})")
+        print(f"[INFO] Вычислены координаты точки соединения '{direction}' от центра ({center_x}, {center_y}) + {offset}px: ({x}, {y})")
         return {'x': x, 'y': y}
     
     def create_connection(self, from_component, to_component, from_direction="right", to_direction="left"):
@@ -176,14 +179,9 @@ class ConnectionPage:
                 print(f"[ERROR] Не удалось получить размеры целевого компонента '{to_component}'")
                 return False
             
-            # Определяем координаты целевой точки
-            if to_direction == "center":
-                to_x = to_component_box['x'] + to_component_box['width'] / 2
-                to_y = to_component_box['y'] + to_component_box['height'] / 2
-            else:
-                to_point = self._calculate_connection_coordinates(to_component_box, to_direction)
-                to_x = to_point['x']
-                to_y = to_point['y']
+            # Определяем координаты целевой точки - К ЦЕНТРУ компонента
+            to_x = to_component_box['x'] + to_component_box['width'] / 2
+            to_y = to_component_box['y'] + to_component_box['height'] / 2
             
             # Начинаем перетаскивание
             if 'element' in from_point:

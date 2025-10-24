@@ -15,12 +15,11 @@ from locators import (
 )
 
 
-def test_flow_catch(login_page, shared_flow_project):
+def test_flow_catch(login_page, flow_project):
     """
     Тест для диаграммы test_catch - проверка завершения на компоненте Output2
     """
-    page = login_page
-    project_code = shared_flow_project
+    page, project_code = flow_project
     project_page = ProjectPage(page)
     file_panel = FilePanelPage(page)
     diagram_page = DiagramPage(page)
@@ -30,8 +29,7 @@ def test_flow_catch(login_page, shared_flow_project):
     time.sleep(2)
 
     print("[INFO] Шаг 1: Открытие диаграммы test_catch.df.json")
-    file_panel.open_file_panel()
-    time.sleep(1)
+    # Файловая панель уже открыта после импорта проекта
     
     test_flow_folder = page.locator(FilePanelLocators.get_treeitem_by_name("test_flow_component"))
     assert test_flow_folder.count() > 0, "Папка 'test_flow_component' не найдена в проекте!"
@@ -59,26 +57,22 @@ def test_flow_catch(login_page, shared_flow_project):
     time.sleep(1)
     print("[SUCCESS] Открыты настройки компонента Output2")
     
-    try:
-        component_tab = page.get_by_text("Компонент", exact=True)
-        if component_tab.is_visible():
-            component_tab.click()
-            time.sleep(0.5)
-        
-        data_field = page.get_by_role("textbox", name="inputs_config.data.value")
-        if not data_field.is_visible():
-            data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK).first
-        
-        if data_field.is_visible():
-            data_field.fill('{"text": "Это второй выход, пойманный кетчем"}')
-            time.sleep(0.5)
-            print("[SUCCESS] Поле 'Данные' заполнено для компонента Output2")
-        else:
-            print("[WARN] Поле 'Данные' не найдено для компонента Output2")
-            page.screenshot(path='screenshots/debug_output2_data_field.png', full_page=True)
-    except Exception as e:
-        print(f"[WARN] Ошибка при заполнении поля 'Данные': {e}")
-        page.screenshot(path='screenshots/debug_output2_data_error.png', full_page=True)
+    component_tab = page.get_by_text("Компонент", exact=True)
+    if component_tab.is_visible():
+        component_tab.click()
+        time.sleep(0.5)
+    
+    data_field = page.get_by_role("textbox", name="inputs_config.data.value")
+    if not data_field.is_visible():
+        data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK).first
+    
+    if data_field.is_visible():
+        data_field.fill('{"text": "Это второй выход, пойманный кетчем"}')
+        time.sleep(0.5)
+        print("[SUCCESS] Поле 'Данные' заполнено для компонента Output2")
+    else:
+        print("[WARN] Поле 'Данные' не найдено для компонента Output2")
+        page.screenshot(path='screenshots/debug_output2_data_field.png', full_page=True)
     
     diagram_page.close_right_sidebar()
     time.sleep(1)
@@ -89,14 +83,10 @@ def test_flow_catch(login_page, shared_flow_project):
     if success:
         print("[SUCCESS] Диаграмма завершилась успешно!")
         
-        try:
-            toast = page.locator(ModalLocators.TOAST).first
-            toast.wait_for(state="visible", timeout=5000)
-            toast_text = toast.text_content()
-            print(f"[SUCCESS] Тост найден: {toast_text}")
-        except Exception as e:
-            print(f"[WARN] Ошибка при проверке тоста: {e}")
-            page.screenshot(path='screenshots/debug_toast_error.png', full_page=True)
+        toast = page.locator(ModalLocators.TOAST).first
+        toast.wait_for(state="visible", timeout=5000)
+        toast_text = toast.text_content()
+        print(f"[SUCCESS] Тост найден: {toast_text}")
     else:
         print("[WARN] Диаграмма не завершилась успешно, но продолжаем проверку")
 
@@ -118,30 +108,26 @@ def test_flow_catch(login_page, shared_flow_project):
     time.sleep(1)
     print("[SUCCESS] Нажата кнопка 'formitem_full_view_button'")
     
-    try:
-        json_modal = page.get_by_text("Просмотр JSON")
-        if json_modal.is_visible():
-            print("[SUCCESS] Модалка 'Просмотр JSON' найдена")
+    json_modal = page.get_by_text("Просмотр JSON")
+    if json_modal.is_visible():
+        print("[SUCCESS] Модалка 'Просмотр JSON' найдена")
+        
+        response_section = page.get_by_test_id("Modal__Container").get_by_text("Ответ")
+        if response_section.is_visible():
+            print("[SUCCESS] Секция 'Ответ' найдена в модалке")
             
-            response_section = page.get_by_text("Ответ")
-            if response_section.is_visible():
-                print("[SUCCESS] Секция 'Ответ' найдена в модалке")
+            json_data = page.locator(ModalLocators.get_json_content_selector()).first
+            if json_data.is_visible():
+                json_text = json_data.text_content()
+                print(f"[SUCCESS] JSON данные найдены: {json_text}")
                 
-                json_data = page.locator(ModalLocators.get_json_content_selector()).first
-                if json_data.is_visible():
-                    json_text = json_data.text_content()
-                    print(f"[SUCCESS] JSON данные найдены: {json_text}")
-                    
-                    assert "Это второй выход, пойманный кетчем" in json_text, f"В JSON не найдено ожидаемое сообщение: {json_text}"
-                    print("[SUCCESS] В JSON найдено ожидаемое сообщение 'Это второй выход, пойманный кетчем'")
-                else:
-                    print("[WARN] JSON данные не найдены в модалке")
+                assert "Это второй выход, пойманный кетчем" in json_text, f"В JSON не найдено ожидаемое сообщение: {json_text}"
+                print("[SUCCESS] В JSON найдено ожидаемое сообщение 'Это второй выход, пойманный кетчем'")
             else:
-                print("[WARN] Секция 'Ответ' не найдена в модалке")
+                print("[WARN] JSON данные не найдены в модалке")
         else:
-            print("[WARN] Модалка 'Просмотр JSON' не найдена")
-    except Exception as e:
-        print(f"[WARN] Ошибка при проверке модалки 'Просмотр JSON': {e}")
-        page.screenshot(path='screenshots/debug_json_modal.png', full_page=True)
+            print("[WARN] Секция 'Ответ' не найдена в модалке")
+    else:
+        print("[WARN] Модалка 'Просмотр JSON' не найдена")
 
     print("[SUCCESS] Тест test_flow_catch завершен успешно!")

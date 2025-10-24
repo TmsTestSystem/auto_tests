@@ -134,124 +134,34 @@ def flow_project(login_page):
             except Exception as e:
                 print(f"[WARNING] Ошибка при удалении проекта {existing['code']}: {e}")
     else:
-        # Создаём новый проект с новым репозиторием и веткой Master
-        git = os.environ.get("REPO_URL_FLOW")
-        default_branch = "master"
-        project_page.open_create_project_modal()
-        project_page.create_project(project_title, project_code, git, default_branch)
-        project_page.wait_modal_close()
-        
-        # Переходим в созданный проект
-        if not project_page.goto_project(project_code):
-            raise Exception(f"Не удалось перейти в созданный проект {project_code}")
-        
-        # Обязательный шаг импорта проекта
-        project_page.import_project()
-        try:
-            yield page, project_code
-        finally:
-            # Очистка после теста в любом случае
-            try:
-                project_info = get_project_by_code(project_code)
-                if project_info and 'id' in project_info:
-                    delete_project_by_id(project_info['id'])
-                    print(f"[SUCCESS] Проект {project_code} удален")
-                else:
-                    print(f"[WARNING] Не удалось получить информацию о проекте {project_code}")
-            except Exception as e:
-                print(f"[WARNING] Ошибка при удалении проекта {project_code}: {e}")
-
-
-# Файл для хранения project_code между тестами
-SHARED_PROJECT_FILE = "shared_project_code.txt"
-
-def get_or_create_shared_project(login_page):
-    """
-    Функция для получения или создания общего проекта между тестами flow.
-    Если тесты запускаются последовательно - используется один проект.
-    Если тест запускается отдельно - создается новый проект.
-    """
-    # Проверяем, есть ли сохраненный код проекта
-    shared_project_code = None
-    if os.path.exists(SHARED_PROJECT_FILE):
-        try:
-            with open(SHARED_PROJECT_FILE, 'r') as f:
-                shared_project_code = f.read().strip()
-        except Exception:
-            pass
-    
-    # Если есть код проекта - проверяем, существует ли проект
-    if shared_project_code:
-        existing_project = get_project_by_code(shared_project_code)
-        if existing_project:
-            return shared_project_code
-        else:
-            # Проект был удален, удаляем файл
-            try:
-                os.remove(SHARED_PROJECT_FILE)
-            except Exception:
-                pass
-    
-    # Создаем новый проект
-    unique = int(time.time())
-    project_code = f"autotest_flow_shared_{unique}"
-    project_title = f"Автотест Flow Shared {unique}"
-    repo_url = "/opt/app/empty_repo"
-    
-    # Создаем проект через UI с новым репозиторием и веткой Master
-    from pages.project_page import ProjectPage
-    project_page = ProjectPage(login_page)
-    project_page.open_create_project_modal()
-    project_page.create_project(project_title, project_code, repo_url, "master")
-    project_page.wait_modal_close()
-    
-    # Переходим в созданный проект
-    if not project_page.goto_project(project_code):
-        raise Exception(f"Не удалось перейти в созданный проект {project_code}")
-    
-    # Обязательный шаг импорта проекта
-    project_page.import_project()
-    
-    # Сохраняем код проекта в файл для следующих тестов
-    try:
-        with open(SHARED_PROJECT_FILE, 'w') as f:
-            f.write(project_code)
-    except Exception:
-        pass
-    
-    return project_code
-
-@pytest.fixture(scope="function")
-def shared_flow_project(login_page):
-    """
-    Фикстура для общего проекта между тестами flow.
-    """
-    return get_or_create_shared_project(login_page)
-
-@pytest.fixture(scope="session", autouse=True)
-def cleanup_shared_project():
-    """
-    Автоматически удаляет общий проект в конце сессии тестов
-    """
-    yield  # Выполняем все тесты
-    
-    # После выполнения всех тестов удаляем проект и файл
-    if os.path.exists(SHARED_PROJECT_FILE):
-        try:
-            with open(SHARED_PROJECT_FILE, 'r') as f:
-                project_code = f.read().strip()
+            # Создаём новый проект
+            git = "/opt/app/empty_repo"
+            default_branch = "master"
+            project_page.open_create_project_modal()
+            project_page.create_project(project_title, project_code, git, default_branch)
+            project_page.wait_modal_close()
             
-            prj = get_project_by_code(project_code)
-            if prj and prj.get("id"):
-                delete_project_by_id(prj["id"])
-                print(f"[CLEANUP] Удален общий проект: {project_code}")
+            # Переходим в проект перед импортом
+            project_page.goto_project(project_code)
+            time.sleep(2)
             
-            # Удаляем файл
-            os.remove(SHARED_PROJECT_FILE)
-        except Exception as e:
-            print(f"[CLEANUP] Ошибка при удалении проекта: {e}")
-            # Все равно пытаемся удалить файл
+            # Импортируем проект через API
+            print("[INFO] Импортируем проект через API...")
+            project_page.import_project()
+            time.sleep(5)
+            print("[SUCCESS] Проект импортирован через API")
+            
             try:
-                os.remove(SHARED_PROJECT_FILE)
-            except Exception:
-                pass 
+                yield page, project_code
+            finally:
+                # Очистка после теста в любом случае
+                try:
+                    project_info = get_project_by_code(project_code)
+                    if project_info and 'id' in project_info:
+                        delete_project_by_id(project_info['id'])
+                        print(f"[SUCCESS] Проект {project_code} удален")
+                    else:
+                        print(f"[WARNING] Не удалось получить информацию о проекте {project_code}")
+                except Exception as e:
+                    print(f"[WARNING] Ошибка при удалении проекта {project_code}: {e}")
+

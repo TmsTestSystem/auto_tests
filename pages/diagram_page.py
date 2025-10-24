@@ -185,3 +185,69 @@ class DiagramPage:
         file_panel_closed = self.close_file_panel()
         sidebar_closed = self.close_right_sidebar()
         return file_panel_closed and sidebar_closed
+    
+    def close_toast(self) -> bool:
+        """
+        Закрывает тост сообщение
+        
+        Returns:
+            bool: True если тост закрыт успешно, False иначе
+        """
+        try:
+            print("[INFO] Закрытие тоста")
+            close_button = self.page.get_by_role("button", name="toast_close_button")
+            if close_button.is_visible():
+                close_button.click()
+                time.sleep(0.5)
+                print("[SUCCESS] Тост закрыт")
+                return True
+            else:
+                print("[WARN] Кнопка закрытия тоста не найдена")
+                return False
+        except Exception as e:
+            print(f"[WARN] Ошибка при закрытии тоста: {e}")
+            return False
+    
+    def open_analysis_log(self) -> bool:
+        """
+        Открывает лог выполнения после успешного выполнения диаграммы
+        
+        Returns:
+            bool: True если лог открыт успешно, False иначе
+        """
+        try:
+            print("[INFO] Открытие лога выполнения")
+            analysis_button = self.page.get_by_role("button", name="toast_open_analysis_button")
+            if analysis_button.is_visible():
+                analysis_button.click()
+                time.sleep(0.5)
+                print("[SUCCESS] Лог выполнения открыт")
+                return True
+            else:
+                print("[WARN] Кнопка открытия лога выполнения не найдена")
+                return False
+        except Exception as e:
+            print(f"[WARN] Ошибка при открытии лога выполнения: {e}")
+            return False
+    
+    def open_toast_details(self) -> bool:
+        """
+        Открывает модалку "Подробнее" с JSON данными
+        
+        Returns:
+            bool: True если модалка открыта успешно, False иначе
+        """
+        try:
+            print("[INFO] Открытие модалки 'Подробнее'")
+            details_button = self.page.get_by_role("button", name="toast_details_button")
+            if details_button.is_visible():
+                details_button.click()
+                time.sleep(0.5)
+                print("[SUCCESS] Модалка 'Подробнее' открыта")
+                return True
+            else:
+                print("[WARN] Кнопка открытия модалки 'Подробнее' не найдена")
+                return False
+        except Exception as e:
+            print(f"[WARN] Ошибка при открытии модалки 'Подробнее': {e}")
+            return False

@@ -17,13 +17,12 @@ from locators import (
 )
 
 
-def test_flow_func(login_page, shared_flow_project):
+def test_flow_func(login_page, flow_project):
     """
     Тест для работы с функциональным компонентом Function
     Input → Function → Output
     """
-    page = login_page
-    project_code = shared_flow_project
+    page, project_code = flow_project
     project_page = ProjectPage(page)
 
     print(f"[INFO] Начинаем тест Function в проекте: {project_code}")
@@ -304,8 +303,10 @@ def test_flow_func(login_page, shared_flow_project):
     try:
         arg_a_field = page.get_by_role("textbox", name="inputs_config.a.value")
         if arg_a_field.is_visible():
+            arg_a_field.click()
+            time.sleep(0.3)
             arg_a_field.fill("42")
-            time.sleep(0.5)
+            time.sleep(0.3)
             print("[INFO] Аргумент a (int): 42")
         else:
             print("[WARN] Поле для аргумента a не найдено")
@@ -316,8 +317,10 @@ def test_flow_func(login_page, shared_flow_project):
     try:
         arg_b_field = page.get_by_role("textbox", name="inputs_config.b.value")
         if arg_b_field.is_visible():
+            arg_b_field.click()
+            time.sleep(0.3)
             arg_b_field.fill('"Hello World"')
-            time.sleep(0.5)
+            time.sleep(0.3)
             print("[INFO] Аргумент b (str): \"Hello World\"")
         else:
             print("[WARN] Поле для аргумента b не найдено")
@@ -328,8 +331,10 @@ def test_flow_func(login_page, shared_flow_project):
     try:
         arg_c_field = page.get_by_role("textbox", name="inputs_config.c.value")
         if arg_c_field.is_visible():
+            arg_c_field.click()
+            time.sleep(0.3)
             arg_c_field.fill("3.14")
-            time.sleep(0.5)
+            time.sleep(0.3)
             print("[INFO] Аргумент c (float): 3.14")
         else:
             print("[WARN] Поле для аргумента c не найдено")
@@ -340,8 +345,10 @@ def test_flow_func(login_page, shared_flow_project):
     try:
         arg_d_field = page.get_by_role("textbox", name="inputs_config.d.value")
         if arg_d_field.is_visible():
+            arg_d_field.click()
+            time.sleep(0.3)
             arg_d_field.fill("true")
-            time.sleep(0.5)
+            time.sleep(0.3)
             print("[INFO] Аргумент d (bool): true")
         else:
             print("[WARN] Поле для аргумента d не найдено")
@@ -352,8 +359,10 @@ def test_flow_func(login_page, shared_flow_project):
     try:
         arg_e_field = page.get_by_role("textbox", name="inputs_config.e.value")
         if arg_e_field.is_visible():
+            arg_e_field.click()
+            time.sleep(0.3)
             arg_e_field.fill("[1, 2, 3, 4, 5]")
-            time.sleep(0.5)
+            time.sleep(0.3)
             print("[INFO] Аргумент e (list): [1, 2, 3, 4, 5]")
         else:
             print("[WARN] Поле для аргумента e не найдено")

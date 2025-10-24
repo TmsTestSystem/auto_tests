@@ -14,7 +14,12 @@ class FilePanelPage(BasePage):
     def open_file_panel(self):
         self.page.wait_for_selector('button[aria-label="board_toolbar_filemanager_button"]', timeout=10000)
         self.page.click('button[aria-label="board_toolbar_filemanager_button"]')
-        self.page.wait_for_selector('.Bar__Bar___lx-XI', timeout=10000)
+        # Ждем появления файловой панели или элементов дерева файлов
+        try:
+            self.page.wait_for_selector('.Bar__Bar___lx-XI', timeout=5000)
+        except:
+            # Если основной селектор не найден, ждем альтернативные элементы
+            self.page.wait_for_selector('[role="tree"], .tree, [data-testid="file-tree"]', timeout=5000)
 
     def open_create_file_menu(self):
         self.page.wait_for_selector('button[aria-label="filemanager_create_button"]', timeout=10000)
@@ -257,6 +262,10 @@ class FilePanelPage(BasePage):
         return None
 
     def create_process_file(self):
+        # Открываем меню создания файлов
+        self.open_create_file_menu()
+        time.sleep(1)
+        
         file_type_buttons = self.get_file_type_buttons()
         for btn in file_type_buttons:
             aria = btn.get_attribute('aria-label')
@@ -440,9 +449,33 @@ class FilePanelPage(BasePage):
                     self.page.wait_for_load_state('networkidle')
                     time.sleep(2)
                     
+                    # Открываем файловую панель, чтобы увидеть дерево файлов
+                    print("[DEBUG] Открываем файловую панель...")
+                    try:
+                        self.open_file_panel()
+                        # Проверяем, что панель действительно открылась
+                        self.page.wait_for_selector('.Bar__Bar___lx-XI', timeout=10000)
+                        print("[DEBUG] Файловая панель успешно открыта")
+                        time.sleep(2)
+                    except Exception as e:
+                        print(f"[ERROR] Не удалось открыть файловую панель: {e}")
+                        # Делаем скриншот для отладки
+                        self.page.screenshot(path="screenshots/file_panel_open_error.png")
+                        raise
+                    
                     # Проверяем импортированные файлы
-                    self.page.wait_for_selector('div[role="treeitem"]', timeout=10000)
+                    print("[DEBUG] Ожидание появления элементов дерева файлов...")
+                    try:
+                        self.page.wait_for_selector('div[role="treeitem"]', timeout=30000)
+                        print("[DEBUG] Элементы дерева файлов найдены")
+                    except Exception as e:
+                        print(f"[ERROR] Элементы дерева файлов не найдены: {e}")
+                        # Делаем скриншот для отладки
+                        self.page.screenshot(path="screenshots/file_tree_timeout.png")
+                        raise
+                    
                     tree_items = self.page.query_selector_all('div[role="treeitem"]')
+                    print(f"[DEBUG] Найдено элементов дерева: {len(tree_items)}")
                     imported_files = []
                     for item in tree_items:
                         aria_label = item.get_attribute('aria-label')

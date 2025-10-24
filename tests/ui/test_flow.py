@@ -16,12 +16,11 @@ from locators import (
 )
 
 
-def test_flow_flow_component(login_page, shared_flow_project):
+def test_flow_flow_component(login_page, flow_project):
     """
     Тест для создания родительского процесса с подпроцессом на диаграмме
     """
-    page = login_page
-    project_code = shared_flow_project
+    page, project_code = flow_project
     project_page = ProjectPage(page)
     file_panel = FilePanelPage(page)
     diagram_page = DiagramPage(page)
@@ -32,8 +31,6 @@ def test_flow_flow_component(login_page, shared_flow_project):
     time.sleep(2)
 
     print("[INFO] Шаг 1: Создание файла 'Процесс' в корне проекта")
-    file_panel.open_file_panel()
-    time.sleep(1)
     
     process_name = file_panel.create_process_file()
     if process_name is None:
@@ -43,17 +40,13 @@ def test_flow_flow_component(login_page, shared_flow_project):
         process_buttons = page.locator('div[role="treeitem"], div.TreeItem__LabelPrimary___vzajD')
         process_found = False
         for i in range(process_buttons.count()):
-            try:
-                btn_text = process_buttons.nth(i).text_content()
-                print(f"[DEBUG] Найден элемент меню: '{btn_text}'")
-                if "процесс" in btn_text.lower():
-                    process_buttons.nth(i).click()
-                    process_found = True
-                    print(f"[SUCCESS] Найдена и нажата кнопка процесса: '{btn_text}'")
-                    break
-            except Exception as e:
-                print(f"[DEBUG] Ошибка при обработке элемента {i}: {e}")
-                continue
+            btn_text = process_buttons.nth(i).text_content()
+            print(f"[DEBUG] Найден элемент меню: '{btn_text}'")
+            if "процесс" in btn_text.lower():
+                process_buttons.nth(i).click()
+                process_found = True
+                print(f"[SUCCESS] Найдена и нажата кнопка процесса: '{btn_text}'")
+                break
         
         if not process_found:
             page.screenshot(path='screenshots/debug_process_menu.png', full_page=True)
@@ -143,26 +136,22 @@ def test_flow_flow_component(login_page, shared_flow_project):
     output_component.dblclick()
     time.sleep(1)
     
-    try:
-        component_tab = page.get_by_text("Компонент", exact=True)
-        if component_tab.is_visible():
-            component_tab.click()
-            time.sleep(0.5)
-        
-        data_field = page.get_by_role("textbox", name="inputs_config.data.value")
-        if not data_field.is_visible():
-            data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK).first
-        
-        if data_field.is_visible():
-            data_field.fill('{"test": "это результат выполнения подпроцесса"}')
-            time.sleep(0.5)
-            print("[SUCCESS] Поле 'Данные' заполнено для компонента Output")
-        else:
-            print("[WARN] Поле 'Данные' не найдено для компонента Output")
-            page.screenshot(path='screenshots/debug_output_data_field.png', full_page=True)
-    except Exception as e:
-        print(f"[WARN] Ошибка при заполнении поля 'Данные': {e}")
-        page.screenshot(path='screenshots/debug_output_data_error.png', full_page=True)
+    component_tab = page.get_by_text("Компонент", exact=True)
+    if component_tab.is_visible():
+        component_tab.click()
+        time.sleep(0.5)
+    
+    data_field = page.get_by_role("textbox", name="inputs_config.data.value")
+    if not data_field.is_visible():
+        data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK).first
+    
+    if data_field.is_visible():
+        data_field.fill('{"test": "это результат выполнения подпроцесса"}')
+        time.sleep(0.5)
+        print("[SUCCESS] Поле 'Данные' заполнено для компонента Output")
+    else:
+        print("[WARN] Поле 'Данные' не найдено для компонента Output")
+        page.screenshot(path='screenshots/debug_output_data_field.png', full_page=True)
     
     print("[INFO] Шаг 6: Переход к диаграмме test_flow")
     
@@ -208,57 +197,48 @@ def test_flow_flow_component(login_page, shared_flow_project):
         time.sleep(1)
         print("[SUCCESS] Открыты настройки компонента Flow_proc")
         
-        try:
-            data_field = page.get_by_role("textbox", name="inputs_config.data.value")
-            if not data_field.is_visible():
-                data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK).first
+        data_field = page.get_by_role("textbox", name="inputs_config.data.value")
+        if not data_field.is_visible():
+            data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK).first
 
-            if data_field.is_visible():
-                data_field.fill('{"test": "это результат выполнения подпроцесса"}')
-                time.sleep(0.5)
-                print("[SUCCESS] Поле 'Данные' заполнено для компонента Flow_proc")
-            else:
-                print("[WARN] Поле 'Данные' не найдено для компонента Flow_proc")
-        except Exception as e:
-            print(f"[WARN] Ошибка при заполнении поля 'Данные': {e}")
+        if data_field.is_visible():
+            data_field.fill('{"test": "это результат выполнения подпроцесса"}')
+            time.sleep(0.5)
+            print("[SUCCESS] Поле 'Данные' заполнено для компонента Flow_proc")
+        else:
+            print("[WARN] Поле 'Данные' не найдено для компонента Flow_proc")
         
-        try:
-            page.get_by_role("button", name="textfield_select_file_button").click()
-            time.sleep(1)
-            print("[SUCCESS] Нажата кнопка выбора файла")
-            
-            page.get_by_test_id("Modal__Container").get_by_text(f"{process_name}.df.json").click()
-            time.sleep(1)
-            print(f"[SUCCESS] Выбран файл {process_name}.df.json")
-            
-            page.get_by_role("button", name="filemanager_select_button").click()
-            time.sleep(1)
-            print("[SUCCESS] Выбор файла подтвержден")
-        except Exception as e:
-            print(f"[WARN] Ошибка при выборе файла: {e}")
+        page.get_by_role("button", name="textfield_select_file_button").click()
+        time.sleep(1)
+        print("[SUCCESS] Нажата кнопка выбора файла")
+        
+        page.get_by_test_id("Modal__Container").get_by_text(f"{process_name}.df.json").click()
+        time.sleep(1)
+        print(f"[SUCCESS] Выбран файл {process_name}.df.json")
+        
+        page.get_by_role("button", name="filemanager_select_button").click()
+        time.sleep(1)
+        print("[SUCCESS] Выбор файла подтвержден")
         
         diagram_page.close_right_sidebar()
         time.sleep(1)
         print("[SUCCESS] Сайдбар закрыт после настройки Flow_proc")
         
-        try:
-            output_component = page.locator(ComponentLocators.OUTPUT)
-            output_component.dblclick()
-            time.sleep(1)
-            print("[SUCCESS] Открыты настройки компонента Output")
-            
-            data_field = page.get_by_role("textbox", name="inputs_config.data.value")
-            if not data_field.is_visible():
-                data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK).first
+        output_component = page.locator(ComponentLocators.OUTPUT)
+        output_component.dblclick()
+        time.sleep(1)
+        print("[SUCCESS] Открыты настройки компонента Output")
+        
+        data_field = page.get_by_role("textbox", name="inputs_config.data.value")
+        if not data_field.is_visible():
+            data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK).first
 
-            if data_field.is_visible():
-                data_field.fill('$node.Flow_proc.Output')
-                time.sleep(0.5)
-                print("[SUCCESS] Поле 'Данные' заполнено значением '$node.Flow_proc.Output' для компонента Output")
-            else:
-                print("[WARN] Поле 'Данные' не найдено для компонента Output")
-        except Exception as e:
-            print(f"[WARN] Ошибка при заполнении поля 'Данные' в Output: {e}")
+        if data_field.is_visible():
+            data_field.fill('$node.Flow_proc.Output')
+            time.sleep(0.5)
+            print("[SUCCESS] Поле 'Данные' заполнено значением '$node.Flow_proc.Output' для компонента Output")
+        else:
+            print("[WARN] Поле 'Данные' не найдено для компонента Output")
     else:
         print("[ERROR] Компонент 'Flow_proc' не найден на канвасе!")
         assert False, "Компонент Flow_proc не найден!"
@@ -269,14 +249,11 @@ def test_flow_flow_component(login_page, shared_flow_project):
     assert success, "Диаграмма не выполнилась успешно!"
     print("[SUCCESS] Диаграмма завершилась успешно!")
     
-    try:
-        toast = page.locator(ModalLocators.TOAST).first
-        if toast.is_visible(timeout=3000):
-            toast_text = toast.text_content()
-            print(f"[SUCCESS] Тост найден: {toast_text}")
-        else:
-            print("[INFO] Тост не появился, но диаграмма выполнилась успешно")
-    except Exception as e:
+    toast = page.locator(ModalLocators.TOAST).first
+    if toast.is_visible(timeout=3000):
+        toast_text = toast.text_content()
+        print(f"[SUCCESS] Тост найден: {toast_text}")
+    else:
         print("[INFO] Тост не появился, но диаграмма выполнилась успешно")
     
     page.get_by_text("Процесс", exact=True).click()
@@ -291,31 +268,27 @@ def test_flow_flow_component(login_page, shared_flow_project):
     time.sleep(1)
     print("[SUCCESS] Нажата кнопка 'formitem_full_view_button'")
     
-    try:
-        json_modal = page.get_by_text("Просмотр JSON")
-        if json_modal.is_visible():
-            print("[SUCCESS] Модалка 'Просмотр JSON' найдена")
+    json_modal = page.get_by_text("Просмотр JSON")
+    if json_modal.is_visible():
+        print("[SUCCESS] Модалка 'Просмотр JSON' найдена")
+        
+        response_section = page.get_by_test_id("Modal__Container").get_by_text("Ответ")
+        if response_section.is_visible():
+            print("[SUCCESS] Секция 'Ответ' найдена в модалке")
             
-            response_section = page.get_by_text("Ответ")
-            if response_section.is_visible():
-                print("[SUCCESS] Секция 'Ответ' найдена в модалке")
+            json_data = page.locator(ModalLocators.get_json_content_selector()).first
+            if json_data.is_visible():
+                json_text = json_data.text_content()
+                print(f"[SUCCESS] JSON данные найдены: {json_text}")
                 
-                json_data = page.locator(ModalLocators.get_json_content_selector()).first
-                if json_data.is_visible():
-                    json_text = json_data.text_content()
-                    print(f"[SUCCESS] JSON данные найдены: {json_text}")
-                    
-                    assert "это результат выполнения подпроцесса" in json_text, f"В JSON не найдено ожидаемое сообщение: {json_text}"
-                    print("[SUCCESS] В JSON найдено ожидаемое сообщение 'это результат выполнения подпроцесса'")
-                else:
-                    print("[WARN] JSON данные не найдены в модалке")
+                assert "это результат выполнения подпроцесса" in json_text, f"В JSON не найдено ожидаемое сообщение: {json_text}"
+                print("[SUCCESS] В JSON найдено ожидаемое сообщение 'это результат выполнения подпроцесса'")
             else:
-                print("[WARN] Секция 'Ответ' не найдена в модалке")
+                print("[WARN] JSON данные не найдены в модалке")
         else:
-            print("[WARN] Модалка 'Просмотр JSON' не найдена")
-    except Exception as e:
-        print(f"[WARN] Ошибка при проверке модалки 'Просмотр JSON': {e}")
-        page.screenshot(path='screenshots/debug_json_modal.png', full_page=True)
+            print("[WARN] Секция 'Ответ' не найдена в модалке")
+    else:
+        print("[WARN] Модалка 'Просмотр JSON' не найдена")
 
     print("[SUCCESS] Тест test_flow_parent_child_process завершен успешно!")
 
