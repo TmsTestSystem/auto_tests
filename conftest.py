@@ -13,7 +13,56 @@ import urllib3
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path, override=True)
 
-# Хост настраивается через run_tests.py скрипт
+# Добавляем поддержку --host параметра
+def pytest_addoption(parser):
+    """Добавляем кастомные опции pytest"""
+    parser.addoption(
+        "--test-host", 
+        action="store", 
+        default=None,
+        help="Выбор хоста для тестирования (st1, st2, st3, st4, local-a, local-b, local-c, local-192)"
+    )
+
+def pytest_configure(config):
+    """Настройка pytest при запуске"""
+    host = config.getoption("--test-host")
+    if host:
+        # Маппинг хостов на URL (как в run_tests.py)
+        host_urls = {
+            "st1": "https://decision-flow-web-1.df-st1.cloud.b-pl.pro",
+            "st2": "https://decision-flow-web-1.df-st2.cloud2.b-pl.pro", 
+            "st3": "https://decision-flow-frontend-st3.df-st.b-pl.cloud2",
+            "st4": "https://decision-flow-web-1.df-st4.cloud2.b-pl.pro",
+            "local-a": "http://localhost:3333",
+            "local-b": "http://localhost:3334", 
+            "local-c": "http://localhost:3335",
+            "local-192": "http://192.168.0.7:3333"
+        }
+        
+        if host in host_urls:
+            base_url = host_urls[host]
+            # Обновляем .env файл
+            env_content = f"""# Конфигурация хостов для тестирования
+# Автоматически обновлено для хоста: {host}
+
+BASE_URL={base_url}
+LOGIN=admin@balance-pl.ru
+PASSWORD=admin
+
+DATABASE_URL=$env.DATABASE_URL
+REPO_URL_FLOW=git@gitlab.infra.b-pl.pro:ilya.kurilin/qa_auto_test.git
+"""
+            with open(env_path, 'w', encoding='utf-8') as f:
+                f.write(env_content)
+            
+            # Перезагружаем переменные окружения
+            load_dotenv(dotenv_path=env_path, override=True)
+            print(f"[HOST] Выбран хост: {host}")
+            print(f"[URL] BASE_URL установлен: {base_url}")
+        else:
+            print(f"[WARNING] Неизвестный хост '{host}'. Доступные: {', '.join(host_urls.keys())}")
+
+# Хост настраивается через run_tests.py скрипт или --host параметр
 
 def get_api_base_url():
     """Получить BASE_URL из переменных окружения"""
