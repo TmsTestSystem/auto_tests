@@ -1,6 +1,10 @@
 from playwright.sync_api import Page
 from .base_page import BasePage
 import time
+import urllib3
+
+# Отключаем предупреждения о небезопасных SSL запросах
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class FilePanelPage(BasePage):
     TREE_ITEM_SELECTOR = 'div[role="treeitem"][aria-label="/{name}"]'
@@ -442,7 +446,7 @@ class FilePanelPage(BasePage):
                     'Referer': current_url
                 }
                 
-                response = requests.post(api_url, data=file_data, headers=headers, cookies=cookies, timeout=60)
+                response = requests.post(api_url, data=file_data, headers=headers, cookies=cookies, timeout=60, verify=False)
                 
                 if response.status_code == 200:
                     time.sleep(3)
