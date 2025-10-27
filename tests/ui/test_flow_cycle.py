@@ -34,6 +34,11 @@ def test_flow_cycle(login_page, flow_project):
 
     print("[INFO] Шаг 1: Создание Python скрипта для циклических операций")
     
+    # Открываем файловую панель
+    print("[INFO] Открываем файловую панель")
+    file_panel.open_file_panel()
+    time.sleep(2)
+    
     scripts_folder = page.locator(FilePanelLocators.get_treeitem_by_name("scripts"))
     if scripts_folder.count() > 0:
         print("[INFO] Папка 'scripts' найдена")

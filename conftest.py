@@ -131,8 +131,8 @@ def login_page():
     assert email is not None, "LOGIN not set"
     assert password is not None, "PASSWORD not set"
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, args=['--start-maximized'])
-        page = browser.new_page()
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_page(viewport={'width': 1920, 'height': 1080})
         login_page = LoginPage(page)
         login_page.goto()
         login_page.login(email, password)
