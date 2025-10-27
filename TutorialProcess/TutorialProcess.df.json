@@ -1,0 +1,413 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "multi_match": null,
+        "patterns": [
+          {
+            "expression": "$node.hasForeignCurrencies.result == true",
+            "name": "Yes"
+          }
+        ]
+      },
+      "description": null,
+      "inputs_config": {
+        "1": {
+          "value": null
+        }
+      },
+      "key": "0ce4861b-94f0-4bc1-bfa2-98613a076c9d",
+      "loc": "937.5 562.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "currencyRateNeeded",
+      "type": "Elixir.Df.Diagram.Components.Statement.Case"
+    },
+    {
+      "config": {},
+      "description": null,
+      "inputs_config": {
+        "error": {
+          "value": null
+        }
+      },
+      "key": "14c4a7a7-860e-43fb-96f9-9f954a34ee9c",
+      "loc": "1537.5 562.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Catch",
+      "type": "Elixir.Df.Diagram.Components.Exceptions.Catch"
+    },
+    {
+      "config": {
+        "function": "parse_currency_rates",
+        "script_path": "tutorial_script.py",
+        "timeout": null
+      },
+      "description": null,
+      "inputs_config": {
+        "currency_name": {
+          "value": "$loop.item.currency"
+        },
+        "currency_rate_response": {
+          "value": "$node.getCurrencyRates.response"
+        }
+      },
+      "key": "3e23ec45-9b04-47bd-9814-00290be06e7c",
+      "loc": "1200 712.5",
+      "parent_component_key": "8892c96e-5765-4780-b8b0-1ba5695e0d50",
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "getRate",
+      "type": "Elixir.Df.Diagram.Components.Code.Python"
+    },
+    {
+      "config": {
+        "assignments": [
+          {
+            "target": "$var.total_payment_RUR",
+            "value": "nullvalue($var.total_payment_RUR, 0) + $loop.item.monthly_payment"
+          }
+        ]
+      },
+      "description": null,
+      "inputs_config": {
+        "total_payment_RUR": {
+          "value": null
+        }
+      },
+      "key": "429d18ee-d89d-4cd0-8d9d-39d31ea05523",
+      "loc": "1312.5 600",
+      "parent_component_key": "8892c96e-5765-4780-b8b0-1ba5695e0d50",
+      "post_config": {},
+      "title": "addToSum2",
+      "type": "Elixir.Df.Diagram.Components.Context.Variables.Assignment"
+    },
+    {
+      "config": {
+        "insecure": null,
+        "method": "GET",
+        "proxy_url": null,
+        "timeout": null,
+        "url": "\"https://www.cbr-xml-daily.ru/daily_json.js\""
+      },
+      "description": null,
+      "inputs_config": {
+        "body": {
+          "value": null
+        },
+        "headers": {
+          "value": [
+            {
+              "name": "\"Content-Type\"",
+              "value": "\"text/json\""
+            }
+          ]
+        }
+      },
+      "key": "53e0b6da-da79-4bb8-8669-dff1bb5c00f5",
+      "loc": "937.5 712.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "getCurrencyRates",
+      "type": "Elixir.Df.Diagram.Components.Net.HTTP"
+    },
+    {
+      "config": {
+        "assignments": [
+          {
+            "target": "$var.response.customer_id",
+            "value": "$node.Input.data.customer_id"
+          },
+          {
+            "target": "$var.response.total_monthly_payment_RUR",
+            "value": "$var.total_payment_RUR"
+          }
+        ]
+      },
+      "description": null,
+      "inputs_config": {
+        "response": {
+          "value": null
+        }
+      },
+      "key": "571f373e-6d4e-47c3-9cd7-d7d106ae4981",
+      "loc": "1237.5 862.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "responseAssignment",
+      "type": "Elixir.Df.Diagram.Components.Context.Variables.Assignment"
+    },
+    {
+      "config": {
+        "function": "has_foreign_currencies",
+        "script_path": "tutorial_script.py",
+        "timeout": null
+      },
+      "description": null,
+      "inputs_config": {
+        "customer": {
+          "value": "$node.Input.data"
+        }
+      },
+      "key": "5737a25d-d7a0-468a-97f9-2ede76cf9d52",
+      "loc": "937.5 412.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "hasForeignCurrencies",
+      "type": "Elixir.Df.Diagram.Components.Code.Python"
+    },
+    {
+      "config": {
+        "path": "tutorial.ds.json",
+        "schema": "Customer"
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "60902098-ab7f-4a8f-b7b1-0c3aed047968",
+      "loc": "937.5 262.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "loop_end": [
+          "429d18ee-d89d-4cd0-8d9d-39d31ea05523",
+          "ca12e0dc-c2be-4715-b371-07ad12bda371"
+        ],
+        "loop_start": "ce43d4b0-e168-4ac5-aafe-519943b2b768",
+        "stop_condition": null
+      },
+      "description": null,
+      "inputs_config": {
+        "input_collection": {
+          "value": "$node.Input.data.loans"
+        }
+      },
+      "key": "8892c96e-5765-4780-b8b0-1ba5695e0d50",
+      "loc": "1256.25 656.25",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Count Total Payment",
+      "type": "Elixir.Df.Diagram.Components.Collections.ForEach"
+    },
+    {
+      "config": {
+        "path": "tutorial.ds.json",
+        "schema": "Response"
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "$var.response"
+        }
+      },
+      "key": "af8eb668-d48f-4104-8a0b-d3d630d4bc3d",
+      "loc": "1237.5 1012.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "$node.Catch.error"
+        }
+      },
+      "key": "c34c547c-3eb9-4d2f-b971-066b52162139",
+      "loc": "1537.5 712.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output2",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "assignments": [
+          {
+            "target": "$var.total_payment_RUR",
+            "value": "nullvalue($var.total_payment_RUR, 0) + ($loop.item.monthly_payment * $node.getRate.result)"
+          }
+        ]
+      },
+      "description": null,
+      "inputs_config": {
+        "total_payment_RUR": {
+          "value": null
+        }
+      },
+      "key": "ca12e0dc-c2be-4715-b371-07ad12bda371",
+      "loc": "1312.5 712.5",
+      "parent_component_key": "8892c96e-5765-4780-b8b0-1ba5695e0d50",
+      "post_config": {},
+      "title": "addToSum1",
+      "type": "Elixir.Df.Diagram.Components.Context.Variables.Assignment"
+    },
+    {
+      "config": {
+        "multi_match": null,
+        "patterns": [
+          {
+            "expression": "$loop.item.currency == \"RUR\"",
+            "name": "Yes"
+          }
+        ]
+      },
+      "description": null,
+      "inputs_config": {
+        "1": {
+          "value": null
+        }
+      },
+      "key": "ce43d4b0-e168-4ac5-aafe-519943b2b768",
+      "loc": "1200 600",
+      "parent_component_key": "8892c96e-5765-4780-b8b0-1ba5695e0d50",
+      "post_config": {},
+      "title": "isRUR",
+      "type": "Elixir.Df.Diagram.Components.Statement.Case"
+    }
+  ],
+  "data": "{\n  \"customer_id\": \"4535464sdf\",\n  \"loans\": [\n    {\n      \"currency\": \"RUR\",\n      \"monthly_payment\": 32300.2\n    },\n    {\n      \"currency\": \"EUR\",\n      \"monthly_payment\": 323.2\n    },\n    {\n      \"currency\": \"USD\",\n      \"monthly_payment\": 323.2\n    }\n  ]\n}",
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": "1"
+      },
+      "from": "0ce4861b-94f0-4bc1-bfa2-98613a076c9d",
+      "key": "246022a1-c448-4335-81ce-b903418c36c5",
+      "title": "1. Yes",
+      "to": "53e0b6da-da79-4bb8-8669-dff1bb5c00f5"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "14c4a7a7-860e-43fb-96f9-9f954a34ee9c",
+      "key": "44be63cb-3d1f-445f-90e7-dc7cd446899e",
+      "title": "",
+      "to": "c34c547c-3eb9-4d2f-b971-066b52162139"
+    },
+    {
+      "config": {
+        "from": "otherwise"
+      },
+      "from": "0ce4861b-94f0-4bc1-bfa2-98613a076c9d",
+      "key": "62dbc074-c253-4395-9638-8b3c7e6631bf",
+      "title": "otherwise",
+      "to": "8892c96e-5765-4780-b8b0-1ba5695e0d50"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "8892c96e-5765-4780-b8b0-1ba5695e0d50",
+      "key": "64ca19fa-5442-44e5-af54-0adbfb857908",
+      "title": "",
+      "to": "571f373e-6d4e-47c3-9cd7-d7d106ae4981"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "3e23ec45-9b04-47bd-9814-00290be06e7c",
+      "key": "7f3bca5c-91c6-476c-aa74-4e51f69b41f2",
+      "title": "",
+      "to": "ca12e0dc-c2be-4715-b371-07ad12bda371"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "5737a25d-d7a0-468a-97f9-2ede76cf9d52",
+      "key": "92458c2f-34cc-404e-891c-721caa7299d0",
+      "title": "",
+      "to": "0ce4861b-94f0-4bc1-bfa2-98613a076c9d"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "60902098-ab7f-4a8f-b7b1-0c3aed047968",
+      "key": "9932576c-7872-40d9-9c3a-fe5270b0a365",
+      "title": "",
+      "to": "5737a25d-d7a0-468a-97f9-2ede76cf9d52"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "571f373e-6d4e-47c3-9cd7-d7d106ae4981",
+      "key": "c2c261fe-4102-4282-8e66-0a0dd60b4284",
+      "title": "",
+      "to": "af8eb668-d48f-4104-8a0b-d3d630d4bc3d"
+    },
+    {
+      "config": {
+        "from": "otherwise"
+      },
+      "from": "ce43d4b0-e168-4ac5-aafe-519943b2b768",
+      "key": "c8f7ff41-2ced-4efa-8a58-8ffb7854985a",
+      "title": "otherwise",
+      "to": "3e23ec45-9b04-47bd-9814-00290be06e7c"
+    },
+    {
+      "config": {
+        "from": "1"
+      },
+      "from": "ce43d4b0-e168-4ac5-aafe-519943b2b768",
+      "key": "dea79670-0609-418d-99f6-4fb942e3b611",
+      "title": "1. Yes",
+      "to": "429d18ee-d89d-4cd0-8d9d-39d31ea05523"
+    },
+    {
+      "config": {
+        "from": null
+      },
+      "from": "53e0b6da-da79-4bb8-8669-dff1bb5c00f5",
+      "key": "f8de1e8f-a419-4a41-9756-d5efab9b2d43",
+      "title": "",
+      "to": "8892c96e-5765-4780-b8b0-1ba5695e0d50"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": [
+    {
+      "name": "response",
+      "schema": {
+        "$ref": "/tutorial.ds.json#/components/schemas/Response",
+        "x-order": 0
+      }
+    },
+    {
+      "name": "total_payment_RUR",
+      "schema": {
+        "type": "number",
+        "x-order": 1
+      }
+    }
+  ]
+}

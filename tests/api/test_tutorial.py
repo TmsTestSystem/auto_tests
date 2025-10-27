@@ -234,32 +234,44 @@ class TestTutorialAPI:
             assert job_found, f"Job {job_uuid} не найден в списке jobs"
             
             logger.info("[STEP 10] Получение деталей job")
-            job_details = tutorial_process_log_api.get_job_details(job_uuid)
+            job_details_response = tutorial_process_log_api.get_job_details(job_uuid)
             logger.info("[SUCCESS] Детали job получены")
             
-            assert job_details is not None, "Детали job не получены"
-            logger.info(f"[SUCCESS] Детали job получены (содержат {len(job_details)} полей)")
+            assert job_details_response is not None, "Детали job не получены"
+            logger.info(f"[SUCCESS] Детали job получены (содержат {len(job_details_response)} полей)")
             
-            logger.info(f"[SUCCESS] Проверяем доступные поля в деталях job: {list(job_details.keys())}")
+            logger.info(f"[SUCCESS] Проверяем доступные поля в деталях job: {list(job_details_response.keys())}")
             
-            if 'status' in job_details:
-                assert job_details.get('status') == "finished", f"Job не завершен: {job_details.get('status')}"
-                logger.info(f"[SUCCESS] Статус job: {job_details.get('status')}")
+            # Извлекаем данные job из ответа (может быть вложенная структура)
+            job_details = job_details_response
+            if 'job' in job_details_response:
+                job_details = job_details_response['job']
+            elif 'data' in job_details_response:
+                job_details = job_details_response['data']
             
-            if 'job_uuid' in job_details:
-                assert job_details.get('job_uuid') == job_uuid, "Неверный job_uuid в деталях"
-                logger.info(f"[SUCCESS] job_uuid в деталях: {job_details.get('job_uuid')}")
+            logger.info(f"[SUCCESS] Извлеченные данные job: {list(job_details.keys()) if isinstance(job_details, dict) else 'не словарь'}")
             
-            if 'object_id' in job_details:
-                assert job_details.get('object_id') == "autotest_process", "Неверный object_id в деталях"
-                logger.info(f"[SUCCESS] object_id в деталях: {job_details.get('object_id')}")
-            
-            logger.info("[SUCCESS] Детали job:")
-            logger.info(f"[SUCCESS]   - object_id: {job_details.get('object_id', 'не найден')}")
-            logger.info(f"[SUCCESS]   - status: {job_details.get('status', 'не найден')}")
-            logger.info(f"[SUCCESS]   - project_code: {job_details.get('project_code', 'не найден')}")
-            logger.info(f"[SUCCESS]   - job_duration: {job_details.get('job_duration', 'не найден')}ms")
-            logger.info(f"[SUCCESS]   - job_uuid: {job_details.get('job_uuid', 'не найден')}")
+            if isinstance(job_details, dict):
+                if 'status' in job_details:
+                    assert job_details.get('status') == "finished", f"Job не завершен: {job_details.get('status')}"
+                    logger.info(f"[SUCCESS] Статус job: {job_details.get('status')}")
+                
+                if 'job_uuid' in job_details:
+                    assert job_details.get('job_uuid') == job_uuid, "Неверный job_uuid в деталях"
+                    logger.info(f"[SUCCESS] job_uuid в деталях: {job_details.get('job_uuid')}")
+                
+                if 'object_id' in job_details:
+                    assert job_details.get('object_id') == "autotest_process", "Неверный object_id в деталях"
+                    logger.info(f"[SUCCESS] object_id в деталях: {job_details.get('object_id')}")
+                
+                logger.info("[SUCCESS] Детали job:")
+                logger.info(f"[SUCCESS]   - object_id: {job_details.get('object_id', 'не найден')}")
+                logger.info(f"[SUCCESS]   - status: {job_details.get('status', 'не найден')}")
+                logger.info(f"[SUCCESS]   - project_code: {job_details.get('project_code', 'не найден')}")
+                logger.info(f"[SUCCESS]   - job_duration: {job_details.get('job_duration', 'не найден')}ms")
+                logger.info(f"[SUCCESS]   - job_uuid: {job_details.get('job_uuid', 'не найден')}")
+            else:
+                logger.info(f"[SUCCESS] Детали job (не словарь): {job_details}")
             
             logger.info("[STEP 11] Получение событий job")
             job_events = tutorial_process_log_api.get_job_events(job_uuid)

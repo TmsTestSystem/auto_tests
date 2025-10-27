@@ -1,0 +1,178 @@
+{
+  "description": "Проверка работы всего процесса",
+  "object_path": "TutorialProcess.df.json",
+  "path": "tutorial_success.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {
+        "object_result_checks": [
+          {
+            "field": null,
+            "path": [
+              "data",
+              "total_monthly_payment_RUR"
+            ],
+            "type": "equal",
+            "value": 54900
+          }
+        ]
+      },
+      "input_data": {
+        "customer_id": "4535464sdf",
+        "loans": [
+          {
+            "currency": "RUR",
+            "monthly_payment": 32300
+          },
+          {
+            "currency": "RUR",
+            "monthly_payment": 5700
+          },
+          {
+            "currency": "RUR",
+            "monthly_payment": 16900
+          }
+        ]
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "4b2d7c6d-9069-428d-a065-9ac34548b284",
+        "object_result": {
+          "data": {
+            "customer_id": "4535464sdf",
+            "total_monthly_payment_RUR": 54900
+          },
+          "error": null
+        },
+        "object_result_check_results": [
+          {
+            "actual_value": 54900,
+            "check": {
+              "field": null,
+              "path": [
+                "data",
+                "total_monthly_payment_RUR"
+              ],
+              "type": "equal",
+              "value": 54900
+            },
+            "key": null,
+            "result": "success"
+          }
+        ],
+        "result": "success",
+        "stderr": [],
+        "stdout": [
+          "Кредиты в иностранной валюте не обнаружены",
+          "Суммарный ежемесячный платёж по кредитам клиента в рублях равен 54900.0"
+        ],
+        "time": 16
+      },
+      "timeout": 60000,
+      "title": ""
+    },
+    {
+      "checks": {},
+      "input_data": {
+        "customer_id": "4535464sdf",
+        "loans": [
+          {
+            "currency": "EKS",
+            "monthly_payment": 32300
+          },
+          {
+            "currency": "RUR",
+            "monthly_payment": 5700
+          },
+          {
+            "currency": "RUR",
+            "monthly_payment": 16900
+          }
+        ]
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "5e7637b6-2c1b-4298-83c5-515e4ef55b44",
+        "object_result": {
+          "data": {
+            "category": "python",
+            "debug": {
+              "traceback": [
+                "  File \"/opt/app/_build/prod/rel/main/lib/df-1.4.1/priv/python/main.py\", line 245, in call\n    res = f(*(args + varargs), **varkw)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+                "  File \"/projects/TP/branches/ImportProject/tutorial_script.py\", line 20, in parse_currency_rates\n    return body_json['Valute'][currency_name]['Value']\n           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^\n"
+              ]
+            },
+            "error_locations": [
+              {
+                "file_path": "tutorial_script.py",
+                "length": null,
+                "line_number": 20,
+                "offset": null,
+                "type": "file"
+              },
+              {
+                "components": [
+                  {
+                    "key": "8892c96e-5765-4780-b8b0-1ba5695e0d50",
+                    "path": "TutorialProcess.df.json",
+                    "title": "Count Total Payment",
+                    "type": "Elixir.Df.Diagram.ParentContext.ForEach"
+                  },
+                  {
+                    "key": "3e23ec45-9b04-47bd-9814-00290be06e7c",
+                    "path": "TutorialProcess.df.json",
+                    "title": "getRate",
+                    "type": "Elixir.Df.Diagram.Components.Code.Python"
+                  }
+                ],
+                "links": [],
+                "type": "diagram"
+              }
+            ],
+            "message": "'EKS'",
+            "stack_trace": [
+              {
+                "key": "8892c96e-5765-4780-b8b0-1ba5695e0d50",
+                "loop_iteration": 0,
+                "object": "loop",
+                "path": "TutorialProcess.df.json",
+                "title": "Count Total Payment",
+                "type": "Elixir.Df.Diagram.ParentContext.ForEach"
+              },
+              {
+                "key": "3e23ec45-9b04-47bd-9814-00290be06e7c",
+                "loop_iteration": null,
+                "object": "component",
+                "path": "TutorialProcess.df.json",
+                "title": "getRate",
+                "type": "Elixir.Df.Diagram.Components.Code.Python"
+              }
+            ],
+            "sub_errors": null,
+            "type": "KeyError"
+          },
+          "error": null
+        },
+        "object_result_check_results": [],
+        "result": "success",
+        "stderr": [
+          "KeyError",
+          "'EKS'",
+          "  File \"/opt/app/_build/prod/rel/main/lib/df-1.4.1/priv/python/main.py\", line 245, in call\n    res = f(*(args + varargs), **varkw)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+          "  File \"/projects/TP/branches/ImportProject/tutorial_script.py\", line 20, in parse_currency_rates\n    return body_json['Valute'][currency_name]['Value']\n           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^\n"
+        ],
+        "stdout": [
+          "Обнаружены кредиты в иностранной валюте"
+        ],
+        "time": 251
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}
