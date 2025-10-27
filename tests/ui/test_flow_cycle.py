@@ -317,46 +317,6 @@ def test_flow_cycle(login_page, flow_project):
                 continue
     
     if not loop_found:
-        print("[WARN] Не удалось найти компонент Loop через текст, пробуем альтернативные методы")
-        
-        canvas = page.locator(CanvasLocators.CANVAS)
-        if canvas.is_visible():
-            canvas_box = canvas.bounding_box()
-            if canvas_box:
-                positions = [
-                    {"x": canvas_box['x'] + canvas_box['width'] * 0.3, "y": canvas_box['y'] + canvas_box['height'] * 0.3},  # Левый верх
-                    {"x": canvas_box['x'] + canvas_box['width'] * 0.7, "y": canvas_box['y'] + canvas_box['height'] * 0.3},  # Правый верх
-                    {"x": canvas_box['x'] + canvas_box['width'] * 0.5, "y": canvas_box['y'] + canvas_box['height'] * 0.2},  # Верхний центр
-                ]
-                
-                for i, pos in enumerate(positions):
-                    try:
-                        print(f"[INFO] Пробуем кликнуть по позиции {i+1}: ({pos['x']}, {pos['y']})")
-                        canvas.click(position=pos)
-                        time.sleep(1)
-                        
-                        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
-                        if details_panel.is_visible():
-                            loop_title = page.get_by_role("heading", name="diagram_element_name")
-                            if loop_title.is_visible():
-                                title_text = loop_title.text_content()
-                                if title_text and "Loop" in title_text:
-                                    print(f"[SUCCESS] Компонент Loop найден по позиции {i+1}!")
-                                    loop_found = True
-                                    break
-                                else:
-                                    print(f"[WARN] Сайдбар открылся для компонента: {title_text}")
-                            
-                            details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
-                            if details_panel_switcher.is_visible():
-                                details_panel_switcher.click()
-                                time.sleep(0.5)
-                                    
-                    except Exception as e:
-                        print(f"[WARN] Ошибка при клике по позиции {i+1}: {e}")
-                        continue
-
-    if not loop_found:
         print("[ERROR] Компонент Loop не найден на canvas!")
         raise Exception("Компонент Loop не найден в диаграмме")
 
