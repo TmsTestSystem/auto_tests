@@ -45,7 +45,73 @@ def delete_project_by_id(project_id):
     cookies = get_auth_cookies()
     resp = requests.delete(f"{PROJECTS_API}/{project_id}", cookies=cookies, verify=False)
     resp.raise_for_status()
-    return resp.status_code == 204
+    return resp.status_code in [200, 204]
+
+def clear_api_test_projects():
+    """
+    Удаляет все проекты, созданные API тестами
+    """
+    try:
+        print("[INFO] Получаем список всех проектов...")
+        projects = get_all_projects()
+        print(f"[INFO] Найдено {len(projects)} проектов")
+        
+        api_test_projects = []
+        
+        # Ищем проекты, созданные API тестами
+        for project in projects:
+            project_code = project.get("code", "")
+            project_title = project.get("title", "")
+            
+            # Проверяем паттерны API тестовых проектов
+            is_api_test = (
+                project_code.startswith("api_test_") or
+                project_title.startswith("API Test Project") or
+                "api_test" in project_code.lower()
+            )
+            
+            if is_api_test:
+                api_test_projects.append(project)
+        
+        if not api_test_projects:
+            print("[INFO] API тестовые проекты не найдены")
+            return
+        
+        print(f"[INFO] Найдено {len(api_test_projects)} API тестовых проектов:")
+        for project in api_test_projects:
+            print(f"  - {project.get('code')} ({project.get('title')})")
+        
+        # Удаляем проекты
+        deleted_count = 0
+        for project in api_test_projects:
+            try:
+                project_id = project.get("id")
+                project_code = project.get("code")
+                project_title = project.get("title")
+                
+                print(f"[INFO] Пытаемся удалить проект: {project_code} (ID: {project_id})")
+                
+                if project_id:
+                    try:
+                        success = delete_project_by_id(project_id)
+                        if success:
+                            print(f"[SUCCESS] Проект {project_code} удален успешно")
+                            deleted_count += 1
+                        else:
+                            print(f"[WARNING] Не удалось удалить проект {project_code}")
+                    except Exception as e:
+                        print(f"[ERROR] Ошибка при удалении проекта {project_code}: {e}")
+                else:
+                    print(f"[WARNING] У проекта {project_code} отсутствует ID")
+                    
+            except Exception as e:
+                print(f"[ERROR] Ошибка при обработке проекта {project.get('code', 'unknown')}: {e}")
+        
+        print(f"[SUCCESS] Удалено {deleted_count} из {len(api_test_projects)} API тестовых проектов")
+        
+    except Exception as e:
+        print(f"[ERROR] Ошибка при очистке API тестовых проектов: {e}")
+
 
 def clear_autotest_projects():
     """
@@ -187,6 +253,8 @@ if __name__ == '__main__':
         print()
     
     clear_autotest_projects()
+    print()
+    clear_api_test_projects()
     print()
     clear_shared_project_file()
     

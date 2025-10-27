@@ -214,3 +214,93 @@ def flow_project(login_page):
                 except Exception as e:
                     print(f"[WARNING] Ошибка при удалении проекта {project_code}: {e}")
 
+
+def create_project_via_api(title: str, code: str, git_url: str = "/opt/app/empty_repo", default_branch: str = "master"):
+    """Создать проект через API"""
+    data = {
+        "title": title,
+        "code": code,
+        "git_url": git_url,
+        "default_branch": default_branch,
+        "gradient": "blue",  # Добавляем обязательное поле
+        "description": f"API тестовый проект {code}",  # Добавляем обязательное поле
+        "git": git_url  # Добавляем обязательное поле
+    }
+    
+    try:
+        response = requests.post(get_projects_api(), json=data, cookies=get_auth_cookies(), verify=False, timeout=30)
+        
+        if response.status_code == 422:
+            print(f"[DEBUG] Ошибка валидации при создании проекта:")
+            print(f"[DEBUG] Данные: {data}")
+            print(f"[DEBUG] Ответ сервера: {response.text}")
+        
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Ошибка при создании проекта {code}: {e}")
+        raise
+
+
+def delete_project_via_api(project_id: str):
+    """Удалить проект через API"""
+    url = f"{get_projects_api()}/{project_id}"
+    
+    try:
+        response = requests.delete(url, cookies=get_auth_cookies(), verify=False, timeout=30)
+        response.raise_for_status()
+        return response.status_code == 204
+    except requests.exceptions.RequestException as e:
+        print(f"[ERROR] Ошибка при удалении проекта {project_id}: {e}")
+        raise
+
+
+@pytest.fixture(scope="session")
+def api_project():
+    """Фикстура для создания проекта через API"""
+    import uuid
+    
+    # Создаем проект через API
+    unique_id = str(uuid.uuid4())[:8]
+    project_title = f"API Test Project {unique_id}"
+    project_code = f"api_test_{unique_id}"
+    
+    print(f"[API_SETUP] Создаем проект через API: {project_code}")
+    
+    project_info = None
+    try:
+        project_info = create_project_via_api(project_title, project_code)
+        print(f"[API_SETUP] Проект создан: {project_info}")
+        
+        yield project_code, project_info
+        
+    except Exception as e:
+        print(f"[API_ERROR] Не удалось создать проект: {e}")
+        # Fallback - используем существующий проект
+        project_code = "regr"
+        print(f"[API_FALLBACK] Используем существующий проект: {project_code}")
+        yield project_code, None
+    
+    # Очистка - удаляем проект если он был создан
+    if project_info:
+        try:
+            delete_project_via_api(project_info['id'])
+            print(f"[API_CLEANUP] Проект {project_code} удален (ID: {project_info['id']})")
+        except Exception as cleanup_error:
+            print(f"[API_WARN] Ошибка при удалении проекта: {cleanup_error}")
+
+
+@pytest.fixture(scope="session")
+def file_panel_api(api_project):
+    """Фикстура для создания API клиента файловой панели"""
+    from api.file_panel_api import FilePanelAPI
+    
+    project_code, project_info = api_project
+    
+    print(f"[FILE_PANEL_SETUP] Используем проект: {project_code}")
+    file_panel = FilePanelAPI(project_code)
+    
+    yield file_panel
+    
+    print(f"[FILE_PANEL_CLEANUP] Тест завершен для проекта: {project_code}")
+
