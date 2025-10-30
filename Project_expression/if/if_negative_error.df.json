@@ -1,0 +1,74 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "path": "",
+        "schema": null
+      },
+      "description": "Синтаксическая ошибка - тип данных результата условия отличен от boolean ",
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "22caf218-f7ec-49d8-af6e-5cd225af60fb",
+      "loc": "862.5 487.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": "if (18)\n    {$var.decision = \"ACCEPT\"}\nelse {$var.decision = \"REJECT\"}"
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "path": "",
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"decision\":$var.decision\n}"
+        }
+      },
+      "key": "d74d488f-5103-4271-8186-fc3cb446f855",
+      "loc": "1312.5 487.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    }
+  ],
+  "data": "{\n  \"age\": 18\n}",
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "22caf218-f7ec-49d8-af6e-5cd225af60fb",
+      "key": "efad2329-fdbd-4f1e-8673-8802ae90c736",
+      "title": "",
+      "to": "d74d488f-5103-4271-8186-fc3cb446f855"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": [
+    {
+      "name": "age",
+      "schema": {
+        "type": "integer",
+        "x-order": 0
+      }
+    },
+    {
+      "name": "decision",
+      "schema": {
+        "type": "string",
+        "x-order": 1
+      }
+    }
+  ]
+}

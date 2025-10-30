@@ -1,0 +1,37 @@
+{
+  "description": null,
+  "object_path": "len/len_object.df.json",
+  "path": "len/len_object.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {},
+      "input_data": {
+        "data": {
+          "a": 1,
+          "b": 2,
+          "c": 3
+        }
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "24b1b6c8-e842-45c3-a059-ce5f6c63522b",
+        "object_result": {
+          "data": {
+            "len_object": 3
+          },
+          "error": null
+        },
+        "object_result_check_results": [],
+        "result": "success",
+        "stderr": [],
+        "stdout": [],
+        "time": 3
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}

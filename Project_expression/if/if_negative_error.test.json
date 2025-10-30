@@ -1,0 +1,74 @@
+{
+  "description": null,
+  "object_path": "if/if_negative_error.df.json",
+  "path": "if/if_negative_error.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {
+        "object_result_checks": [
+          {
+            "field": null,
+            "path": [
+              "error",
+              "message"
+            ],
+            "type": "equal",
+            "value": "Делить на ноль нельзя. Исправьте выражение"
+          }
+        ]
+      },
+      "input_data": {
+        "age": 18
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "8b67c1cf-4d3c-4672-b24c-7b84c35ba5bf",
+        "object_result": {
+          "error": {
+            "category": "internal",
+            "debug": {
+              "elixir_error": "** (CaseClauseError) no case clause matching: {{:ok, 18}, %ExPression.Interpreter.Context{bindings: %{}, functions_module: nil, special_modules: [Df.Diagram.Expression.Special.Node, Df.Diagram.Expression.Special.Env, Df.Diagram.Expression.Special.Meta, Df.Diagram.Expression.Special.Var, Df.Diagram.Expression.Special.Loop, Df.Diagram.Expression.Special.This, Df.Diagram.Expression.Special.Finish], error: nil, data: %Df.Diagram.Expression.Context{diagram: %Df.Diagram.Executor.OneProcess.Diagram{project: %Df.ProjectsRepo.Project{project_code: \"TP\", ref_type: :branch, ref_name: \"ImportProject\"}, path: \"if/if_negative_error.df.json\", topic: \"TP@branch@ImportProject@#Reference<0.279544654.1644691460.229161>\", job_uuid: %Df.Diagram.JobUuidLocal{value: \"8b67c1cf-4d3c-4672-b24c-7b84c35ba5bf\"}, state_storage: %Df.Diagram.StateStorage.StateStoragePd{pid: #PID<0.167218.0>}, executor: %Df.Diagram.Executor.OneProcessExecutor{}, meta_diagram: nil, parent_context: nil, events_handler: Df.Testing.Running.EventsStorage, created_in: \"/opt/app/lib/df/testing/running/runner.ex:25\", listeners: nil, cleaner_pid: nil, plugins: %Df.Diagram.Plugin.State{states: %{Df.Diagram.Plugin.Mock => :presented}, plugins: [Df.Diagram.Plugin.Mock]}}, diagram_vars: nil, this_component: %Df.Diagram.Component{diagram: %Df.Diagram.Executor.OneProcess.Diagram{project: %Df.ProjectsRepo.Project{project_code: \"TP\", ref_type: :branch, ref_name: \"ImportProject\"}, path: \"if/if_negative_error.df.json\", topic: \"TP@branch@ImportProject@#Reference<0.279544654.1644691460.229161>\", job_uuid: %Df.Diagram.JobUuidLocal{value: \"8b67c1cf-4d3c-4672-b24c-7b84c35ba5bf\"}, state_storage: %Df.Diagram.StateStorage.StateStoragePd{pid: #PID<0.167218.0>}, executor: %Df.Diagram.Executor.OneProcessExecutor{}, meta_diagram: nil, parent_context: nil, events_handler: Df.Testing.Running.EventsStorage, created_in: \"/opt/app/lib/df/testing/running/runner.ex:25\", listeners: nil, cleaner_pid: nil, plugins: %Df.Diagram.Plugin.State{states: %{Df.Diagram.Plugin.Mock => :presented}, plugins: [Df.Diagram.Plugin.Mock]}}, key: \"22caf218-f7ec-49d8-af6e-5cd225af60fb\", parent_component_key: nil, updated_at: 1761747365570047, title: \"Input\", description: \"Синтаксическая ошибка - тип данных результата условия отличен от boolean \", module: Df.Diagram.Components.Entrypoint.OpenAPI, input_ports: %{\"data\" => %Df.Diagram.Port{value: %{\"age\" => 18}, status: :done}}, output_ports: %{\"data\" => %Df.Diagram.Port{value: %{\"age\" => 18}, status: :done}, \"error\" => %Df.Diagram.Port{value: nil, status: :initial}}, input_desc: %{\"data\" => %OpenApiSpex.Schema{type: :object, properties: %{}, additionalProperties: %OpenApiSpex.Schema{nullable: true, extensions: %{\"x-expression\" => true, \"x-type\" => \"any\", \"x-type-for-label\" => \"Any\"}}, extensions: %{\"x-expression\" => true, \"x-hidden\" => true, \"x-label\" => \"Данные\", \"x-order\" => 0, \"x-type\" => \"object\", \"x-type-for-label\" => \"Object\"}}}, output_desc: %{\"data\" => %OpenApiSpex.Schema{type: :object, properties: %{}, additionalProperties: %OpenApiSpex.Schema{nullable: true, extensions: %{\"x-expression\" => true, \"x-type\" => \"any\", \"x-type-for-label\" => \"Any\"}}, description: \"Входные данные процесса\", extensions: %{\"x-expression\" => true, \"x-label\" => \"result\", \"x-order\" => 0, \"x-type\" => \"object\", \"x-type-for-label\" => \"Object\"}}, \"error\" => %OpenApiSpex.Schema{type: :object, properties: %{message: %OpenApiSpex.Schema{type: :string, extensions: %{\"x-expression\" => true, \"x-type\" => \"string\", \"x-type-for-label\" => \"String\"}}, type: %OpenApiSpex.Schema{type: :string, extensions: %{\"x-expression\" => true, \"x-type\" => \"string\", \"x-type-for-label\" => \"String\"}}, stack_trace: %OpenApiSpex.Schema{type: :array, items: %OpenApiSpex.Schema{type: :object, properties: %{path: %OpenApiSpex.Schema{type: :string, extensions: %{\"x-expression\" => true, \"x-type\" => \"string\", \"x-type-for-label\" => \"String\"}}, title: %OpenApiSpex.Schema{type: :string, nullable: true, extensions: %{\"x-expression\" => true, \"x-type\" => \"string\", \"x-type-for-label\" => \"String\"}}, key: %OpenApiSpex.Schema{type: :string, extensions: %{\"x-expression\" => true, \"x-type\" => \"string\", \"x-type-for-label\" => \"String\"}}}, extensions: %{\"x-expression\" => true, \"x-type\" => \"object\", \"x-type-for-label\" => \"Object\"}}, extensions: %{\"x-expression\" => true, \"x-type\" => \"list\", \"x-type-for-label\" => \"List\"}}}, description: \"Результат компонента при ошибке\", nullable: true, extensions: %{\"x-expression\" => true, \"x-hidden\" => false, \"x-order\" => 1, \"x-type\" => \"object\", \"x-type-for-label\" => \"Object\"}}}, init_data: %{}, runtime_data: %{}, internal_data: nil, inputs_config: %{\"data\" => %Df.Diagram.Port{value: nil, status: :initial}}, config_values: %{\"path\" => \"\", \"schema\" => nil}, config: %{\"path\" => \"\", \"schema\" => nil}, config_desc: %{\"path\" => %OpenApiSpex.Schema{type: :string, description: \"Выберите структуру данных из файлов проекта\", extensions: %{\"x-expression\" => false, \"x-label\" => \"Структура\", \"x-order\" => 0, \"x-type\" => \"FilePath.Structure\", \"x-type-for-label\" => false}}, \"schema\" => %OpenApiSpex.Schema{type: :string, extensions: %{\"x-expression\" => false, \"x-label\" => \"Схема\", \"x-order\" => 1, \"x-readonly\" => true, \"x-type\" => \"string\", \"x-type-for-label\" => false}}}, post_config: %{\"postprocessing\" => \"if (18)\\n    {$var.decision = \\\"ACCEPT\\\"}\\nelse {$var.decision = \\\"REJECT\\\"}\"}, post_config_desc: %{\"postprocessing\" => %OpenApiSpex.Schema{type: :string, description: \"Код на языке выражений, который выполняется после исполнения компонента\", nullable: true, extensions: %{\"x-expression\" => true, \"x-label\" => \"Постобработка\", \"x-order\" => 100, \"x-type\" => \"string\", \"x-type-for-label\" => false}}}, listeners: [], status: :done, errors: [], loc: \"862.5 487.5\"}}, stacktrace: [%ExPression.Interpreter.StacktraceItem{token: %ExPression.Tokens.If{condition: %ExPression.Tokens.Integer{name: :integer, position: {4, 2}, args: [18]}, when_true: %ExPression.Tokens.CodeBlock{ast: [%ExPression.Tokens.Special{path: [\"var\", \"decision\"], mode: %ExPression.Tokens.Special.WriteMode{value: %ExPression.Tokens.String{name: :string, position: {29, 1}, args: [\"ACCEPT\"]}}, position: {13, 1}}], position: {12, 1}}, when_false: %ExPression.Tokens.CodeBlock{ast: [%ExPression.Tokens.Special{path: [\"var\", \"decision\"], mode: %ExPression.Tokens.Special.WriteMode{value: %ExPression.Tokens.String{name: :string, position: {61, 1}, args: [\"REJECT\"]}}, position: {45, 1}}], position: {44, 1}}, position: {0, 2}}}], imports: [], aliases: %{}, explain: nil, adapters: %ExPression.Adapters{file_operations: %Df.ExPression.FileOperationsAdapter{project: %Df.ProjectsRepo.Project{project_code: \"TP\", ref_type: :branch, ref_name: \"ImportProject\"}}}}}\n    (ex_pression 1.1.0) lib/ex_pression/tokens/if.ex:38: ExPression.Interpreter.TokenProtocol.ExPression.Tokens.If.eval/2\n    (ex_pression 1.1.0) lib/ex_pression/interpreter/token.ex:29: ExPression.Interpreter.Token.eval/2\n    (ex_pression 1.1.0) lib/ex_pression/interpreter.ex:19: anonymous fn/2 in ExPression.Interpreter.evaluate/2\n    (elixir 1.18.4) lib/enum.ex:4968: Enumerable.List.reduce/3\n    (elixir 1.18.4) lib/enum.ex:2600: Enum.reduce_while/3\n    (ex_pression 1.1.0) lib/ex_pression/interpreter.ex:18: ExPression.Interpreter.evaluate/2\n    (ex_pression 1.1.0) lib/ex_pression.ex:51: ExPression.eval/2\n    (df 1.4.1) lib/df/diagram/expression/common.ex:30: Df.Diagram.Expression.Common.execute/3\n"
+            },
+            "error_locations": [
+              {
+                "components": [
+                  {
+                    "key": "22caf218-f7ec-49d8-af6e-5cd225af60fb",
+                    "path": "if/if_negative_error.df.json",
+                    "title": "Input",
+                    "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+                  }
+                ],
+                "links": [],
+                "type": "diagram"
+              }
+            ],
+            "message": "Внутренняя ошибка",
+            "stack_trace": [
+              {
+                "key": "22caf218-f7ec-49d8-af6e-5cd225af60fb",
+                "loop_iteration": null,
+                "object": "component",
+                "path": "if/if_negative_error.df.json",
+                "title": "Input",
+                "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+              }
+            ],
+            "sub_errors": null,
+            "type": "InternalError"
+          }
+        },
+        "object_result_check_results": [],
+        "result": "error",
+        "stderr": [],
+        "stdout": [],
+        "time": 5
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}

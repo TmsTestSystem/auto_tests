@@ -1,0 +1,74 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "path": "",
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "a7c52836-be8f-4193-a2c7-faff75f4b6fa",
+      "loc": "862.5 562.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": "if ($this.data.age >= 18)\n    {$var.decision = \"ACCEPT\"}\nelse {$var.decision = \"REJECT\"}"
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "path": "",
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"decision\":$var.decision\n}"
+        }
+      },
+      "key": "cb6a667c-8fa4-4522-835f-ff2398df461c",
+      "loc": "1312.5 562.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    }
+  ],
+  "data": "{\n  \"age\": 17\n}",
+  "description": "Выполнение кода else",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "a7c52836-be8f-4193-a2c7-faff75f4b6fa",
+      "key": "ca746eaa-d215-48fc-986a-ca08136c73c4",
+      "title": "",
+      "to": "cb6a667c-8fa4-4522-835f-ff2398df461c"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": [
+    {
+      "name": "age",
+      "schema": {
+        "type": "integer",
+        "x-order": 0
+      }
+    },
+    {
+      "name": "decision",
+      "schema": {
+        "type": "string",
+        "x-order": 1
+      }
+    }
+  ]
+}

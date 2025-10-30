@@ -1,0 +1,59 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "33717a10-4b98-4060-95ee-e7f96779d233",
+      "loc": "750 637.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"len_error\":len($node.Input.data.data)\n}"
+        }
+      },
+      "key": "9b62ffd2-70f0-4ad7-b711-b7bb1faa5564",
+      "loc": "975 637.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    }
+  ],
+  "data": "{\n  \"data\":true\n}",
+  "description": "Проверка функции len с невалидным типом данных",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "33717a10-4b98-4060-95ee-e7f96779d233",
+      "key": "da0cc3ce-c3e3-410b-b4de-9c7e35fd49e9",
+      "title": "",
+      "to": "9b62ffd2-70f0-4ad7-b711-b7bb1faa5564"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

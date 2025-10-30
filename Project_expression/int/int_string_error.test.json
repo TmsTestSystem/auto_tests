@@ -1,0 +1,65 @@
+{
+  "description": null,
+  "object_path": "int/int_string_error.df.json",
+  "path": "int/int_string_error.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {
+        "object_result_checks": [
+          {
+            "field": null,
+            "path": [
+              "error",
+              "message"
+            ],
+            "type": "equal",
+            "value": "'int' не поддерживает аргументы следующих типов [\"t+r\"]"
+          }
+        ]
+      },
+      "input_data": {
+        "value": "t+r"
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "e4ca866c-77e3-4f14-9d3d-c72ae3027e6a",
+        "object_result": {
+          "data": null,
+          "error": {
+            "class": "inputs_config",
+            "code": null,
+            "field": "data",
+            "level": "error",
+            "message": "'int' не поддерживает аргументы следующих типов [\"t+r\"]",
+            "type": "expression"
+          }
+        },
+        "object_result_check_results": [
+          {
+            "actual_value": "'int' не поддерживает аргументы следующих типов [\"t+r\"]",
+            "check": {
+              "field": null,
+              "path": [
+                "error",
+                "message"
+              ],
+              "type": "equal",
+              "value": "'int' не поддерживает аргументы следующих типов [\"t+r\"]"
+            },
+            "key": null,
+            "result": "success"
+          }
+        ],
+        "result": "success",
+        "stderr": [],
+        "stdout": [],
+        "time": 4
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}

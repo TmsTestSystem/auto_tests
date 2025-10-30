@@ -1,0 +1,127 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "multi_match": null,
+        "patterns": [
+          {
+            "expression": "isUndef($node.Function.data)",
+            "name": "Гоу"
+          }
+        ]
+      },
+      "description": null,
+      "inputs_config": {
+        "1": {
+          "value": null
+        }
+      },
+      "key": "2ad2aba6-0ad0-4208-b6b7-12d52d0e6b40",
+      "loc": "900 337.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Split",
+      "type": "Elixir.Df.Diagram.Components.Statement.Case"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"isUndef\":isUndef($node.Function.data)\n}"
+        }
+      },
+      "key": "464ffa66-1029-4720-8064-7a5dd80343be",
+      "loc": "937.5 487.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "function": "do_nothing",
+        "script_path": "script_do_nothing.py",
+        "timeout": null
+      },
+      "description": null,
+      "inputs_config": {
+        "a": {
+          "value": "\"kek\""
+        }
+      },
+      "key": "4d0e4ea0-9e30-4368-ab8b-e53816ee4a11",
+      "loc": "787.5 487.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Function",
+      "type": "Elixir.Df.Diagram.Components.Code.Python"
+    },
+    {
+      "config": {
+        "table_path": null
+      },
+      "description": null,
+      "inputs_config": {},
+      "key": "7bff0565-fa40-4503-811f-0f028ecef95b",
+      "loc": "787.5 337.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "DecisionTable",
+      "type": "Elixir.Df.Diagram.Components.DecisionTable"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "c7573154-0a6f-4713-b7f1-b8cdf6a724b8",
+      "loc": "637.5 487.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    }
+  ],
+  "data": "{}",
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "4d0e4ea0-9e30-4368-ab8b-e53816ee4a11",
+      "key": "727ce931-41b9-4534-98d4-c9b0828b130b",
+      "title": "",
+      "to": "464ffa66-1029-4720-8064-7a5dd80343be"
+    },
+    {
+      "config": {
+        "from": ""
+      },
+      "from": "c7573154-0a6f-4713-b7f1-b8cdf6a724b8",
+      "key": "79e25ef5-a74b-49da-8517-e7f590d14a4a",
+      "title": "",
+      "to": "4d0e4ea0-9e30-4368-ab8b-e53816ee4a11"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

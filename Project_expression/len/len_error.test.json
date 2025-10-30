@@ -1,0 +1,65 @@
+{
+  "description": null,
+  "object_path": "len/len_error.df.json",
+  "path": "len/len_error.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {
+        "object_result_checks": [
+          {
+            "field": null,
+            "path": [
+              "error",
+              "message"
+            ],
+            "type": "equal",
+            "value": "'len' не поддерживает аргументы следующих типов [true]"
+          }
+        ]
+      },
+      "input_data": {
+        "data": true
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "552fa0dd-cc75-49b4-98ee-d09c87d2e060",
+        "object_result": {
+          "data": null,
+          "error": {
+            "class": "inputs_config",
+            "code": null,
+            "field": "data",
+            "level": "error",
+            "message": "'len' не поддерживает аргументы следующих типов [true]",
+            "type": "expression"
+          }
+        },
+        "object_result_check_results": [
+          {
+            "actual_value": "'len' не поддерживает аргументы следующих типов [true]",
+            "check": {
+              "field": null,
+              "path": [
+                "error",
+                "message"
+              ],
+              "type": "equal",
+              "value": "'len' не поддерживает аргументы следующих типов [true]"
+            },
+            "key": null,
+            "result": "success"
+          }
+        ],
+        "result": "success",
+        "stderr": [],
+        "stdout": [],
+        "time": 7
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}

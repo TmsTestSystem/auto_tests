@@ -1,0 +1,59 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": "coalesce - ошибка \"нельзя делить на ноль\"",
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"coalesce\":coalesce(null, coalesce(1/0, null, null))\n}"
+        }
+      },
+      "key": "d28b3e20-62b8-4f87-8002-83c133e3c09f",
+      "loc": "1012.5 562.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "ea2912ef-b17e-4709-b134-5301f1c15db3",
+      "loc": "862.5 562.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    }
+  ],
+  "data": "{}",
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "ea2912ef-b17e-4709-b134-5301f1c15db3",
+      "key": "cc3f1960-3890-44f9-8c01-a0cad7418bd6",
+      "title": "",
+      "to": "d28b3e20-62b8-4f87-8002-83c133e3c09f"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

@@ -1,0 +1,85 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"isUndef\":isUndef($node.Function.result)\n}"
+        }
+      },
+      "key": "464ffa66-1029-4720-8064-7a5dd80343be",
+      "loc": "937.5 487.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "function": "do_nothing",
+        "script_path": "script_do_nothing.py",
+        "timeout": null
+      },
+      "description": null,
+      "inputs_config": {},
+      "key": "4d0e4ea0-9e30-4368-ab8b-e53816ee4a11",
+      "loc": "787.5 487.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Function",
+      "type": "Elixir.Df.Diagram.Components.Code.Python"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "c7573154-0a6f-4713-b7f1-b8cdf6a724b8",
+      "loc": "637.5 487.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    }
+  ],
+  "data": "{}",
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "c7573154-0a6f-4713-b7f1-b8cdf6a724b8",
+      "key": "17c5db93-ed8a-440d-bfff-64d85817b789",
+      "title": "",
+      "to": "4d0e4ea0-9e30-4368-ab8b-e53816ee4a11"
+    },
+    {
+      "config": {
+        "from": ""
+      },
+      "from": "4d0e4ea0-9e30-4368-ab8b-e53816ee4a11",
+      "key": "460a5f7f-44c6-4956-bb60-c7c38aa987e9",
+      "title": "",
+      "to": "464ffa66-1029-4720-8064-7a5dd80343be"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

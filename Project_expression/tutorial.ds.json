@@ -1,0 +1,55 @@
+{
+  "components": {
+    "schemas": {
+      "Customer": {
+        "properties": {
+          "customer_id": {
+            "description": "идентификатор клиента",
+            "type": "string"
+          },
+          "loans": {
+            "description": "кредиты",
+            "items": {
+              "$ref": "#/components/schemas/Loan"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Loan": {
+        "properties": {
+          "currency": {
+            "description": "валюта",
+            "type": "string"
+          },
+          "monthly_payment": {
+            "description": "ежемесячный платёж",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "Response": {
+        "properties": {
+          "customer_id": {
+            "description": "идентификатор клиента",
+            "type": "string"
+          },
+          "total_monthly_payment_RUR": {
+            "description": "общий ежемесячный платёж, руб",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Decision Flow",
+    "version": "1.0.0"
+  },
+  "openapi": "3.0.0",
+  "paths": {},
+  "servers": []
+}

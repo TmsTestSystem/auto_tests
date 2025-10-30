@@ -1,0 +1,68 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "89d5f635-0d0f-40a8-a764-e0c6eb7dc8b4",
+      "loc": "712.5 562.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": "$var.date = Date.today()"
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"matchValue\":matchValue($var.date.month,\n  1, \"Январь\",\n  2, \"Февраль\",\n  3, \"Март\",\n  4, \"Апрель\",\n  5, \"Май\",\n  6, \"Июнь\",\n  7, \"Июль\",\n  8, \"Август\",\n  9, \"Сентябрь\",\n  10, \"Октябрь\",\n  11, \"Ноябрь\",\n  12, \"Декабрь\",\n  \"Неизвестный сезон\"\n)\n}"
+        }
+      },
+      "key": "be18a169-b2ae-4415-9623-fe8e95baa316",
+      "loc": "1012.5 562.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    }
+  ],
+  "data": {},
+  "description": "Проверка функции matchValue",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "89d5f635-0d0f-40a8-a764-e0c6eb7dc8b4",
+      "key": "f40cb2cd-1657-474d-989c-1dd2a2b0cc3d",
+      "title": "",
+      "to": "be18a169-b2ae-4415-9623-fe8e95baa316"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": [
+    {
+      "name": "date",
+      "schema": {
+        "format": "date",
+        "type": "string",
+        "x-order": 0
+      }
+    }
+  ]
+}

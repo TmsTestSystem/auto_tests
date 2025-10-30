@@ -1,0 +1,59 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"maxList\": max($node.Input.data.c)\n}"
+        }
+      },
+      "key": "b551de8d-92de-4b2a-83e4-c08801407a25",
+      "loc": "862.5 562.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "c0414de6-6a66-4598-bd04-321a8f273352",
+      "loc": "637.5 562.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    }
+  ],
+  "data": "{\n  \"a\":1,\n  \"b\":2,\n  \"c\":[1,2,3]\n}",
+  "description": "Валидная проверка функции max(list)",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "c0414de6-6a66-4598-bd04-321a8f273352",
+      "key": "5fea9c23-1400-4f3c-a0df-500a81e8b5ad",
+      "title": "",
+      "to": "b551de8d-92de-4b2a-83e4-c08801407a25"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

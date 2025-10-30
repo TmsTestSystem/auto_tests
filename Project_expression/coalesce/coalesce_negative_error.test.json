@@ -1,0 +1,63 @@
+{
+  "description": null,
+  "object_path": "coalesce/coalesce_negative_error.df.json",
+  "path": "coalesce/coalesce_negative_error.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {
+        "object_result_checks": [
+          {
+            "field": null,
+            "path": [
+              "error",
+              "message"
+            ],
+            "type": "equal",
+            "value": "Делить на ноль нельзя. Исправьте выражение"
+          }
+        ]
+      },
+      "input_data": {},
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "62b873b1-9291-4acb-9eee-8fa30a729684",
+        "object_result": {
+          "data": null,
+          "error": {
+            "class": "inputs_config",
+            "code": null,
+            "field": "data",
+            "level": "error",
+            "message": "Делить на ноль нельзя. Исправьте выражение",
+            "type": "expression"
+          }
+        },
+        "object_result_check_results": [
+          {
+            "actual_value": "Делить на ноль нельзя. Исправьте выражение",
+            "check": {
+              "field": null,
+              "path": [
+                "error",
+                "message"
+              ],
+              "type": "equal",
+              "value": "Делить на ноль нельзя. Исправьте выражение"
+            },
+            "key": null,
+            "result": "success"
+          }
+        ],
+        "result": "success",
+        "stderr": [],
+        "stdout": [],
+        "time": 13
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}

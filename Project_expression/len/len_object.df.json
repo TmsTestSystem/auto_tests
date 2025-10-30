@@ -1,0 +1,59 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"len_object\":len($node.Input.data.data)\n}"
+        }
+      },
+      "key": "1a25b732-7d85-45be-b12f-1545e310e745",
+      "loc": "1162.5 562.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "9b4d4ca0-68be-4e6c-83ee-b43b2cfcad1b",
+      "loc": "937.5 562.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    }
+  ],
+  "data": "{\n\"data\":{\n  \"a\":1,\n  \"b\":2,\n  \"c\":3\n  }\n}",
+  "description": "Проверка функции len с типом данных object",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "9b4d4ca0-68be-4e6c-83ee-b43b2cfcad1b",
+      "key": "035bb9ab-189f-4807-991c-9cae4c6df24d",
+      "title": "",
+      "to": "1a25b732-7d85-45be-b12f-1545e310e745"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

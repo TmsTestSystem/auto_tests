@@ -1,0 +1,67 @@
+{
+  "description": null,
+  "object_path": "matchValue/matchValue_error.df.json",
+  "path": "matchValue/matchValue_error.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {
+        "object_result_checks": [
+          {
+            "field": null,
+            "path": [
+              "error",
+              "message"
+            ],
+            "type": "equal",
+            "value": "Функция matchValue должна иметь четное количество аргументов не меньше 4"
+          }
+        ]
+      },
+      "input_data": {
+        "data": {
+          "a": 1
+        }
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "dd08d28b-fdbb-4c6d-b684-5aab1d8c6b73",
+        "object_result": {
+          "data": null,
+          "error": {
+            "class": "inputs_config",
+            "code": null,
+            "field": "data",
+            "level": "error",
+            "message": "Функция matchValue должна иметь четное количество аргументов не меньше 4",
+            "type": "expression"
+          }
+        },
+        "object_result_check_results": [
+          {
+            "actual_value": "Функция matchValue должна иметь четное количество аргументов не меньше 4",
+            "check": {
+              "field": null,
+              "path": [
+                "error",
+                "message"
+              ],
+              "type": "equal",
+              "value": "Функция matchValue должна иметь четное количество аргументов не меньше 4"
+            },
+            "key": null,
+            "result": "success"
+          }
+        ],
+        "result": "success",
+        "stderr": [],
+        "stdout": [],
+        "time": 21
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "description": null,
+  "object_path": "if/if_else_positive.df.json",
+  "path": "if/if_else_positive.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {},
+      "input_data": {
+        "age": 17
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "a2a00752-6dac-42e2-b58a-ecc404260887",
+        "object_result": {
+          "data": {
+            "decision": "REJECT"
+          },
+          "error": null
+        },
+        "object_result_check_results": [],
+        "result": "success",
+        "stderr": [],
+        "stdout": [],
+        "time": 13
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}

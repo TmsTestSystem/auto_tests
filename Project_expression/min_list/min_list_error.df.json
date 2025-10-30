@@ -1,0 +1,59 @@
+{
+  "background_cards": [],
+  "components": [
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": null
+        }
+      },
+      "key": "1070d579-cc51-4358-8802-a028148b6e93",
+      "loc": "750 562.5",
+      "parent_component_key": null,
+      "post_config": {
+        "postprocessing": null
+      },
+      "title": "Input",
+      "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
+    },
+    {
+      "config": {
+        "path": null,
+        "schema": null
+      },
+      "description": null,
+      "inputs_config": {
+        "data": {
+          "value": "{\n\"minList\": min($node.Input.data.d)\n}"
+        }
+      },
+      "key": "cc76e37c-98d8-425a-8137-9dced24f16ca",
+      "loc": "1012.5 562.5",
+      "parent_component_key": null,
+      "post_config": {},
+      "title": "Output",
+      "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
+    }
+  ],
+  "data": "{\n  \"a\":1,\n  \"b\":2,\n  \"c\":[1,2,3],\n  \"d\":{\"wrong\":true}\n}",
+  "description": "",
+  "links": [
+    {
+      "config": {
+        "from": null
+      },
+      "from": "1070d579-cc51-4358-8802-a028148b6e93",
+      "key": "3dc1e336-d297-4359-8bfe-d417449a966e",
+      "title": "",
+      "to": "cc76e37c-98d8-425a-8137-9dced24f16ca"
+    }
+  ],
+  "meta": {},
+  "title": null,
+  "vars": []
+}

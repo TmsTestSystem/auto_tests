@@ -1,0 +1,39 @@
+{
+  "description": null,
+  "object_path": "max_list/max_list_positive.df.json",
+  "path": "max_list/max_list_positive.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {},
+      "input_data": {
+        "a": 1,
+        "b": 2,
+        "c": [
+          1,
+          2,
+          3
+        ]
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "8fae929e-73f9-483b-b04c-516f69510daa",
+        "object_result": {
+          "data": {
+            "maxList": 3
+          },
+          "error": null
+        },
+        "object_result_check_results": [],
+        "result": "success",
+        "stderr": [],
+        "stdout": [],
+        "time": 5
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}

@@ -64,6 +64,70 @@ class TestTutorialAPI:
                 logger.warning(f"[TUTORIAL_WARN] Ошибка при удалении проекта туториала: {cleanup_error}")
         finally:
             logger.close()
+
+    # Утилита для ручной очистки туториальных проектов на стенде
+    # Ищет проекты, созданные тестом туториала, и удаляет их через API
+    @staticmethod
+    def clear_tutorial_projects():
+        logger = setup_test_logger("tutorial_cleanup")
+        try:
+            base_url = get_api_base_url()
+            cookies = get_auth_cookies()
+
+            logger.info("[TUTORIAL_CLEAN] Получаем список всех проектов...")
+            resp = requests.get(f"{base_url}/api/projects", cookies=cookies, verify=False, timeout=30)
+            resp.raise_for_status()
+            projects = resp.json()
+
+            tutorial_projects = []
+            for prj in projects:
+                code = (prj.get("code") or "").lower()
+                title = prj.get("title") or ""
+
+                is_tutorial = (
+                    code.startswith("tutorial_") or
+                    title.startswith("Tutorial Project")
+                )
+                if is_tutorial:
+                    tutorial_projects.append(prj)
+
+            if not tutorial_projects:
+                logger.info("[TUTORIAL_CLEAN] Проекты туториала не найдены")
+                return
+
+            logger.info(f"[TUTORIAL_CLEAN] Найдено {len(tutorial_projects)} туториальных проектов")
+
+            deleted = 0
+            for prj in tutorial_projects:
+                try:
+                    prj_id = prj.get("id")
+                    prj_code = prj.get("code")
+                    if not prj_id:
+                        logger.warning(f"[TUTORIAL_WARN] У проекта {prj_code} отсутствует ID")
+                        continue
+
+                    del_resp = requests.delete(
+                        f"{base_url}/api/projects/{prj_id}",
+                        cookies=cookies,
+                        verify=False,
+                        timeout=30,
+                    )
+                    if del_resp.status_code in (200, 204):
+                        deleted += 1
+                        logger.info(f"[TUTORIAL_CLEAN] Удален проект: {prj_code}")
+                    else:
+                        logger.warning(
+                            f"[TUTORIAL_WARN] API вернул {del_resp.status_code} при удалении {prj_code}: {del_resp.text}"
+                        )
+                except Exception as e:
+                    logger.warning(f"[TUTORIAL_WARN] Ошибка при удалении проекта {prj.get('code')}: {e}")
+
+            logger.info(f"[TUTORIAL_CLEAN] Удалено {deleted} из {len(tutorial_projects)} туториальных проектов")
+        except Exception as e:
+            logger.error(f"[TUTORIAL_ERROR] Ошибка при очистке туториальных проектов: {e}")
+            raise
+        finally:
+            logger.close()
     
     @pytest.fixture(scope="session")
     def tutorial_file_panel_api(self, tutorial_project):

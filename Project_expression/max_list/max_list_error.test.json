@@ -1,0 +1,74 @@
+{
+  "description": null,
+  "object_path": "max_list/max_list_error.df.json",
+  "path": "max_list/max_list_error.test.json",
+  "save_test_results": true,
+  "tests": [
+    {
+      "checks": {
+        "object_result_checks": [
+          {
+            "field": null,
+            "path": [
+              "error",
+              "message"
+            ],
+            "type": "equal",
+            "value": "'max' не поддерживает аргументы следующих типов [%{\"wrong\" => true}]"
+          }
+        ]
+      },
+      "input_data": {
+        "a": 1,
+        "b": 2,
+        "c": [
+          1,
+          2,
+          3
+        ],
+        "d": {
+          "wrong": true
+        }
+      },
+      "input_meta": {},
+      "mocks": [],
+      "test_result": {
+        "check_results": [],
+        "job_uuid": "ca68b0c4-d324-4ae9-8040-deae64c7a584",
+        "object_result": {
+          "data": null,
+          "error": {
+            "class": "inputs_config",
+            "code": null,
+            "field": "data",
+            "level": "error",
+            "message": "'max' не поддерживает аргументы следующих типов [%{\"wrong\" => true}]",
+            "type": "expression"
+          }
+        },
+        "object_result_check_results": [
+          {
+            "actual_value": "'max' не поддерживает аргументы следующих типов [%{\"wrong\" => true}]",
+            "check": {
+              "field": null,
+              "path": [
+                "error",
+                "message"
+              ],
+              "type": "equal",
+              "value": "'max' не поддерживает аргументы следующих типов [%{\"wrong\" => true}]"
+            },
+            "key": null,
+            "result": "success"
+          }
+        ],
+        "result": "success",
+        "stderr": [],
+        "stdout": [],
+        "time": 4
+      },
+      "timeout": 60000,
+      "title": ""
+    }
+  ]
+}
