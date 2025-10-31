@@ -18,4 +18,3 @@ def extract_job_payload(details_json: Dict[str, Any]) -> Dict[str, Any]:
             job_details = details_json['data']
     return job_details
 
-

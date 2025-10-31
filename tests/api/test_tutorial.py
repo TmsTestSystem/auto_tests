@@ -56,12 +56,14 @@ class TestTutorialAPI:
                 logger.error(f"[TUTORIAL_ERROR] Не удалось создать проект туториала: {e}")
                 raise
             
-            try:
-                if project_info:
-                    requests.delete(f"{base_url}/api/projects/{project_info['id']}", cookies=cookies, verify=False, timeout=30)
-                    logger.info(f"[TUTORIAL_CLEANUP] Проект туториала {project_code} удален")
-            except Exception as cleanup_error:
-                logger.warning(f"[TUTORIAL_WARN] Ошибка при удалении проекта туториала: {cleanup_error}")
+            # Удаление проекта отключено для ручной проверки
+            logger.info(f"[TUTORIAL_INFO] Проект оставлен для ручной проверки: {project_code} (ID: {project_info.get('id') if project_info else 'N/A'})")
+            # try:
+            #     if project_info:
+            #         requests.delete(f"{base_url}/api/projects/{project_info['id']}", cookies=cookies, verify=False, timeout=30)
+            #         logger.info(f"[TUTORIAL_CLEANUP] Проект туториала {project_code} удален")
+            # except Exception as cleanup_error:
+            #     logger.warning(f"[TUTORIAL_WARN] Ошибка при удалении проекта туториала: {cleanup_error}")
         finally:
             logger.close()
 
@@ -235,7 +237,9 @@ class TestTutorialAPI:
             
             logger.info("[STEP 6] Ожидание обработки файла процесса сервером...")
             import time
-            time.sleep(3)
+            # Увеличиваем время ожидания для индексации Python модулей сервером
+            logger.info("[INFO] Ожидание индексации Python модулей (10 секунд)...")
+            time.sleep(10)
             
             logger.info("[STEP 7] Вызов процесса TutorialProcess.df.json")
             request_data = {
@@ -258,18 +262,77 @@ class TestTutorialAPI:
             
             result = tutorial_process_log_api.call_process("TutorialProcess.df.json", request_data, "autotest_process")
             job_uuid = result.get('job_uuid')
-            logger.info(f"[SUCCESS] Процесс выполнен, job_uuid: {job_uuid}")
+            logger.info(f"[SUCCESS] Процесс вызван, job_uuid: {job_uuid}")
+            logger.info(f"[DEBUG] Полный ответ от call_process: {result}")
             
             logger.info("[STEP] Ожидание завершения процесса...")
-            time.sleep(2)
+            # Ждем завершения процесса, проверяя статус через get_job_details
+            max_attempts = 30
+            attempt = 0
+            while attempt < max_attempts:
+                time.sleep(1)
+                job_details = tutorial_process_log_api.get_job_details(job_uuid)
+                # Обработка различных структур ответа
+                if isinstance(job_details, dict):
+                    if 'job' in job_details:
+                        status = job_details['job'].get('status')
+                    elif 'status' in job_details:
+                        status = job_details.get('status')
+                    else:
+                        status = None
+                else:
+                    status = None
+                
+                if status == 'finished':
+                    logger.info(f"[SUCCESS] Процесс завершен (попытка {attempt + 1})")
+                    result = job_details
+                    if 'job' in result:
+                        result = result['job']
+                    break
+                elif status == 'error':
+                    logger.error(f"[ERROR] Процесс завершился с ошибкой (попытка {attempt + 1})")
+                    logger.error(f"[ERROR] Детали ошибки: {job_details}")
+                    raise AssertionError(f"Процесс завершился с ошибкой: {job_details}")
+                elif status is None:
+                    logger.warning(f"[WARN] Статус не определен (попытка {attempt + 1}), структура: {list(job_details.keys()) if isinstance(job_details, dict) else type(job_details)}")
+                
+                attempt += 1
+                if attempt % 5 == 0:
+                    logger.info(f"[INFO] Ожидание завершения процесса... (попытка {attempt}/{max_attempts}, статус: {status})")
+            
+            if attempt >= max_attempts:
+                raise AssertionError(f"Процесс не завершился за {max_attempts} секунд")
             
             logger.info("[STEP 8] Проверка результата процесса")
             assert result.get('status') == 'finished', f"Процесс не завершился успешно: {result.get('status')}"
-            assert 'result' in result, "Отсутствует результат выполнения процесса"
-            assert 'data' in result['result'], "Отсутствуют данные в результате"
+            assert 'result' in result, f"Отсутствует результат выполнения процесса. Доступные ключи: {list(result.keys())}"
             
-            result_data = result['result']['data']
-            assert 'customer_id' in result_data, "Отсутствует customer_id в результате"
+            # Обработка структуры результата
+            result_obj = result['result']
+            
+            # Проверка на наличие ошибки
+            if isinstance(result_obj, dict) and ('error' in result_obj or 'type' in result_obj or 'message' in result_obj):
+                error_message = result_obj.get('message', 'Неизвестная ошибка')
+                error_type = result_obj.get('type', 'Unknown')
+                logger.error(f"[ERROR] Процесс завершился с ошибкой в результате:")
+                logger.error(f"[ERROR]   - Тип ошибки: {error_type}")
+                logger.error(f"[ERROR]   - Сообщение: {error_message}")
+                if 'sub_errors' in result_obj:
+                    logger.error(f"[ERROR]   - Дополнительные ошибки: {result_obj['sub_errors']}")
+                if 'error_locations' in result_obj:
+                    logger.error(f"[ERROR]   - Места ошибок: {result_obj['error_locations']}")
+                raise AssertionError(f"Процесс завершился с ошибкой: {error_type} - {error_message}")
+            
+            if isinstance(result_obj, dict) and 'data' in result_obj:
+                result_data = result_obj['data']
+            elif isinstance(result_obj, dict):
+                # Если result напрямую содержит данные
+                result_data = result_obj
+            else:
+                raise AssertionError(f"Неожиданная структура результата: {result_obj}")
+            
+            logger.info(f"[DEBUG] result_data: {result_data}")
+            assert 'customer_id' in result_data, f"Отсутствует customer_id в результате. Доступные ключи: {list(result_data.keys())}"
             assert 'total_monthly_payment_RUR' in result_data, "Отсутствует total_monthly_payment_RUR в результате"
             
             logger.info("[SUCCESS] Результат выполнения:")

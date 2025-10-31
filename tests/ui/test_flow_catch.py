@@ -100,9 +100,9 @@ def test_flow_catch(login_page, flow_project):
     time.sleep(1)
     print("[SUCCESS] Переключились на вкладку 'Процесс'")
     
-    page.get_by_text("Анализ").click()
+    page.get_by_text("Отладка").click()
     time.sleep(1)
-    print("[SUCCESS] Переключились на подвкладку 'Анализ'")
+    print("[SUCCESS] Переключились на подвкладку 'Отладка'")
     
     page.get_by_role("button", name="formitem_full_view_button").nth(1).click()
     time.sleep(1)

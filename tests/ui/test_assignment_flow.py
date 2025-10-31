@@ -206,8 +206,25 @@ def test_assignment_flow(login_page, flow_project):
     except:
         pass
     
-    # Анализ результатов
-    page.get_by_text("Анализ", exact=True).click()
+    # Отладка результатов
+    # Открываем компонент Output
+    output_found = canvas_utils.find_component_by_title("Output", exact=True)
+    assert output_found, "Компонент 'Output' не найден!"
+    page.get_by_text("Output").first.click()
+    time.sleep(1)
+    
+    # Открываем сайдбар если закрыт
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
+    if not details_panel.is_visible():
+        page.get_by_role("button", name="diagram_details_panel_switcher").click()
+        time.sleep(1)
+    
+    # Переключаемся на вкладку "Процесс"
+    page.get_by_text("Процесс", exact=True).click()
+    time.sleep(1)
+    
+    # Переключаемся на подвкладку "Отладка"
+    page.get_by_text("Отладка", exact=True).click()
     time.sleep(1)
     
     page.get_by_role("button", name="formitem_full_view_button").nth(1).click()

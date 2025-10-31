@@ -16,14 +16,38 @@ class FilePanelPage(BasePage):
         self.page = page
 
     def open_file_panel(self):
-        self.page.wait_for_selector('button[aria-label="board_toolbar_filemanager_button"]', timeout=10000)
-        self.page.click('button[aria-label="board_toolbar_filemanager_button"]')
-        # Ждем появления файловой панели или элементов дерева файлов
+        # Проверяем, открыта ли уже файловая панель
         try:
-            self.page.wait_for_selector('.Bar__Bar___lx-XI', timeout=5000)
+            # Проверяем наличие элементов файлового дерева
+            tree_selectors = ['[role="tree"]', '.tree', '[data-testid="file-tree"]', '.Bar__Bar___lx-XI']
+            for selector in tree_selectors:
+                if self.page.locator(selector).count() > 0:
+                    element = self.page.locator(selector).first
+                    if element.is_visible(timeout=1000):
+                        return  # Панель уже открыта
         except:
-            # Если основной селектор не найден, ждем альтернативные элементы
-            self.page.wait_for_selector('[role="tree"], .tree, [data-testid="file-tree"]', timeout=5000)
+            pass
+        
+        # Если панель не открыта, открываем её
+        file_manager_button = self.page.locator('button[aria-label="board_toolbar_filemanager_button"]')
+        if file_manager_button.is_visible(timeout=10000):
+            file_manager_button.click()
+            # Ждем появления файловой панели или элементов дерева файлов
+            time.sleep(0.5)  # Даем время на анимацию
+            
+            # Ждем появления любого из селекторов файлового дерева
+            found = False
+            for selector in tree_selectors:
+                try:
+                    self.page.wait_for_selector(selector, timeout=5000)
+                    found = True
+                    break
+                except:
+                    continue
+            
+            if not found:
+                # Последняя попытка - просто подождем немного
+                time.sleep(1)
 
     def open_create_file_menu(self):
         self.page.wait_for_selector('button[aria-label="filemanager_create_button"]', timeout=10000)

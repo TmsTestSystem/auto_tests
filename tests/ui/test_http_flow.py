@@ -628,11 +628,11 @@ def test_http_flow(login_page, flow_project, api_server):
     time.sleep(1)
     print("[INFO] Переход на вкладку 'Процесс' выполнен")
 
-    analysis_tab = page.get_by_text("Анализ", exact=True)
-    assert analysis_tab.is_visible(), "Подвкладка 'Анализ' не найдена!"
+    analysis_tab = page.get_by_text("Отладка", exact=True)
+    assert analysis_tab.is_visible(), "Подвкладка 'Отладка' не найдена!"
     analysis_tab.click()
     time.sleep(1)
-    print("[INFO] Переход на подвкладку 'Анализ' выполнен")
+    print("[INFO] Переход на подвкладку 'Отладка' выполнен")
 
     try:
         full_view_button = page.get_by_role("button", name="formitem_full_view_button").nth(1)

@@ -253,21 +253,7 @@ def test_flow_split(login_page, flow_project):
             return
     
     if connection_point:
-        # Соединение Split -> Output1
-        connection_point.hover()
-        page.mouse.down()
-        time.sleep(0.5)
-        
-        output1_component = page.get_by_text("Output").first
-        output1_component.hover()
-        page.mouse.up()
-        time.sleep(1)
-        print("[SUCCESS] Соединение Split -> Output1 создано")
-        
-        # Соединение Split -> Output2
-        split_component.click()
-        time.sleep(1)
-        
+        # Соединение Split -> Output2 (сначала)
         connection_point.hover()
         page.mouse.down()
         time.sleep(0.5)
@@ -277,6 +263,20 @@ def test_flow_split(login_page, flow_project):
         page.mouse.up()
         time.sleep(1)
         print("[SUCCESS] Соединение Split -> Output2 создано")
+        
+        # Соединение Split -> Output1 (затем)
+        split_component.click()
+        time.sleep(1)
+        
+        connection_point.hover()
+        page.mouse.down()
+        time.sleep(0.5)
+        
+        output1_component = page.get_by_text("Output").first
+        output1_component.hover()
+        page.mouse.up()
+        time.sleep(1)
+        print("[SUCCESS] Соединение Split -> Output1 создано")
     
     print("[INFO] Шаг 10: Работа с сайдбаром процесса")
     
@@ -285,10 +285,10 @@ def test_flow_split(login_page, flow_project):
     time.sleep(1)
     print("[SUCCESS] Переход на вкладку 'Процесс'")
     
-    # Переход на подвкладку "Анализ"
-    page.get_by_text("Анализ").click()
+    # Переход на подвкладку "Отладка"
+    page.get_by_text("Отладка").click()
     time.sleep(1)
-    print("[SUCCESS] Переход на подвкладку 'Анализ'")
+    print("[SUCCESS] Переход на подвкладку 'Отладка'")
     
     # Нажатие кнопки "Предзаполнить"
     page.get_by_role("button", name="formitem_paste_button").click()
@@ -330,10 +330,10 @@ def test_flow_split(login_page, flow_project):
     time.sleep(1)
     print("[SUCCESS] Возврат на вкладку 'Процесс'")
     
-    # Переход на подвкладку "Анализ"
-    page.get_by_text("Анализ").click()
+    # Переход на подвкладку "Отладка"
+    page.get_by_text("Отладка").click()
     time.sleep(1)
-    print("[SUCCESS] Переход на подвкладку 'Анализ'")
+    print("[SUCCESS] Переход на подвкладку 'Отладка'")
     
     # Клик в редакторе Monaco
     page.get_by_text("{").first.click()
@@ -377,7 +377,7 @@ def test_flow_split(login_page, flow_project):
     print("[SUCCESS] Компонент Split настроен с условием")
     print("[SUCCESS] Компонент Input настроен")
     print("[SUCCESS] Добавлены два компонента 'Конец процесса'")
-    print("[SUCCESS] Созданы соединения Split -> Output1 и Split -> Output2")
+    print("[SUCCESS] Созданы соединения Split -> Output2 и Split -> Output1")
     print("[SUCCESS] Выполнена работа с сайдбаром процесса")
     print("[SUCCESS] Диаграмма запущена")
     print("[SUCCESS] Компонент Output2 настроен")

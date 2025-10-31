@@ -537,17 +537,17 @@ def test_flow_cycle(login_page, flow_project):
     except Exception as e:
         print(f"[WARN] Ошибка при переходе на вкладку 'Процесс': {e}")
 
-    print("[INFO] Переход на подвкладку 'Анализ'")
+    print("[INFO] Переход на подвкладку 'Отладка'")
     try:
-        analysis_tab = page.get_by_text("Анализ")
+        analysis_tab = page.get_by_text("Отладка")
         if analysis_tab.is_visible():
             analysis_tab.click()
             time.sleep(1)
-            print("[SUCCESS] Переключились на подвкладку 'Анализ'")
+            print("[SUCCESS] Переключились на подвкладку 'Отладка'")
         else:
-            print("[WARN] Подвкладка 'Анализ' не найдена")
+            print("[WARN] Подвкладка 'Отладка' не найдена")
     except Exception as e:
-        print(f"[WARN] Ошибка при переходе на подвкладку 'Анализ': {e}")
+        print(f"[WARN] Ошибка при переходе на подвкладку 'Отладка': {e}")
 
     print("[INFO] Поиск кнопки для просмотра результата")
     try:

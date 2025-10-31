@@ -241,11 +241,11 @@ def test_flow_query(login_page, flow_project):
     time.sleep(1)
     print("[INFO] Переход на вкладку 'Процесс' выполнен")
 
-    analysis_tab = page.get_by_text("Анализ", exact=True)
-    assert analysis_tab.is_visible(), "Подвкладка 'Анализ' не найдена!"
+    analysis_tab = page.get_by_text("Отладка", exact=True)
+    assert analysis_tab.is_visible(), "Подвкладка 'Отладка' не найдена!"
     analysis_tab.click()
     time.sleep(1)
-    print("[INFO] Переход на подвкладку 'Анализ' выполнен")
+    print("[INFO] Переход на подвкладку 'Отладка' выполнен")
 
     full_view_button = page.get_by_role("button", name="formitem_full_view_button").nth(1)
     assert full_view_button.is_visible(), "Кнопка 'formitem_full_view_button' не найдена!"
@@ -253,8 +253,9 @@ def test_flow_query(login_page, flow_project):
     time.sleep(1)
     print("[INFO] Кнопка 'formitem_full_view_button' нажата")
 
-    json_modal = page.locator(ModalLocators.JSON_MODAL)
-    json_modal.wait_for(state="visible", timeout=10000)
+    # Ждем появления модального окна по test-id
+    json_modal = page.get_by_test_id("Modal__Container")
+    json_modal.wait_for(state="visible", timeout=15000)
     print("[INFO] Модальное окно 'Просмотр JSON' открыто")
     
     save_screenshot(page, f"json_modal_{project_code}")
