@@ -23,7 +23,6 @@ def test_len_list(expression_project):
         cookies = file_panel_api.cookies
         path = "len/len_list.df.json"
 
-        # [STEP 1] Вызов процесса
         logger.info(f"[STEP 1] Вызов процесса: {path}")
         req_body = {
             "request_meta": {
@@ -45,7 +44,6 @@ def test_len_list(expression_project):
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса успешен: len_list=6, job_uuid={job_uuid}")
 
-        # [STEP 2] Проверка лога выполнения по job_uuid
         logger.info("[STEP 2] Проверка деталей job")
         time.sleep(2)
         details_json = fetch_job_details(base_url, job_uuid, cookies)
@@ -58,7 +56,6 @@ def test_len_list(expression_project):
         assert result_obj.get("data", {}).get("len_list") == 6
         logger.info("[SUCCESS] Детали job корректны: status=finished, len_list=6")
 
-        # [STEP 3] Unit-тест диаграммы (ожидаем success)
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success")
         test_bp_url = f"{base_url}/api/ide/{project_code}/branch/master/tests/test_bp?object_path={path}"
         payload_success = {
@@ -80,7 +77,6 @@ def test_len_list(expression_project):
         assert test_json_ok.get("result") == "success", f"Ожидали result=success, получили: {test_json_ok}"
         logger.info("[SUCCESS] test_bp success получен")
 
-        # [STEP 4] Unit-тест диаграммы (ожидаем checks_failed)
         logger.info("[STEP 4] Юнит-тест диаграммы: ожидаем result=checks_failed")
         payload_fail = {
             "checks": {
@@ -119,7 +115,6 @@ def test_len_string(expression_project):
         cookies = file_panel_api.cookies
         path = "len/len_string.df.json"
 
-        # [STEP 1] Вызов процесса
         logger.info(f"[STEP 1] Вызов процесса: {path}")
         req_body = {
             "request_meta": {
@@ -141,7 +136,6 @@ def test_len_string(expression_project):
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса успешен: len_string=4, job_uuid={job_uuid}")
 
-        # [STEP 2] Проверка лога выполнения по job_uuid
         logger.info("[STEP 2] Проверка деталей job")
         time.sleep(2)
         details_json = fetch_job_details(base_url, job_uuid, cookies)
@@ -154,7 +148,6 @@ def test_len_string(expression_project):
         assert result_obj.get("data", {}).get("len_string") == 4
         logger.info("[SUCCESS] Детали job корректны: status=finished, len_string=4")
 
-        # [STEP 3] Unit-тест диаграммы (ожидаем success)
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success")
         test_bp_url = f"{base_url}/api/ide/{project_code}/branch/master/tests/test_bp?object_path={path}"
         payload_success = {
@@ -176,7 +169,6 @@ def test_len_string(expression_project):
         assert test_json_ok.get("result") == "success", f"Ожидали result=success, получили: {test_json_ok}"
         logger.info("[SUCCESS] test_bp success получен")
 
-        # [STEP 4] Unit-тест диаграммы (ожидаем checks_failed)
         logger.info("[STEP 4] Юнит-тест диаграммы: ожидаем result=checks_failed")
         payload_fail = {
             "checks": {
@@ -215,7 +207,6 @@ def test_len_object(expression_project):
         cookies = file_panel_api.cookies
         path = "len/len_object.df.json"
 
-        # [STEP 1] Вызов процесса
         logger.info(f"[STEP 1] Вызов процесса: {path}")
         req_body = {
             "request_meta": {
@@ -237,7 +228,6 @@ def test_len_object(expression_project):
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса успешен: len_object=3, job_uuid={job_uuid}")
 
-        # [STEP 2] Проверка лога выполнения по job_uuid
         logger.info("[STEP 2] Проверка деталей job")
         time.sleep(2)
         details_json = fetch_job_details(base_url, job_uuid, cookies)
@@ -250,7 +240,6 @@ def test_len_object(expression_project):
         assert result_obj.get("data", {}).get("len_object") == 3
         logger.info("[SUCCESS] Детали job корректны: status=finished, len_object=3")
 
-        # [STEP 3] Unit-тест диаграммы (ожидаем success)
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success")
         test_bp_url = f"{base_url}/api/ide/{project_code}/branch/master/tests/test_bp?object_path={path}"
         payload_success = {
@@ -272,7 +261,6 @@ def test_len_object(expression_project):
         assert test_json_ok.get("result") == "success", f"Ожидали result=success, получили: {test_json_ok}"
         logger.info("[SUCCESS] test_bp success получен")
 
-        # [STEP 4] Unit-тест диаграммы (ожидаем checks_failed)
         logger.info("[STEP 4] Юнит-тест диаграммы: ожидаем result=checks_failed")
         payload_fail = {
             "checks": {

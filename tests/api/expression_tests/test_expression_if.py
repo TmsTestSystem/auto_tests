@@ -22,7 +22,6 @@ def test_if_else_positive(expression_project):
         cookies = file_panel_api.cookies
         path = "if/if_else_positive.df.json"
 
-        # [STEP 1] Вызов процесса
         logger.info(f"[STEP 1] Вызов процесса: {path}")
         req_body = {
             "request_meta": {
@@ -44,7 +43,6 @@ def test_if_else_positive(expression_project):
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса успешен: decision=REJECT, job_uuid={job_uuid}")
 
-        # [STEP 2] Проверка лога выполнения по job_uuid
         logger.info("[STEP 2] Проверка деталей job")
         time.sleep(3)
         details_url = f"{base_url}/api/jobs/details/{job_uuid}"
@@ -67,7 +65,6 @@ def test_if_else_positive(expression_project):
         assert result_obj.get("data", {}).get("decision") == "REJECT"
         logger.info("[SUCCESS] Детали job корректны: status=finished, decision=REJECT")
 
-        # [STEP 3] Unit-тест диаграммы (ожидаем success)
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success")
         test_bp_url = f"{base_url}/api/ide/{project_code}/branch/master/tests/test_bp?object_path={path}"
         payload_success = {
@@ -89,7 +86,6 @@ def test_if_else_positive(expression_project):
         assert test_json_ok.get("result") == "success", f"Ожидали result=success, получили: {test_json_ok}"
         logger.info("[SUCCESS] test_bp success получен")
 
-        # [STEP 4] Unit-тест диаграммы (ожидаем checks_failed)
         logger.info("[STEP 4] Юнит-тест диаграммы: ожидаем result=checks_failed")
         payload_fail = {
             "checks": {
@@ -130,7 +126,6 @@ def test_if_negative_error(expression_project):
 
         expected_error_message = "Условие в if должно вернуть булево значение, но вернуло: 18"
 
-        # [STEP 1] Вызов процесса (ожидаем status=error)
         logger.info(f"[STEP 1] Вызов процесса (негатив): {path}")
         req_body = {
             "request_meta": {
@@ -155,7 +150,6 @@ def test_if_negative_error(expression_project):
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса вернул error: message match, job_uuid={job_uuid}")
 
-        # [STEP 2] Проверка лога выполнения по job_uuid (ожидаем то же самое)
         logger.info("[STEP 2] Проверка деталей job для негативного кейса")
         time.sleep(2)
         details_json = fetch_job_details(base_url, job_uuid, cookies)
@@ -171,7 +165,6 @@ def test_if_negative_error(expression_project):
         assert error_details.get("message") == expected_error_message, f"Неверное сообщение об ошибке в деталях: {error_details}"
         logger.info("[SUCCESS] Детали job корректны для негативного кейса: status=error, message совпадает")
 
-        # [STEP 3] Unit-тест диаграммы (успешный, т.к. проверяем корректность error.message)
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success (по error.message)")
         test_bp_url = f"{base_url}/api/ide/{project_code}/branch/master/tests/test_bp?object_path={path}"
         payload_success = {
@@ -193,7 +186,6 @@ def test_if_negative_error(expression_project):
         assert test_json_ok.get("result") == "success", f"Ожидали result=success, получили: {test_json_ok}"
         logger.info("[SUCCESS] test_bp success (негативный кейс) получен")
 
-        # [STEP 4] Unit-тест диаграммы (провальный, проверяем неверное условие)
         logger.info("[STEP 4] Юнит-тест диаграммы: ожидаем result=checks_failed (по неверному ожиданию)")
         payload_fail = {
             "checks": {
@@ -232,7 +224,6 @@ def test_if_positive(expression_project):
         cookies = file_panel_api.cookies
         path = "if/if_positive.df.json"
 
-        # [STEP 1] Вызов процесса (ожидаем status=finished, decision=ACCEPT)
         logger.info(f"[STEP 1] Вызов процесса: {path}")
         req_body = {
             "request_meta": {
@@ -254,7 +245,6 @@ def test_if_positive(expression_project):
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса успешен: decision=ACCEPT, job_uuid={job_uuid}")
 
-        # [STEP 2] Проверка лога выполнения по job_uuid
         logger.info("[STEP 2] Проверка деталей job")
         time.sleep(2)
         details_json = fetch_job_details(base_url, job_uuid, cookies)
@@ -267,7 +257,6 @@ def test_if_positive(expression_project):
         assert result_obj.get("data", {}).get("decision") == "ACCEPT"
         logger.info("[SUCCESS] Детали job корректны: status=finished, decision=ACCEPT")
 
-        # [STEP 3] Unit-тест диаграммы (ожидаем success)
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success")
         test_bp_url = f"{base_url}/api/ide/{project_code}/branch/master/tests/test_bp?object_path={path}"
         payload_success = {
@@ -289,7 +278,6 @@ def test_if_positive(expression_project):
         assert test_json_ok.get("result") == "success", f"Ожидали result=success, получили: {test_json_ok}"
         logger.info("[SUCCESS] test_bp success получен")
 
-        # [STEP 4] Unit-тест диаграммы (ожидаем checks_failed)
         logger.info("[STEP 4] Юнит-тест диаграммы: ожидаем result=checks_failed")
         payload_fail = {
             "checks": {

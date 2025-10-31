@@ -35,14 +35,12 @@ def expression_project():
         response.raise_for_status()
         project_info = response.json()
 
-        # Создаем ZIP из Project_expression (в корне проекта)
         project_root = Path(__file__).parent.parent.parent.parent
         source_folder = project_root / "Project_expression"
         temp_zip_path = create_project_zip(str(source_folder))
         logger.info(f"[EXP_SETUP] ZIP создан: {temp_zip_path}")
 
         try:
-            # Импортируем ZIP через API upload
             upload_url = f"{base_url}/api/ide/{project_code}/branch/master/git/repository/upload"
             with open(temp_zip_path, 'rb') as f:
                 data = f.read()
@@ -60,7 +58,6 @@ def expression_project():
 
         yield project_code, project_info
     finally:
-        # cleanup
         try:
             requests.delete(f"{base_url}/api/projects/{project_info['id']}", cookies=cookies, verify=False, timeout=30)
             logger.info(f"[EXP_CLEANUP] Проект удалён: {project_code}")

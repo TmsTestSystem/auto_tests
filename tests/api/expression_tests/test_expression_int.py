@@ -23,7 +23,6 @@ def test_int_float(expression_project):
         cookies = file_panel_api.cookies
         path = "int/int_float.df.json"
 
-        # [STEP 1] Вызов процесса
         logger.info(f"[STEP 1] Вызов процесса: {path}")
         req_body = {
             "request_meta": {
@@ -45,7 +44,6 @@ def test_int_float(expression_project):
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса успешен: value=52, job_uuid={job_uuid}")
 
-        # [STEP 2] Проверка лога выполнения по job_uuid
         logger.info("[STEP 2] Проверка деталей job")
         time.sleep(2)
         details_json = fetch_job_details(base_url, job_uuid, cookies)
@@ -58,7 +56,6 @@ def test_int_float(expression_project):
         assert result_obj.get("data", {}).get("value") == 52
         logger.info("[SUCCESS] Детали job корректны: status=finished, value=52")
 
-        # [STEP 3] Unit-тест диаграммы (ожидаем success)
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success")
         test_bp_url = f"{base_url}/api/ide/{project_code}/branch/master/tests/test_bp?object_path={path}"
         payload_success = {
@@ -80,7 +77,6 @@ def test_int_float(expression_project):
         assert test_json_ok.get("result") == "success", f"Ожидали result=success, получили: {test_json_ok}"
         logger.info("[SUCCESS] test_bp success получен")
 
-        # [STEP 4] Unit-тест диаграммы (ожидаем checks_failed)
         logger.info("[STEP 4] Юнит-тест диаграммы: ожидаем result=checks_failed")
         payload_fail = {
             "checks": {
@@ -119,7 +115,6 @@ def test_int_string(expression_project):
         cookies = file_panel_api.cookies
         path = "int/int_string.df.json"
 
-        # [STEP 1] Вызов процесса
         logger.info(f"[STEP 1] Вызов процесса: {path}")
         req_body = {
             "request_meta": {
@@ -141,7 +136,6 @@ def test_int_string(expression_project):
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса успешен: value=52, job_uuid={job_uuid}")
 
-        # [STEP 2] Проверка лога выполнения по job_uuid
         logger.info("[STEP 2] Проверка деталей job")
         time.sleep(2)
         details_json = fetch_job_details(base_url, job_uuid, cookies)
@@ -154,7 +148,6 @@ def test_int_string(expression_project):
         assert result_obj.get("data", {}).get("value") == 52
         logger.info("[SUCCESS] Детали job корректны: status=finished, value=52")
 
-        # [STEP 3] Unit-тест диаграммы (ожидаем success)
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success")
         test_bp_url = f"{base_url}/api/ide/{project_code}/branch/master/tests/test_bp?object_path={path}"
         payload_success = {
@@ -176,7 +169,6 @@ def test_int_string(expression_project):
         assert test_json_ok.get("result") == "success", f"Ожидали result=success, получили: {test_json_ok}"
         logger.info("[SUCCESS] test_bp success получен")
 
-        # [STEP 4] Unit-тест диаграммы (ожидаем checks_failed)
         logger.info("[STEP 4] Юнит-тест диаграммы: ожидаем result=checks_failed")
         payload_fail = {
             "checks": {
@@ -215,7 +207,6 @@ def test_int_string_error(expression_project):
         cookies = file_panel_api.cookies
         path = "int/int_string_error.df.json"
 
-        # [STEP 1] Вызов процесса (ожидаем status=error)
         logger.info(f"[STEP 1] Вызов процесса (негатив): {path}")
         req_body = {
             "request_meta": {
@@ -240,7 +231,6 @@ def test_int_string_error(expression_project):
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса вернул error: type={error_obj.get('type')}, job_uuid={job_uuid}")
 
-        # [STEP 2] Проверка лога выполнения по job_uuid (ожидаем то же самое)
         logger.info("[STEP 2] Проверка деталей job для негативного кейса")
         time.sleep(2)
         details_json = fetch_job_details(base_url, job_uuid, cookies)
@@ -257,7 +247,6 @@ def test_int_string_error(expression_project):
         assert error_type, "Отсутствует error.type в деталях"
         logger.info("[SUCCESS] Детали job корректны для негативного кейса: status=error, type совпадает")
 
-        # [STEP 3] Unit-тест диаграммы (успешный): проверяем стабильное поле error.type
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success (по error.type)")
         test_bp_url = f"{base_url}/api/ide/{project_code}/branch/master/tests/test_bp?object_path={path}"
         payload_success = {
@@ -279,7 +268,6 @@ def test_int_string_error(expression_project):
         assert test_json_ok.get("result") == "success", f"Ожидали result=success, получили: {test_json_ok}"
         logger.info("[SUCCESS] test_bp success (негативный кейс) получен")
 
-        # [STEP 4] Unit-тест диаграммы (провальный): неверный error.type
         logger.info("[STEP 4] Юнит-тест диаграммы: ожидаем result=checks_failed (по неверному error.type)")
         payload_fail = {
             "checks": {
