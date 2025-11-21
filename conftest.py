@@ -117,6 +117,23 @@ def save_screenshot(page, test_name):
     page.screenshot(path=screenshot_path, full_page=True)
     print(f"[SCREENSHOT] Скриншот сохранён: {screenshot_path}")
 
+def wait_for_canvas_with_refresh(page, timeout=10000, max_refreshes=1):
+    """
+    Ждет загрузки canvas диаграммы с автоматическим рефрешем при таймауте.
+    При запуске всех тестов разом канвас может залипать дольше обычного.
+    
+    Args:
+        page: Playwright page объект
+        timeout (int): Таймаут ожидания в миллисекундах
+        max_refreshes (int): Максимальное количество рефрешей при таймауте
+        
+    Returns:
+        bool: True если canvas загружен, False если не удалось загрузить даже после рефрешей
+    """
+    from pages.canvas_utils import CanvasUtils
+    canvas_utils = CanvasUtils(page)
+    return canvas_utils.wait_for_canvas_with_refresh(timeout=timeout, max_refreshes=max_refreshes)
+
 def get_all_projects_via_api():
     cookies = get_auth_cookies()
     projects_api = get_projects_api()

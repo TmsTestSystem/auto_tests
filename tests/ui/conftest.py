@@ -24,6 +24,7 @@ delete_project_by_id = root_conftest.delete_project_by_id
 get_auth_cookies = root_conftest.get_auth_cookies
 get_all_projects_via_api = root_conftest.get_all_projects_via_api
 get_api_base_url = root_conftest.get_api_base_url
+wait_for_canvas_with_refresh = root_conftest.wait_for_canvas_with_refresh
 
 # Реэкспортируем фикстуры из корневого conftest
 login_page = root_conftest.login_page

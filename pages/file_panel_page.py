@@ -49,10 +49,64 @@ class FilePanelPage(BasePage):
                 # Последняя попытка - просто подождем немного
                 time.sleep(1)
 
-    def open_create_file_menu(self):
-        self.page.wait_for_selector('button[aria-label="filemanager_create_button"]', timeout=10000)
-        self.page.click('button[aria-label="filemanager_create_button"]')
+    def open_create_file_menu(self, timeout=10000, max_refreshes=1):
+        """
+        Открывает меню создания файла с автоматическим рефрешем при таймауте.
+        При запуске всех тестов разом кнопка может залипать дольше обычного.
+        
+        Args:
+            timeout (int): Таймаут ожидания в миллисекундах
+            max_refreshes (int): Максимальное количество рефрешей при таймауте
+        """
+        refresh_count = 0
+        button_selector = 'button[aria-label="filemanager_create_button"]'
+        
+        while refresh_count <= max_refreshes:
+            try:
+                print(f"[INFO] Ожидание кнопки создания файла (попытка {refresh_count + 1})...")
+                self.page.wait_for_selector(button_selector, timeout=timeout)
+                
+                # Дополнительная проверка, что кнопка действительно видна
+                if self.page.locator(button_selector).is_visible():
+                    time.sleep(0.5)  # Дополнительное время для стабилизации
+                    print("[SUCCESS] Кнопка создания файла найдена")
+                    break
+                else:
+                    print("[WARN] Кнопка найдена, но не видна, ожидаем еще...")
+                    time.sleep(1)
+                    if self.page.locator(button_selector).is_visible():
+                        print("[SUCCESS] Кнопка создания файла появилась после дополнительного ожидания")
+                        break
+                    
+            except Exception as e:
+                print(f"[WARN] Кнопка не появилась в течение {timeout}мс: {e}")
+                
+                # Если достигли максимума рефрешей, выбрасываем исключение
+                if refresh_count >= max_refreshes:
+                    print(f"[ERROR] Кнопка не появилась после {max_refreshes} рефрешей")
+                    raise
+                
+                # Делаем рефреш страницы
+                print(f"[INFO] Выполняем рефреш страницы (рефреш #{refresh_count + 1})...")
+                try:
+                    self.page.reload(wait_until="domcontentloaded")
+                    time.sleep(3)  # Даем время на загрузку после рефреша
+                    
+                    # После рефреша нужно заново открыть файловую панель
+                    print("[INFO] Страница перезагружена, открываем файловую панель заново...")
+                    self.open_file_panel()
+                    time.sleep(2)  # Даем время на открытие панели
+                    
+                    print("[INFO] Ожидаем кнопку создания файла снова...")
+                    refresh_count += 1
+                except Exception as refresh_error:
+                    print(f"[ERROR] Ошибка при рефреше страницы: {refresh_error}")
+                    raise
+        
+        # Кликаем по кнопке и ждем меню
+        self.page.click(button_selector)
         self.page.wait_for_selector('.FilesMenu__FilesMenu___ESpN6', timeout=10000)
+        print("[SUCCESS] Меню создания файла открыто")
 
     def get_file_type_buttons(self):
         # Ищем кнопки типов файлов во всех меню и попапах

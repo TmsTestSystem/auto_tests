@@ -9,7 +9,7 @@ from pages.file_panel_page import FilePanelPage
 from pages.diagram_page import DiagramPage
 from pages.canvas_utils import CanvasUtils
 from pages.connection_page import ConnectionPage
-from conftest import save_screenshot, get_project_by_code, delete_project_by_id
+from conftest import save_screenshot, wait_for_canvas_with_refresh, get_project_by_code, delete_project_by_id
 from locators import (
     FilePanelLocators, DiagramLocators, CanvasLocators, 
     ComponentLocators, ModalLocators, ToolbarLocators

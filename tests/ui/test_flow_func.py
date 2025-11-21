@@ -10,7 +10,7 @@ from pages.file_panel_page import FilePanelPage
 from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
 from pages.diagram_page import DiagramPage
-from conftest import save_screenshot
+from conftest import save_screenshot, wait_for_canvas_with_refresh
 from locators import (
     FilePanelLocators, DiagramLocators, CanvasLocators, 
     ComponentLocators, ModalLocators, ToolbarLocators
@@ -221,6 +221,10 @@ def test_flow_func(login_page, flow_project):
     print("[SUCCESS] Диаграмма test_func.df.json открыта, панели закрыты!")
 
     print("[INFO] Шаг 4: Настройка компонента Function на canvas")
+    
+    # Ждем загрузки canvas с рефрешем при таймауте
+    assert wait_for_canvas_with_refresh(page, timeout=10000, max_refreshes=1), "Canvas не загрузился даже после рефреша!"
+    time.sleep(2)  # Дополнительное время для полной загрузки компонентов на canvas
 
     function_component = page.locator('text="Function"')
     if function_component.count() > 0:

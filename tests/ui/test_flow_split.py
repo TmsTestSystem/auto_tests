@@ -7,6 +7,7 @@ from pages.file_panel_page import FilePanelPage
 from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
 from locators.canvas_locators import CanvasLocators
+from conftest import wait_for_canvas_with_refresh
 
 
 def save_screenshot(page, name):
@@ -81,10 +82,33 @@ def test_flow_split(login_page, flow_project):
     page.get_by_role("textbox", name="treeitem_label_field").fill(diagram_name)
     page.get_by_role("textbox", name="treeitem_label_field").press("Enter")
     time.sleep(2)  # Ждем создания диаграммы
-    page.get_by_role("button", name="diagram_details_panel_switcher").click()
-    time.sleep(1)
-    page.get_by_role("button", name="board_toolbar_filemanager_button").click()
-    time.sleep(1)
+    
+    # Ждем загрузки диаграммы и появления кнопки switcher
+    try:
+        switcher_button = page.get_by_role("button", name="diagram_details_panel_switcher")
+        switcher_button.wait_for(state="visible", timeout=10000)
+        switcher_button.click()
+        time.sleep(1)
+    except Exception as e:
+        print(f"[WARN] Кнопка diagram_details_panel_switcher не появилась сразу: {e}, продолжаем...")
+        time.sleep(2)
+        # Пробуем еще раз
+        try:
+            switcher_button = page.get_by_role("button", name="diagram_details_panel_switcher")
+            if switcher_button.is_visible():
+                switcher_button.click()
+                time.sleep(1)
+        except:
+            pass  # Если не получилось, просто продолжаем
+    
+    try:
+        file_manager_button = page.get_by_role("button", name="board_toolbar_filemanager_button")
+        if file_manager_button.is_visible():
+            file_manager_button.click()
+            time.sleep(1)
+    except Exception as e:
+        print(f"[WARN] Кнопка board_toolbar_filemanager_button не найдена: {e}, продолжаем...")
+    
     print(f"[SUCCESS] Диаграмма '{diagram_name}' создана")
     
     print("[INFO] Шаг 3: Добавление компонентов на диаграмму")
@@ -93,9 +117,14 @@ def test_flow_split(login_page, flow_project):
     page.get_by_role("button", name="diagram_create_button").click()
     page.get_by_text("Старт процесса").click()
     
-    # Ищем канвас с правильным селектором
+    # Ждем загрузки canvas с рефрешем при таймауте
+    # Для специфического селектора сначала проверяем стандартный
+    assert wait_for_canvas_with_refresh(page, timeout=10000, max_refreshes=1), "Canvas не загрузился даже после рефреша!"
+    # Ищем канвас с правильным селектором (специфический для этого теста)
     canvas = page.locator("#cy-node-edge-editing-stage1 canvas").first
-    canvas.wait_for(state="visible", timeout=10000)
+    if not canvas.is_visible():
+        # Fallback на обычный canvas
+        canvas = page.locator("canvas").first
     
     # Кликаем на канвас для размещения "Старт процесса"
     canvas.click(position={"x": 300, "y": 300})

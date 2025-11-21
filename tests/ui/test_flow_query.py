@@ -8,7 +8,7 @@ from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
 from pages.db_connector_page import DBConnectorPage
 from pages.diagram_page import DiagramPage
-from conftest import save_screenshot
+from conftest import save_screenshot, wait_for_canvas_with_refresh
 from locators import (
     FilePanelLocators, DiagramLocators, CanvasLocators, 
     ComponentLocators, ModalLocators, ToolbarLocators
@@ -104,9 +104,10 @@ def test_flow_query(login_page, flow_project):
     time.sleep(2)
     print("[INFO] Диаграмма 'test_query.df.json' открыта")
 
+    # Ждем загрузки canvas с рефрешем при таймауте
+    assert wait_for_canvas_with_refresh(page, timeout=10000, max_refreshes=1), "Canvas не загрузился даже после рефреша!"
     canvas = page.locator(CanvasLocators.CANVAS).first
-    canvas.wait_for(state="visible", timeout=10000)
-    time.sleep(2)
+    time.sleep(1)
     print("[INFO] Canvas диаграммы загружен")
 
     if page.get_by_label("board_toolbar_panel").is_visible():

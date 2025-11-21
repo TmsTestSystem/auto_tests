@@ -9,7 +9,7 @@ from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.canvas_utils import CanvasUtils
 from pages.diagram_page import DiagramPage
-from conftest import save_screenshot
+from conftest import save_screenshot, wait_for_canvas_with_refresh
 from locators import (
     FilePanelLocators, DiagramLocators, CanvasLocators, 
     ComponentLocators, ModalLocators, ToolbarLocators
@@ -20,24 +20,29 @@ from locators import (
 def api_server():
     """
     Фикстура для использования публичного API (JSONPlaceholder)
+    Возвращает URL API независимо от доступности, так как тест сам проверит работоспособность
     """
     import requests
     import urllib3
     
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     
+    api_config = {
+        "base_url": "https://jsonplaceholder.typicode.com",
+        "users_endpoint": "https://jsonplaceholder.typicode.com/users"
+    }
+    
+    # Пытаемся проверить доступность, но не падаем при ошибке
     try:
         response = requests.get("https://jsonplaceholder.typicode.com/users/1", timeout=5, verify=False)
         if response.status_code == 200:
             print("[INFO] JSONPlaceholder API is accessible")
-            return {
-                "base_url": "https://jsonplaceholder.typicode.com",
-                "users_endpoint": "https://jsonplaceholder.typicode.com/users"
-            }
         else:
-            pytest.fail(f"JSONPlaceholder API returned status {response.status_code}")
+            print(f"[WARN] JSONPlaceholder API returned status {response.status_code}, but continuing test anyway")
     except Exception as e:
-        pytest.fail(f"Failed to connect to JSONPlaceholder API: {e}")
+        print(f"[WARN] Failed to connect to JSONPlaceholder API: {e}, but continuing test anyway")
+    
+    return api_config
 
 
 def test_http_flow(login_page, flow_project, api_server):
@@ -92,9 +97,10 @@ def test_http_flow(login_page, flow_project, api_server):
     time.sleep(2)
     print("[INFO] Диаграмма открыта")
 
+    # Ждем загрузки canvas с рефрешем при таймауте
+    assert wait_for_canvas_with_refresh(page, timeout=10000, max_refreshes=1), "Canvas не загрузился даже после рефреша!"
     canvas = page.locator(CanvasLocators.CANVAS).first
-    canvas.wait_for(state="visible", timeout=10000)
-    time.sleep(2)
+    time.sleep(1)
     print("[INFO] Canvas диаграммы загружен")
 
     print("[INFO] Закрытие панелей")

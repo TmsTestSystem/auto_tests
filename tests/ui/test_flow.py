@@ -5,7 +5,7 @@ from pages.file_panel_page import FilePanelPage
 from pages.diagram_page import DiagramPage
 from pages.canvas_utils import CanvasUtils
 from pages.connection_page import ConnectionPage
-from conftest import save_screenshot, get_project_by_code, delete_project_by_id
+from conftest import save_screenshot, get_project_by_code, delete_project_by_id, wait_for_canvas_with_refresh
 from locators import (
     FilePanelLocators,
     DiagramLocators,
@@ -79,9 +79,10 @@ def test_flow_flow_component(login_page, flow_project):
     page.get_by_text("Старт процесса").click()
     time.sleep(0.5)
     
-    canvas = page.locator(CanvasLocators.CANVAS).first
-    canvas.wait_for(state="visible", timeout=10000)
+    # Ждем загрузки canvas с рефрешем при таймауте
+    assert wait_for_canvas_with_refresh(page, timeout=10000, max_refreshes=1), "Canvas не загрузился даже после рефреша!"
     
+    canvas = page.locator(CanvasLocators.CANVAS).first
     # Кликаем в левую часть canvas для Input
     canvas.click(position={"x": 200, "y": 300}, force=True)
     time.sleep(1)
@@ -174,10 +175,10 @@ def test_flow_flow_component(login_page, flow_project):
             time.sleep(3)
             print("[SUCCESS] Страница обновлена, канвас должен обновиться")
             
-            # Ждем загрузки canvas
+            # Ждем загрузки canvas с рефрешем при таймауте
+            assert wait_for_canvas_with_refresh(page, timeout=10000, max_refreshes=1), "Canvas не загрузился даже после рефреша!"
             canvas = page.locator(CanvasLocators.CANVAS).first
-            canvas.wait_for(state="visible", timeout=10000)
-            time.sleep(2)
+            time.sleep(1)
             print("[SUCCESS] Canvas загружен и готов к работе")
         else:
             print("[ERROR] Диаграмма test_flow.df.json не найдена в папке test_flow_component")

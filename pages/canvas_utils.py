@@ -25,8 +25,12 @@ class CanvasUtils:
         print(f"[INFO] Поиск компонента '{title}' на canvas")
         
         try:
+            # Используем метод с рефрешем при таймауте
+            if not self.wait_for_canvas_with_refresh(timeout=timeout, max_refreshes=1):
+                print(f"[ERROR] Не удалось загрузить canvas для поиска компонента '{title}'")
+                return False
+            
             canvas = self.page.locator('canvas').first
-            canvas.wait_for(state="visible", timeout=timeout)
             time.sleep(0.5)
             
             # Метод 1: Поиск по тексту
@@ -678,3 +682,98 @@ class CanvasUtils:
         except Exception as e:
             print(f"[ERROR] Canvas не загрузился в течение {timeout}мс: {e}")
             return False
+    
+    def wait_for_canvas_with_refresh(self, timeout=10000, max_refreshes=1):
+        """
+        Ждет загрузки canvas диаграммы с автоматическим рефрешем при таймауте.
+        При запуске всех тестов разом канвас может залипать дольше обычного.
+        
+        Args:
+            timeout (int): Таймаут ожидания в миллисекундах
+            max_refreshes (int): Максимальное количество рефрешей при таймауте
+            
+        Returns:
+            bool: True если canvas загружен, False если не удалось загрузить даже после рефрешей
+        """
+        refresh_count = 0
+        
+        while refresh_count <= max_refreshes:
+            try:
+                print(f"[INFO] Ожидание загрузки canvas (попытка {refresh_count + 1})...")
+                
+                # Ищем видимый canvas с правильными размерами (не декоративный из Monaco Editor)
+                # Декоративный canvas обычно маленький (14x5), а canvas диаграммы большой
+                canvas_found = False
+                all_canvases = self.page.locator('canvas')
+                canvas_count = all_canvases.count()
+                
+                for i in range(canvas_count):
+                    try:
+                        canvas = all_canvases.nth(i)
+                        if canvas.is_visible(timeout=2000):
+                            # Проверяем размеры canvas - диаграмма должна быть большой
+                            try:
+                                box = canvas.bounding_box()
+                                if box and box['width'] > 100 and box['height'] > 100:
+                                    canvas_found = True
+                                    print(f"[INFO] Найден видимый canvas диаграммы (размер: {int(box['width'])}x{int(box['height'])})")
+                                    time.sleep(1)  # Дополнительное время для полной загрузки
+                                    print("[SUCCESS] Canvas диаграммы загружен")
+                                    return True
+                            except:
+                                continue
+                    except:
+                        continue
+                
+                # Если не нашли нужный canvas, пробуем стандартный способ
+                if not canvas_found:
+                    canvas = self.page.locator('canvas').first
+                    canvas.wait_for(state="visible", timeout=timeout)
+                    
+                    # Проверяем, что это действительно canvas диаграммы
+                    try:
+                        box = canvas.bounding_box()
+                        if box and box['width'] > 100 and box['height'] > 100:
+                            if canvas.is_visible():
+                                time.sleep(1)
+                                print("[SUCCESS] Canvas диаграммы загружен")
+                                return True
+                    except:
+                        pass
+                    
+                    print("[WARN] Canvas найден, но может быть декоративным, ожидаем еще...")
+                    time.sleep(2)
+                    
+                    # Пробуем найти canvas через другой селектор
+                    try:
+                        diagram_canvas = self.page.locator('#cy-node-edge-editing-stage1 canvas, canvas[width][height]').first
+                        if diagram_canvas.is_visible(timeout=2000):
+                            box = diagram_canvas.bounding_box()
+                            if box and box['width'] > 100 and box['height'] > 100:
+                                print("[SUCCESS] Canvas диаграммы загружен после дополнительного поиска")
+                                return True
+                    except:
+                        pass
+                    
+            except Exception as e:
+                error_msg = str(e).replace('×', 'x').replace('\xd7', 'x')[:200]  # Убираем проблемные символы
+                print(f"[WARN] Canvas не загрузился в течение {timeout}мс: {error_msg}")
+                
+                # Если достигли максимума рефрешей, возвращаем False
+                if refresh_count >= max_refreshes:
+                    print(f"[ERROR] Canvas не загрузился после {max_refreshes} рефрешей")
+                    return False
+                
+                # Делаем рефреш страницы
+                print(f"[INFO] Выполняем рефреш страницы (рефреш #{refresh_count + 1})...")
+                try:
+                    self.page.reload(wait_until="domcontentloaded")
+                    time.sleep(3)  # Даем время на загрузку после рефреша
+                    print("[INFO] Страница перезагружена, ожидаем canvas снова...")
+                    refresh_count += 1
+                except Exception as refresh_error:
+                    print(f"[ERROR] Ошибка при рефреше страницы: {refresh_error}")
+                    return False
+        
+        print(f"[ERROR] Canvas не загрузился после всех попыток (рефрешей: {max_refreshes})")
+        return False
