@@ -1,6 +1,6 @@
 import datetime
 import json
-from data_structures.tutorial.models import *
+from data_structures.tutorial.models import Customer
 
 def has_foreign_currencies(customer: Customer) -> bool:
     '''Функция определяет, есть ли у клиента кредит в иностранной валюте'''

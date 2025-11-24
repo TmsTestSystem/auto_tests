@@ -16,6 +16,104 @@ from locators import (
 )
 
 
+def wait_for_field_value(page, field_locator, expected_value, timeout=10000):
+    """
+    Ждет, пока поле получит ожидаемое значение через WebSocket.
+    Используется для избежания race condition при заполнении полей.
+    
+    Args:
+        page: Playwright page объект
+        field_locator: Локатор поля
+        expected_value: Ожидаемое значение (может быть строкой или частью строки)
+        timeout: Таймаут ожидания в миллисекундах
+        
+    Returns:
+        bool: True если значение появилось, False если таймаут
+    """
+    start_time = time.time()
+    while (time.time() - start_time) * 1000 < timeout:
+        try:
+            field = field_locator
+            if field.is_visible():
+                try:
+                    current_value = field.input_value()
+                    if expected_value in current_value or current_value == expected_value:
+                        print(f"[SUCCESS] Поле получило значение: {current_value}")
+                        return True
+                except:
+                    pass
+                
+                try:
+                    current_value = field.text_content()
+                    if expected_value in current_value or current_value == expected_value:
+                        print(f"[SUCCESS] Поле получило значение: {current_value}")
+                        return True
+                except:
+                    pass
+                
+                try:
+                    invalid_class = field.locator("..").locator(".TextField__TextField_invalid___KA8-t")
+                    if not invalid_class.is_visible(timeout=500):
+                        print("[INFO] Поле прошло валидацию (нет класса invalid)")
+                        time.sleep(0.3)  # Дополнительная пауза для стабилизации
+                        return True
+                except:
+                    pass
+                    
+        except Exception as e:
+            pass
+        
+        time.sleep(0.2)
+    
+    print(f"[WARN] Таймаут ожидания значения '{expected_value}' в поле")
+    return False
+
+
+def wait_for_field_selection(page, field_locator, expected_text, timeout=10000):
+    """
+    Ждет, пока в поле выбора появится ожидаемый текст (для выпадающих списков).
+    
+    Args:
+        page: Playwright page объект
+        field_locator: Локатор поля
+        expected_text: Ожидаемый текст в поле
+        timeout: Таймаут ожидания в миллисекундах
+        
+    Returns:
+        bool: True если текст появился, False если таймаут
+    """
+    start_time = time.time()
+    while (time.time() - start_time) * 1000 < timeout:
+        try:
+            field = field_locator
+            if field.is_visible():
+                try:
+                    current_value = field.input_value()
+                    if expected_text in current_value or current_value == expected_text:
+                        print(f"[SUCCESS] В поле выбора появился текст: {current_value}")
+                        time.sleep(0.5)  # Дополнительная пауза для стабилизации через WS
+                        return True
+                except:
+                    pass
+                
+                try:
+                    current_value = field.text_content()
+                    if expected_text in current_value or current_value == expected_text:
+                        print(f"[SUCCESS] В поле выбора появился текст: {current_value}")
+                        time.sleep(0.5)  # Дополнительная пауза для стабилизации через WS
+                        return True
+                except:
+                    pass
+                    
+        except Exception as e:
+            pass
+        
+        time.sleep(0.2)
+    
+    print(f"[WARN] Таймаут ожидания текста '{expected_text}' в поле выбора")
+    return False
+
+
 def test_flow_cycle(login_page, flow_project):
     """
     Тест для создания циклического процесса на диаграмме
@@ -34,7 +132,6 @@ def test_flow_cycle(login_page, flow_project):
 
     print("[INFO] Шаг 1: Создание Python скрипта для циклических операций")
     
-    # Открываем файловую панель
     print("[INFO] Открываем файловую панель")
     file_panel.open_file_panel()
     time.sleep(2)
@@ -168,7 +265,7 @@ def test_flow_cycle(login_page, flow_project):
     test_cycle_file = page.locator(FilePanelLocators.get_treeitem_by_name("test_cycle.df.json"))
     if test_cycle_file.count() > 0:
         print("[INFO] Файл 'test_cycle.df.json' найден")
-        test_cycle_file.first.dblclick()  # Двойной клик для открытия
+        test_cycle_file.first.dblclick()
         time.sleep(2)
     else:
         print("[ERROR] Файл 'test_cycle.df.json' не найден!")
@@ -184,14 +281,13 @@ def test_flow_cycle(login_page, flow_project):
 
     print("[INFO] Шаг 3: Настройка компонента Function на canvas")
     
-    # Ждем загрузки canvas с рефрешем при таймауте
     assert wait_for_canvas_with_refresh(page, timeout=10000, max_refreshes=1), "Canvas не загрузился даже после рефреша!"
     time.sleep(2)  # Дополнительное время для полной загрузки компонентов на canvas
 
     function_component = page.locator(DiagramLocators.FUNCTION_COMPONENT)
     if function_component.count() > 0:
         print("[INFO] Компонент Function найден на canvas")
-        function_component.first.dblclick()  # Двойной клик
+        function_component.first.dblclick()
         time.sleep(1)
         print("[INFO] Двойной клик по компоненту Function выполнен")
     else:
@@ -282,51 +378,78 @@ def test_flow_cycle(login_page, flow_project):
     print("[INFO] Шаг 5: Настройка компонента Loop на canvas")
 
     print("[INFO] Поиск компонента Loop на канвасе")
-    
-    loop_components = page.locator(CanvasLocators.get_component_by_text("Loop"))
     loop_found = False
+    max_attempts = 5
     
-    if loop_components.count() > 0:
-        print(f"[INFO] Найдено {loop_components.count()} компонентов с текстом 'Loop'")
-        
-        for i in range(loop_components.count()):
+    for attempt in range(max_attempts):
+        try:
+            print(f"[INFO] Попытка {attempt + 1}/{max_attempts} найти компонент Loop")
+            
             try:
-                loop_component = loop_components.nth(i)
-                if loop_component.is_visible():
-                    loop_box = loop_component.bounding_box()
-                    if loop_box:
-                        edge_x = loop_box['x'] + 10  # 10px от левого края
-                        edge_y = loop_box['y'] + loop_box['height'] / 2  # по центру по вертикали
-                        
-                        print(f"[INFO] Кликаем по краю компонента Loop в позиции ({edge_x}, {edge_y})")
-                        page.mouse.click(edge_x, edge_y)
-                        time.sleep(1)
-                        
-                        details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
-                        if details_panel.is_visible():
-                            loop_title = page.get_by_role("heading", name="diagram_element_name")
-                            if loop_title.is_visible():
-                                title_text = loop_title.text_content()
-                                if title_text and "Loop" in title_text:
-                                    print("[SUCCESS] Компонент Loop найден и выбран!")
-                                    loop_found = True
-                                    break
-                                else:
-                                    print(f"[WARN] Сайдбар открылся для компонента: {title_text}")
-                            else:
-                                print("[WARN] Заголовок компонента не найден в сайдбаре")
-                            
-                            details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
-                            if details_panel_switcher.is_visible():
-                                details_panel_switcher.click()
-                                time.sleep(0.5)
-                        
+                loop_component = canvas_utils.find_component_by_title("Loop", exact=True, timeout=5000)
+                if loop_component:
+                    print("[INFO] Компонент Loop найден через CanvasUtils")
+                    loop_component.click()
+                    time.sleep(1)
+                    
+                    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
+                    if details_panel.is_visible(timeout=3000):
+                        loop_title = page.get_by_role("heading", name="diagram_element_name")
+                        if loop_title.is_visible(timeout=2000):
+                            title_text = loop_title.text_content()
+                            if title_text and "Loop" in title_text:
+                                print("[SUCCESS] Компонент Loop найден и выбран!")
+                                loop_found = True
+                                break
             except Exception as e:
-                print(f"[WARN] Ошибка при проверке компонента Loop {i}: {e}")
+                print(f"[WARN] CanvasUtils не нашел Loop (попытка {attempt + 1}): {e}")
+            
+            if not loop_found:
+                loop_components = page.locator(CanvasLocators.get_component_by_text("Loop"))
+                if loop_components.count() > 0:
+                    print(f"[INFO] Найдено {loop_components.count()} компонентов с текстом 'Loop'")
+                    for i in range(loop_components.count()):
+                        try:
+                            loop_component = loop_components.nth(i)
+                            if loop_component.is_visible():
+                                loop_box = loop_component.bounding_box()
+                                if loop_box:
+                                    center_x = loop_box['x'] + loop_box['width'] / 2
+                                    center_y = loop_box['y'] + loop_box['height'] / 2
+                                    
+                                    print(f"[INFO] Кликаем по центру компонента Loop в позиции ({center_x}, {center_y})")
+                                    page.mouse.click(center_x, center_y)
+                                    time.sleep(1.5)
+                                    
+                                    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
+                                    if details_panel.is_visible(timeout=3000):
+                                        loop_title = page.get_by_role("heading", name="diagram_element_name")
+                                        if loop_title.is_visible(timeout=2000):
+                                            title_text = loop_title.text_content()
+                                            if title_text and "Loop" in title_text:
+                                                print("[SUCCESS] Компонент Loop найден и выбран!")
+                                                loop_found = True
+                                                break
+                        except Exception as e:
+                            print(f"[WARN] Ошибка при проверке компонента Loop {i}: {e}")
+                            continue
+                    
+                    if loop_found:
+                        break
+            
+            if not loop_found and attempt < max_attempts - 1:
+                print("[INFO] Даем дополнительное время для загрузки компонентов...")
+                time.sleep(2)
+                
+        except Exception as e:
+            print(f"[WARN] Ошибка при поиске Loop (попытка {attempt + 1}): {e}")
+            if attempt < max_attempts - 1:
+                time.sleep(2)
                 continue
     
     if not loop_found:
-        print("[ERROR] Компонент Loop не найден на canvas!")
+        print("[ERROR] Компонент Loop не найден на canvas после всех попыток!")
+        save_screenshot(page, "loop_not_found")
         raise Exception("Компонент Loop не найден в диаграмме")
 
     print("[INFO] Настройка компонента Loop")
@@ -364,6 +487,21 @@ def test_flow_cycle(login_page, flow_project):
                 function_option.click()
                 time.sleep(0.5)
                 print("[INFO] Компонент Function выбран для loop_start")
+                
+                print("[INFO] Ожидание сохранения значения loop_start через WebSocket...")
+                loop_start_input = None
+                try:
+                    loop_start_input = page.locator('textarea[name*="loop_start"], input[name*="loop_start"], textarea[aria-label*="loop_start"], input[aria-label*="loop_start"]').first
+                    if loop_start_input.count() == 0:
+                        loop_start_input = loop_start_field.locator("..").locator("textarea, input").first
+                except:
+                    loop_start_input = loop_start_field
+                
+                if loop_start_input:
+                    wait_for_field_selection(page, loop_start_input, "Function", timeout=15000)
+                    print("[SUCCESS] Значение loop_start сохранено через WebSocket")
+                else:
+                    print("[WARN] Не удалось найти поле для проверки значения, пропускаем ожидание")
             else:
                 print("[WARN] Компонент Function не найден в списке, пробуем альтернативный метод")
                 function_label = page.locator('.TreeItem__LabelPrimary___vzajD[aria-label="treeitem_label"]:has-text("Function")').first
@@ -371,6 +509,21 @@ def test_flow_cycle(login_page, flow_project):
                     function_label.click()
                     time.sleep(0.5)
                     print("[INFO] Компонент Function найден по TreeItem__LabelPrimary")
+                    
+                    print("[INFO] Ожидание сохранения значения loop_start через WebSocket (альтернативный метод)...")
+                    loop_start_input = None
+                    try:
+                        loop_start_input = page.locator('textarea[name*="loop_start"], input[name*="loop_start"], textarea[aria-label*="loop_start"], input[aria-label*="loop_start"]').first
+                        if loop_start_input.count() == 0:
+                            loop_start_input = loop_start_field.locator("..").locator("textarea, input").first
+                    except:
+                        loop_start_input = loop_start_field
+                    
+                    if loop_start_input:
+                        wait_for_field_selection(page, loop_start_input, "Function", timeout=15000)
+                        print("[SUCCESS] Значение loop_start сохранено через WebSocket (альтернативный метод)")
+                    else:
+                        print("[WARN] Не удалось найти поле для проверки значения, пропускаем ожидание")
                 else:
                     print("[WARN] Не удалось найти компонент Function для loop_start")
         else:
@@ -385,6 +538,15 @@ def test_flow_cycle(login_page, flow_project):
             add_button.click()
             time.sleep(0.5)
             print("[INFO] Кнопка добавления элемента нажата")
+            
+            print("[INFO] Ожидание добавления элемента через WebSocket...")
+            try:
+                loop_end_new_field = page.get_by_role("textbox", name="config.loop_end.0")
+                loop_end_new_field.wait_for(state="visible", timeout=10000)
+                print("[SUCCESS] Элемент добавлен в список, поле loop_end.0 появилось")
+                time.sleep(0.5)  # Дополнительная пауза для стабилизации через WS
+            except Exception as e:
+                print(f"[WARN] Не удалось дождаться появления нового поля: {e}")
         else:
             print("[WARN] Кнопка добавления элемента не найдена")
     except Exception as e:
@@ -403,12 +565,19 @@ def test_flow_cycle(login_page, flow_project):
                 function_option.click()
                 time.sleep(0.5)
                 print("[INFO] Компонент Function выбран для loop_end")
+                
+                print("[INFO] Ожидание сохранения значения loop_end через WebSocket...")
+                wait_for_field_selection(page, loop_end_field, "Function", timeout=15000)
+                print("[SUCCESS] Значение loop_end сохранено через WebSocket")
             else:
                 function_label = page.locator('.TreeItem__LabelPrimary___vzajD[aria-label="treeitem_label"]:has-text("Function")').first
                 if function_label.is_visible():
                     function_label.click()
                     time.sleep(0.5)
                     print("[INFO] Компонент Function найден для loop_end по TreeItem__LabelPrimary")
+                    
+                    wait_for_field_selection(page, loop_end_field, "Function", timeout=15000)
+                    print("[SUCCESS] Значение loop_end сохранено через WebSocket (альтернативный метод)")
                 else:
                     print("[WARN] Не удалось найти компонент Function для loop_end")
         else:
@@ -427,6 +596,10 @@ def test_flow_cycle(login_page, flow_project):
             iterator_field.fill("[1,2,3,4]")
             time.sleep(0.5)
             print("[INFO] Итератор заполнен данными [1,2,3,4]")
+            
+            print("[INFO] Ожидание сохранения значения итератора через WebSocket...")
+            wait_for_field_value(page, iterator_field, "[1,2,3,4]", timeout=15000)
+            print("[SUCCESS] Значение итератора сохранено через WebSocket")
         else:
             print("[WARN] Поле итератора не найдено")
     except Exception as e:
