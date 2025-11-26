@@ -139,12 +139,13 @@ def test_flow_query(login_page, flow_project):
     print("[INFO] Шаг 5: Настройка подключения к БД в компоненте Query")
 
     select_file_button = page.get_by_role("button", name="textfield_select_file_button")
+    select_file_button.wait_for(state="visible", timeout=15000)
     assert select_file_button.is_visible(), "Кнопка выбора файла не найдена!"
     select_file_button.click()
     time.sleep(1)
     print("[INFO] Клик по кнопке выбора файла выполнен")
 
-    modal = page.locator('.decision-flow__Modal_open___NIla4.src__FileManagerModal___HeqlP')
+    modal = page.locator('[data-testid="Modal__Container"]')
     modal.wait_for(state="visible", timeout=10000)
     print("[INFO] Модалка выбора БД открыта")
 

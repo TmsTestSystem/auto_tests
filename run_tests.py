@@ -22,8 +22,8 @@ def main():
     
     # Маппинг хостов на URL
     host_urls = {
-        "st1": "https://decision-flow-web-1.df-st1.cloud.b-pl.pro",
-        "st2": "https://decision-flow-web-1.df-st2.cloud2.b-pl.pro", 
+        "st1": "https://decision-flow-frontend-st1.df-st.b-pl.cloud2",
+        "st2": "https://decision-flow-frontend-st2.df-st.b-pl.cloud2", 
         "st3": "https://decision-flow-frontend-st3.df-st.b-pl.cloud2",
         "st4": "https://decision-flow-web-1.df-st4.cloud2.b-pl.pro",
         "local-a": "http://localhost:3333",

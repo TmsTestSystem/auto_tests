@@ -29,8 +29,8 @@ def pytest_configure(config):
     if host:
         # Маппинг хостов на URL (как в run_tests.py)
         host_urls = {
-            "st1": "https://decision-flow-web-1.df-st1.cloud.b-pl.pro",
-            "st2": "https://decision-flow-web-1.df-st2.cloud2.b-pl.pro", 
+            "st1": "https://decision-flow-frontend-st1.df-st.b-pl.cloud2",
+            "st2": "https://decision-flow-frontend-st2.df-st.b-pl.cloud2", 
             "st3": "https://decision-flow-frontend-st3.df-st.b-pl.cloud2",
             "st4": "https://decision-flow-web-1.df-st4.cloud2.b-pl.pro",
             "local-a": "http://localhost:3333",
@@ -148,7 +148,7 @@ def login_page():
     assert email is not None, "LOGIN not set"
     assert password is not None, "PASSWORD not set"
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={'width': 1920, 'height': 1080})
         login_page = LoginPage(page)
         login_page.goto()
