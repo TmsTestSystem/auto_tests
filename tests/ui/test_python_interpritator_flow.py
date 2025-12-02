@@ -51,6 +51,10 @@ FUNCS_TO_TEST = [
     "process_mixed_types",
     "interpreter_diagnostics",
     "cpu_stress",
+    "traceback_demo",
+    "big_structure",
+    "timezone_demo",
+    "recursion_demo",
 ]
 
 
@@ -292,7 +296,14 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
         print(f"[PY_INT][WARN] Не удалось переключиться на вкладку 'Консоль': {e}")
 
     # 5) Для функций, которые логируют тайминги, проверяем [PY_TIMER] в консоли
-    if func_name == "interpreter_diagnostics":
+    if func_name in (
+        "interpreter_diagnostics",
+        "cpu_stress",
+        "traceback_demo",
+        "big_structure",
+        "timezone_demo",
+        "recursion_demo",
+    ):
         try:
             time.sleep(2)
             console_output = page.locator('.OutputPanel__Body___ypo3o > div').first
@@ -374,5 +385,62 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
         assert res["count"] == 500_000
         assert res["hash_len"] == 32  # длина sha256 в байтах
         print("[PY_INT] Ответ API для cpu_stress успешно провалидирован")
+
+    if func_name == "traceback_demo":
+        for key in ("ok", "duration_ms", "result", "error"):
+            assert key in result_data, f"В результате traceback_demo нет ключа {key}: {result_data}"
+        assert result_data["ok"] is True, f"traceback_demo завершилась с ошибкой: {result_data}"
+        tb = (result_data.get("result") or {}).get("traceback")
+        assert isinstance(tb, str) and "RuntimeError" in tb and "traceback demo" in tb, (
+            f"В traceback_demo ожидаем текст traceback с RuntimeError, получили: {tb!r}"
+        )
+        print("[PY_INT] Ответ API для traceback_demo успешно провалидирован")
+
+    if func_name == "big_structure":
+        for key in ("ok", "duration_ms", "result", "error"):
+            assert key in result_data, f"В результате big_structure нет ключа {key}: {result_data}"
+        assert result_data["ok"] is True, f"big_structure завершилась с ошибкой: {result_data}"
+        res = result_data.get("result") or {}
+        assert isinstance(res, dict), f"Ожидали dict в result.result для big_structure, получили: {type(res)}"
+        assert res.get("items_count", 0) >= 50_000, (
+            f"items_count для big_structure слишком мал: {res.get('items_count')}"
+        )
+        assert isinstance(res.get("sample"), list) and len(res["sample"]) == 3, (
+            f"В big_structure.sample ожидаем 3 элемента, получили: {res.get('sample')}"
+        )
+        print("[PY_INT] Ответ API для big_structure успешно провалидирован")
+
+    if func_name == "timezone_demo":
+        for key in ("ok", "duration_ms", "result", "error"):
+            assert key in result_data, f"В результате timezone_demo нет ключа {key}: {result_data}"
+        assert result_data["ok"] is True, f"timezone_demo завершилась с ошибкой: {result_data}"
+        res = result_data.get("result") or {}
+        assert isinstance(res, dict), f"Ожидали dict в result.result для timezone_demo, получили: {type(res)}"
+        assert isinstance(res.get("utc_iso"), str) and "T" in res["utc_iso"], (
+            f"Некорректный utc_iso в timezone_demo: {res.get('utc_iso')}"
+        )
+        assert isinstance(res.get("local_iso"), str) and "T" in res["local_iso"], (
+            f"Некорректный local_iso в timezone_demo: {res.get('local_iso')}"
+        )
+        assert isinstance(res.get("delta_seconds"), (int, float)), "delta_seconds в timezone_demo должен быть числом"
+        assert isinstance(res.get("utc_offset_seconds"), (int, float)), (
+            "utc_offset_seconds в timezone_demo должен быть числом"
+        )
+        print("[PY_INT] Ответ API для timezone_demo успешно провалидирован")
+
+    if func_name == "recursion_demo":
+        for key in ("ok", "duration_ms", "result", "error"):
+            assert key in result_data, f"В результате recursion_demo нет ключа {key}: {result_data}"
+        assert result_data["ok"] is True, f"recursion_demo завершилась с ошибкой: {result_data}"
+        res = result_data.get("result") or {}
+        assert isinstance(res, dict), f"Ожидали dict в result.result для recursion_demo, получили: {type(res)}"
+        depth = res.get("depth")
+        total = res.get("sum")
+        assert depth == 300, f"В recursion_demo ожидаем глубину 300, получили: {depth}"
+        expected_sum = depth * (depth + 1) // 2
+        assert total == expected_sum, (
+            f"Неверная сумма в recursion_demo: ожидали {expected_sum}, получили: {total}"
+        )
+        print("[PY_INT] Ответ API для recursion_demo успешно провалидирован")
 
 

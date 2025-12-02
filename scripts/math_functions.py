@@ -4,6 +4,7 @@ import json
 import math
 import random
 import time
+import traceback
 from typing import Any, Dict
 
 
@@ -218,6 +219,93 @@ def cpu_stress() -> Dict[str, Any]:
             "approx": approx,
             "hash_len": hash_len,
             "count": len(data),
+        }
+
+    return _run_timed(_workload)
+
+
+def traceback_demo() -> Dict[str, Any]:
+    def _workload() -> Dict[str, Any]:
+        try:
+            def inner():
+                raise RuntimeError("traceback demo")
+
+            def mid():
+                inner()
+
+            mid()
+        except Exception:
+            tb_str = traceback.format_exc()
+            print("[TRACEBACK_DEMO] captured traceback:")
+            print(tb_str)
+            return {"traceback": tb_str}
+
+    return _run_timed(_workload)
+
+
+def big_structure() -> Dict[str, Any]:
+    def _workload() -> Dict[str, Any]:
+        data = [
+            {
+                "id": i,
+                "value": i % 10,
+                "nested": {
+                    "square": i * i,
+                    "even": (i % 2) == 0,
+                },
+            }
+            for i in range(50_000)
+        ]
+
+        sum_values = sum(item["value"] for item in data)
+        even_count = sum(1 for item in data if item["nested"]["even"])
+
+        return {
+            "items_count": len(data),
+            "sum_values": sum_values,
+            "even_count": even_count,
+            "sample": data[:3],
+        }
+
+    return _run_timed(_workload)
+
+
+def timezone_demo() -> Dict[str, Any]:
+    def _workload() -> Dict[str, Any]:
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        now_local = datetime.datetime.now()
+
+        iso_utc = now_utc.isoformat()
+        iso_local = now_local.isoformat()
+
+        delta = now_utc.replace(tzinfo=None) - now_local.replace(tzinfo=None)
+        delta_seconds = float(delta.total_seconds())
+
+        offset = now_utc.utcoffset()
+        offset_seconds = float(offset.total_seconds()) if offset else 0.0
+
+        return {
+            "utc_iso": iso_utc,
+            "local_iso": iso_local,
+            "delta_seconds": delta_seconds,
+            "utc_offset_seconds": offset_seconds,
+        }
+
+    return _run_timed(_workload)
+
+
+def recursion_demo() -> Dict[str, Any]:
+    def _recurse(n: int, acc: int) -> int:
+        if n == 0:
+            return acc
+        return _recurse(n - 1, acc + n)
+
+    def _workload() -> Dict[str, Any]:
+        depth = 300
+        total = _recurse(depth, 0)
+        return {
+            "depth": depth,
+            "sum": total,
         }
 
     return _run_timed(_workload)
