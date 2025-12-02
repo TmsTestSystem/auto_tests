@@ -382,7 +382,7 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
         assert isinstance(res, dict), f"Ожидали dict в result.result для cpu_stress, получили: {type(res)}"
         for key in ("sum_plain", "sum_squares", "approx", "hash_len", "count"):
             assert key in res, f"В результате cpu_stress.result нет ключа {key}: {res}"
-        assert res["count"] == 500_000
+        assert res["count"] == 10_000_000
         assert res["hash_len"] == 32  # длина sha256 в байтах
         print("[PY_INT] Ответ API для cpu_stress успешно провалидирован")
 
@@ -402,7 +402,7 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
         assert result_data["ok"] is True, f"big_structure завершилась с ошибкой: {result_data}"
         res = result_data.get("result") or {}
         assert isinstance(res, dict), f"Ожидали dict в result.result для big_structure, получили: {type(res)}"
-        assert res.get("items_count", 0) >= 50_000, (
+        assert res.get("items_count", 0) >= 500_000, (
             f"items_count для big_structure слишком мал: {res.get('items_count')}"
         )
         assert isinstance(res.get("sample"), list) and len(res["sample"]) == 3, (

@@ -182,10 +182,19 @@ def test_release_end_to_end(login_page):
 
         print("[STEP 15] Проверяем API после снятия с публикации")
         unpublish_response = requests.post(execute_url, json=request_payload, verify=False, timeout=30)
-        assert unpublish_response.status_code == 404, (
-            f"После снятия с публикации ожидали 404, получили {unpublish_response.status_code}: {unpublish_response.text}"
+        assert unpublish_response.status_code in (404, 422), (
+            f"После снятия с публикации ожидали 404 или 422, получили "
+            f"{unpublish_response.status_code}: {unpublish_response.text}"
         )
-        print("[SUCCESS] API ответило 404 после снятия релиза с публикации")
+        if unpublish_response.status_code == 422:
+            # На локальных стендах при обращении к непубликованному релизу возвращается 422 Not Published
+            body = unpublish_response.text or ""
+            assert "not published" in body.lower(), (
+                f"Для кода 422 ожидаем сообщение 'Not Published', получили: {body}"
+            )
+            print("[SUCCESS] API ответило 422 Not Published после снятия релиза с публикации")
+        else:
+            print("[SUCCESS] API ответило 404 после снятия релиза с публикации")
 
         print("[STEP 16] Удаляем релиз и повторно проверяем API")
         release_page.delete_release()

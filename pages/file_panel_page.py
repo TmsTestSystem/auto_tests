@@ -23,14 +23,25 @@ class FilePanelPage(BasePage):
             for selector in tree_selectors:
                 if self.page.locator(selector).count() > 0:
                     element = self.page.locator(selector).first
-                    if element.is_visible(timeout=1000):
-                        return  # Панель уже открыта
+                    # В новых версиях Playwright у is_visible нет параметра timeout,
+                    # поэтому используем явное ожидание через wait_for_selector.
+                    try:
+                        self.page.wait_for_selector(selector, timeout=1000)
+                        if element.is_visible():
+                            return  # Панель уже открыта
+                    except Exception:
+                        continue
         except:
             pass
         
         # Если панель не открыта, открываем её
         file_manager_button = self.page.locator('button[aria-label="board_toolbar_filemanager_button"]')
-        if file_manager_button.is_visible(timeout=10000):
+        try:
+            self.page.wait_for_selector('button[aria-label="board_toolbar_filemanager_button"]', timeout=10000)
+        except Exception:
+            return
+
+        if file_manager_button.is_visible():
             file_manager_button.click()
             # Ждем появления файловой панели или элементов дерева файлов
             time.sleep(0.5)  # Даем время на анимацию

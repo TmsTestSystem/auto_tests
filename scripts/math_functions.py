@@ -202,16 +202,16 @@ def cpu_stress() -> Dict[str, Any]:
     """
 
     def _workload() -> Dict[str, Any]:
-        data = list(range(500_000))
+        data = list(range(10_000_000))
 
         sum_plain = sum(data)
         sum_squares = sum(x * x for x in data)
 
         approx = 0.0
-        for i in range(0, len(data), 250):
+        for i in range(0, len(data), 1000):
             approx += math.sqrt(data[i] + 1) * 0.5
 
-        hash_len = _heavy_cpu(500_000)
+        hash_len = _heavy_cpu(1_000_000)
 
         return {
             "sum_plain": sum_plain,
@@ -254,7 +254,7 @@ def big_structure() -> Dict[str, Any]:
                     "even": (i % 2) == 0,
                 },
             }
-            for i in range(50_000)
+            for i in range(500_000)
         ]
 
         sum_values = sum(item["value"] for item in data)

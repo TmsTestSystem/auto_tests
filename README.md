@@ -25,6 +25,20 @@ python run_tests.py local-192 tests/ui/ -v
 python run_tests.py local-192 tests/ui/test_login.py -v
 ```
 
+### 🐍 Диагностика Python‑интерпретатора
+
+В проекте есть специальный UI‑тест, который проверяет встроенный Python‑интерпретатор через диаграмму `Input → Function → Output`
+и набор диагностических функций (`process_mixed_types`, `interpreter_diagnostics`, `cpu_stress`, `traceback_demo`,
+`big_structure`, `timezone_demo`, `recursion_demo`) из скрипта `scripts/math_functions.py`.
+
+```bash
+# Запуск всех проверок интерпретатора (UI + API валидация результата)
+python -m pytest tests/ui/test_python_interpritator_flow.py::test_python_interpritator_flow -vv
+
+# Запуск конкретной функции (пример — только нагрузочный сценарий)
+python -m pytest tests/ui/test_python_interpritator_flow.py::test_python_interpritator_flow[cpu_stress] -vv
+```
+
 ## 🎯 Доступные хосты
 
 | Хост | Описание | URL |
