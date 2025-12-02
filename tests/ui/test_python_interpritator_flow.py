@@ -43,6 +43,45 @@ def _import_math_functions_via_api(project_code: str, branch: str = "master"):
         content_b64 = base64.b64encode(f.read()).decode("ascii")
 
     api = FilePanelAPI(project_code, branch=branch)
+    
+    # Создаём папку /scripts, если её нет
+    try:
+        api.create_folder("scripts", parent_path="/")
+        print(f"[PY_INT] Папка /scripts создана через API")
+    except requests.exceptions.HTTPError as e:
+        if "already exists" in str(e) or (hasattr(e, 'response') and e.response.status_code == 409):
+            print(f"[PY_INT] Папка /scripts уже существует")
+        else:
+            raise
+    
+    # Ждём, пока папка появится в дереве файлов (на случай задержек на стендах)
+    print(f"[PY_INT] Ожидаем появления папки /scripts в дереве файлов...")
+    max_attempts = 10
+    for attempt in range(max_attempts):
+        try:
+            tree = api.get_file_tree()
+            # Проверяем, есть ли папка scripts в дереве
+            scripts_found = False
+            if isinstance(tree, dict):
+                items = tree.get("items", tree.get("data", []))
+                for item in items:
+                    if isinstance(item, dict) and item.get("name") == "scripts" and item.get("type") == "directory":
+                        scripts_found = True
+                        break
+            
+            if scripts_found:
+                print(f"[PY_INT] Папка /scripts найдена в дереве файлов")
+                break
+            else:
+                if attempt < max_attempts - 1:
+                    time.sleep(0.5)
+                    print(f"[PY_INT] Папка /scripts ещё не появилась, попытка {attempt + 1}/{max_attempts}...")
+                else:
+                    print(f"[PY_INT][WARN] Папка /scripts не найдена после {max_attempts} попыток, продолжаем импорт...")
+        except Exception as e:
+            print(f"[PY_INT][WARN] Ошибка при проверке дерева файлов: {e}, продолжаем импорт...")
+            break
+    
     print(f"[PY_INT] Импортируем math_functions.py в проект {project_code} через API...")
     api.import_file("/scripts/math_functions.py", content_b64)
 
