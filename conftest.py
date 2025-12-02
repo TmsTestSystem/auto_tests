@@ -147,8 +147,11 @@ def login_page():
     password = os.getenv("PASSWORD")
     assert email is not None, "LOGIN not set"
     assert password is not None, "PASSWORD not set"
+    headless_env = os.getenv("HEADLESS", "false").lower()
+    headless = headless_env in ("1", "true", "yes")
+    print(f"[PLAYWRIGHT] HEADLESS={headless} (env={headless_env})")
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=headless)
         page = browser.new_page(viewport={'width': 1920, 'height': 1080})
         login_page = LoginPage(page)
         login_page.goto()
