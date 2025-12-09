@@ -1,5 +1,6 @@
 import time
 import pytest
+from playwright.sync_api import TimeoutError
 from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.diagram_page import DiagramPage
@@ -251,10 +252,11 @@ def test_flow_flow_component(login_page, flow_project):
     print("[SUCCESS] Диаграмма завершилась успешно!")
     
     toast = page.locator(ModalLocators.TOAST).first
-    if toast.is_visible(timeout=3000):
+    try:
+        toast.wait_for(state="visible", timeout=3000)
         toast_text = toast.text_content()
         print(f"[SUCCESS] Тост найден: {toast_text}")
-    else:
+    except TimeoutError:
         print("[INFO] Тост не появился, но диаграмма выполнилась успешно")
     
     page.get_by_text("Процесс", exact=True).click()

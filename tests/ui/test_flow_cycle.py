@@ -1,5 +1,6 @@
 import time
 import pytest
+from playwright.sync_api import TimeoutError
 from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.diagram_page import DiagramPage
@@ -53,10 +54,13 @@ def wait_for_field_value(page, field_locator, expected_value, timeout=10000):
                 
                 try:
                     invalid_class = field.locator("..").locator(".TextField__TextField_invalid___KA8-t")
-                    if not invalid_class.is_visible(timeout=500):
+                    try:
+                        invalid_class.wait_for(state="hidden", timeout=500)
                         print("[INFO] Поле прошло валидацию (нет класса invalid)")
                         time.sleep(0.3)  # Дополнительная пауза для стабилизации
                         return True
+                    except TimeoutError:
+                        pass
                 except:
                     pass
                     
@@ -393,14 +397,17 @@ def test_flow_cycle(login_page, flow_project):
                     time.sleep(1)
                     
                     details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
-                    if details_panel.is_visible(timeout=3000):
+                    try:
+                        details_panel.wait_for(state="visible", timeout=3000)
                         loop_title = page.get_by_role("heading", name="diagram_element_name")
-                        if loop_title.is_visible(timeout=2000):
-                            title_text = loop_title.text_content()
-                            if title_text and "Loop" in title_text:
-                                print("[SUCCESS] Компонент Loop найден и выбран!")
-                                loop_found = True
-                                break
+                        loop_title.wait_for(state="visible", timeout=2000)
+                        title_text = loop_title.text_content()
+                        if title_text and "Loop" in title_text:
+                            print("[SUCCESS] Компонент Loop найден и выбран!")
+                            loop_found = True
+                            break
+                    except TimeoutError:
+                        pass
             except Exception as e:
                 print(f"[WARN] CanvasUtils не нашел Loop (попытка {attempt + 1}): {e}")
             
@@ -422,14 +429,17 @@ def test_flow_cycle(login_page, flow_project):
                                     time.sleep(1.5)
                                     
                                     details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
-                                    if details_panel.is_visible(timeout=3000):
+                                    try:
+                                        details_panel.wait_for(state="visible", timeout=3000)
                                         loop_title = page.get_by_role("heading", name="diagram_element_name")
-                                        if loop_title.is_visible(timeout=2000):
-                                            title_text = loop_title.text_content()
-                                            if title_text and "Loop" in title_text:
-                                                print("[SUCCESS] Компонент Loop найден и выбран!")
-                                                loop_found = True
-                                                break
+                                        loop_title.wait_for(state="visible", timeout=2000)
+                                        title_text = loop_title.text_content()
+                                        if title_text and "Loop" in title_text:
+                                            print("[SUCCESS] Компонент Loop найден и выбран!")
+                                            loop_found = True
+                                            break
+                                    except TimeoutError:
+                                        pass
                         except Exception as e:
                             print(f"[WARN] Ошибка при проверке компонента Loop {i}: {e}")
                             continue
