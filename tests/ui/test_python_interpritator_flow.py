@@ -153,6 +153,9 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
         pytest.fail(f"Не удалось привязать скрипт math_functions.py к Function: {e}")
 
     try:
+        # Даем бэкенду подтянуть список функций из выбранного скрипта
+        time.sleep(2)
+
         function_field = page.get_by_role("textbox", name="config.function")
         if not function_field.is_visible():
             pytest.fail("Поле config.function не отображается")
