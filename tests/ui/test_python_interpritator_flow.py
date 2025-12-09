@@ -19,6 +19,7 @@ import time
 
 import pytest
 import requests
+from playwright.sync_api import TimeoutError
 
 from api.file_panel_api import FilePanelAPI
 from pages.project_page import ProjectPage
@@ -53,34 +54,6 @@ def _import_math_functions_via_api(project_code: str, branch: str = "master"):
             print(f"[PY_INT] Папка /scripts уже существует")
         else:
             raise
-    
-    # Ждём, пока папка появится в дереве файлов (на случай задержек на стендах)
-    print(f"[PY_INT] Ожидаем появления папки /scripts в дереве файлов...")
-    max_attempts = 10
-    for attempt in range(max_attempts):
-        try:
-            tree = api.get_file_tree()
-            # Проверяем, есть ли папка scripts в дереве
-            scripts_found = False
-            if isinstance(tree, dict):
-                items = tree.get("items", tree.get("data", []))
-                for item in items:
-                    if isinstance(item, dict) and item.get("name") == "scripts" and item.get("type") == "directory":
-                        scripts_found = True
-                        break
-            
-            if scripts_found:
-                print(f"[PY_INT] Папка /scripts найдена в дереве файлов")
-                break
-            else:
-                if attempt < max_attempts - 1:
-                    time.sleep(0.5)
-                    print(f"[PY_INT] Папка /scripts ещё не появилась, попытка {attempt + 1}/{max_attempts}...")
-                else:
-                    print(f"[PY_INT][WARN] Папка /scripts не найдена после {max_attempts} попыток, продолжаем импорт...")
-        except Exception as e:
-            print(f"[PY_INT][WARN] Ошибка при проверке дерева файлов: {e}, продолжаем импорт...")
-            break
     
     print(f"[PY_INT] Импортируем math_functions.py в проект {project_code} через API...")
     api.import_file("/scripts/math_functions.py", content_b64)
@@ -183,9 +156,19 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
         function_field = page.get_by_role("textbox", name="config.function")
         if not function_field.is_visible():
             pytest.fail("Поле config.function не отображается")
+
+        # Открываем дропдаун с функциями: кликаем и, при необходимости, повторяем
         function_field.click()
-        time.sleep(0.5)
+        time.sleep(0.2)
         option = page.get_by_text(func_name, exact=False).first
+        try:
+            option.wait_for(state="visible", timeout=3000)
+        except TimeoutError:
+            # Дропдаун мог не открыться с первого клика — повторим
+            function_field.click()
+            time.sleep(0.2)
+            option.wait_for(state="visible", timeout=3000)
+
         assert option.count() > 0, f"Функция {func_name} не найдена в списке доступных функций"
         option.click()
         time.sleep(0.5)
