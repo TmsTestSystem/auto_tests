@@ -41,6 +41,24 @@ def pytest_configure(config):
         
         if host in host_urls:
             base_url = host_urls[host]
+            
+            # Сохраняем MAILHOG_URL из существующего .env файла, если он есть
+            mailhog_url = None
+            if env_path.exists():
+                try:
+                    with open(env_path, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith('MAILHOG_URL='):
+                                mailhog_url = line.split('=', 1)[1] if '=' in line else None
+                                break
+                except Exception:
+                    pass
+            
+            # Если MAILHOG_URL не найден, устанавливаем значение по умолчанию для local-192
+            if not mailhog_url and host == "local-192":
+                mailhog_url = "http://192.168.0.7:8025"
+            
             # Обновляем .env файл
             env_content = f"""# Конфигурация хостов для тестирования
 # Автоматически обновлено для хоста: {host}
@@ -50,8 +68,12 @@ LOGIN=admin@balance-pl.ru
 PASSWORD=admin
 
 DATABASE_URL=$env.DATABASE_URL
-REPO_URL_FLOW=git@gitlab.infra.b-pl.pro:ilya.kurilin/qa_auto_test.git
-"""
+REPO_URL_FLOW=git@gitlab.infra.b-pl.pro:ilya.kurilin/qa_auto_test.git"""
+            
+            # Добавляем MAILHOG_URL, если он был найден или установлен по умолчанию
+            if mailhog_url:
+                env_content += f"\nMAILHOG_URL={mailhog_url}"
+            
             with open(env_path, 'w', encoding='utf-8') as f:
                 f.write(env_content)
             
