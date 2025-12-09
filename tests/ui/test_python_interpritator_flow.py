@@ -138,6 +138,12 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
             print("[PY_INT] Модалка выбора файла открыта")
 
             python_script = page.locator(FilePanelLocators.get_treeitem_by_name("math_functions.py"))
+            try:
+                python_script.first.wait_for(state="visible", timeout=4000)
+            except TimeoutError:
+                # Даем ещё немного времени на появление файла после импорта
+                time.sleep(2)
+                python_script.first.wait_for(state="visible", timeout=4000)
             assert python_script.count() > 0, "math_functions.py не найден в дереве файлов модалки"
             python_script.first.click()
             time.sleep(0.5)
