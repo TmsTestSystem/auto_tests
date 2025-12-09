@@ -1,5 +1,6 @@
 import time
 import pytest
+from playwright.sync_api import TimeoutError
 from pages.file_panel_page import FilePanelPage
 from pages.project_page import ProjectPage
 from pages.data_struct_page import DataStructPage
@@ -202,8 +203,8 @@ def test_assignment_flow(login_page, flow_project):
     
     # Проверка выполнения
     try:
-        page.get_by_text("Диаграмма выполнена успешно").is_visible(timeout=10000)
-    except:
+        page.get_by_text("Диаграмма выполнена успешно").wait_for(state="visible", timeout=10000)
+    except TimeoutError:
         pass
     
     # Отладка результатов
@@ -230,7 +231,12 @@ def test_assignment_flow(login_page, flow_project):
     page.get_by_role("button", name="formitem_full_view_button").nth(1).click()
     time.sleep(1)
     
-    json_contains_string = page.get_by_test_id("Modal__Container").get_by_text('"string": "Тестовое строковое значение"').is_visible(timeout=5000)
+    json_result_locator = page.get_by_test_id("Modal__Container").get_by_text('"string": "Тестовое строковое значение"')
+    try:
+        json_result_locator.wait_for(state="visible", timeout=5000)
+        json_contains_string = True
+    except TimeoutError:
+        json_contains_string = False
     assert json_contains_string, "JSON не содержит ожидаемого строкового значения!"
     
     page.keyboard.press("Escape")

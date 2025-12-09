@@ -147,7 +147,9 @@ def login_page():
     password = os.getenv("PASSWORD")
     assert email is not None, "LOGIN not set"
     assert password is not None, "PASSWORD not set"
-    headless_env = os.getenv("HEADLESS", "false").lower()
+    # По умолчанию запускаем браузер без UI (headless), чтобы ускорить прогоны в CI.
+    # Для локальной отладки можно переопределить: HEADLESS=false
+    headless_env = os.getenv("HEADLESS", "true").lower()
     headless = headless_env in ("1", "true", "yes")
     print(f"[PLAYWRIGHT] HEADLESS={headless} (env={headless_env})")
     with sync_playwright() as p:
