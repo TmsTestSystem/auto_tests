@@ -7,6 +7,7 @@ from pages.file_panel_page import FilePanelPage
 from pages.data_struct_page import DataStructPage
 from pages.canvas_utils import CanvasUtils
 from locators.canvas_locators import CanvasLocators
+from locators.diagram_locators import DiagramLocators
 from conftest import wait_for_canvas_with_refresh
 
 
@@ -200,16 +201,21 @@ def test_flow_split(login_page, flow_project):
     time.sleep(3)
     print("[SUCCESS] Сайдбар для Input открыт")
     
-    page.get_by_role("button", name="textfield_select_file_button").click()
-    page.get_by_text(f"{schema_name}.ds.json").click()
-    page.get_by_role("button", name="filemanager_select_button").click()
+    # В новой версии UI выбор структуры открывается через поле config.openapi_schema.type
+    page.get_by_role("textbox", name="config.openapi_schema.type").click()
     time.sleep(1)
-    print("[SUCCESS] Структура данных выбрана")
-    
-    page.get_by_role("textbox", name="config.schema").click()
-    page.get_by_role("treeitem", name="str_name").locator("div").nth(2).click()
+    page.get_by_text("Структура данных").click()
     time.sleep(1)
-    print("[SUCCESS] Схема выбрана")
+    # Выбираем нужную структуру данных через datastructureview по имени файла схемы
+    page.get_by_label("datastructureview", exact=True).get_by_text(f"{schema_name}.ds.json").click()
+    time.sleep(1)
+    # И отдельно кликаем по самой схеме внутри файла (якорь после #)
+    page.get_by_role("treeitem", name=f"/{schema_name}.ds.json#str_name").locator("div").nth(1).click()
+    time.sleep(1)
+    # Подтверждаем выбор структуры и схемы
+    page.get_by_role("button", name="datastructureview_select_button").click()
+    time.sleep(1)
+    print("[SUCCESS] Структура и схема выбраны и подтверждены через datastructureview")
     
     print("[SUCCESS] Компонент Input настроен")
     
@@ -285,7 +291,9 @@ def test_flow_split(login_page, flow_project):
     time.sleep(1)
     print("[SUCCESS] Переход на вкладку 'Процесс'")
     
-    page.get_by_text("Отладка").click()
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
+    details_panel.wait_for(state="visible", timeout=10000)
+    details_panel.get_by_text("Отладка", exact=True).click()
     time.sleep(1)
     print("[SUCCESS] Переход на подвкладку 'Отладка'")
     
@@ -324,7 +332,9 @@ def test_flow_split(login_page, flow_project):
     print("[SUCCESS] Возврат на вкладку 'Процесс'")
     
     # Переход на подвкладку "Отладка"
-    page.get_by_text("Отладка").click()
+    details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
+    details_panel.wait_for(state="visible", timeout=10000)
+    details_panel.get_by_text("Отладка", exact=True).click()
     time.sleep(1)
     print("[SUCCESS] Переход на подвкладку 'Отладка'")
     

@@ -105,7 +105,8 @@ def test_assignment_flow(login_page, flow_project):
         page.locator(ComponentLocators.VARIABLES_ITEM_SETTINGS_BUTTON).nth(i).click()
         time.sleep(1)
         
-        page.get_by_test_id("Modal__Container").get_by_role("textbox", name="schema.type").click()
+        # Открываем селект типа данных для переменной
+        page.get_by_role("textbox", name="schema.type", exact=True).click()
         time.sleep(0.5)
         page.get_by_role("treeitem", name=var['type']).locator("div").nth(1).click()
         time.sleep(1)
@@ -117,10 +118,11 @@ def test_assignment_flow(login_page, flow_project):
                 page.get_by_role("treeitem", name="structure").locator("div").nth(1).click()
                 time.sleep(1)
             
-            page.get_by_role("treeitem", name=f"/{file_name}").locator("div").nth(1).click()
+            # Разворачиваем структуру по имени файла в дереве data structure view
+            page.get_by_label("datastructureview", exact=True).get_by_text(f"{file_name}.ds.json").click()
             time.sleep(0.5)
-            
-            page.get_by_test_id("Modal__Container").locator("span").filter(has_text=schema_name).click()
+            # Выбираем конкретную схему по label вида "/<file_name>.ds.json#<schema_name>"
+            page.get_by_label(f"/{file_name}.ds.json#{schema_name}").get_by_text(schema_name).click()
             time.sleep(0.5)
             
             page.get_by_role("button", name="datastructureview_select_button").click()
@@ -228,16 +230,13 @@ def test_assignment_flow(login_page, flow_project):
     page.get_by_text("Отладка", exact=True).click()
     time.sleep(1)
     
+    # Открываем полный просмотр результата
     page.get_by_role("button", name="formitem_full_view_button").nth(1).click()
     time.sleep(1)
     
-    json_result_locator = page.get_by_test_id("Modal__Container").get_by_text('"string": "Тестовое строковое значение"')
-    try:
-        json_result_locator.wait_for(state="visible", timeout=5000)
-        json_contains_string = True
-    except TimeoutError:
-        json_contains_string = False
-    assert json_contains_string, "JSON не содержит ожидаемого строкового значения!"
+    # Под фактический UI: убеждаемся, что в JSON есть наше строковое значение
+    expected_fragment = '"string": "Тестовое строковое значение"'
+    page.get_by_text(expected_fragment).wait_for(state="visible", timeout=10000)
     
     page.keyboard.press("Escape")
     time.sleep(1)

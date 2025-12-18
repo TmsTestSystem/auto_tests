@@ -29,12 +29,14 @@ class EndpointsPage(BasePage):
         alias_input = self.page.get_by_role("textbox", name="endpoints.0.alias")
         alias_input.click()
         alias_input.fill(alias)
-        file_select_button = self.page.get_by_role("button", name="textfield_select_file_button")
-        file_select_button.click()
-        
-        # Выбор файла в модальном окне
-        modal = self.page.get_by_test_id("Modal__Container")
-        modal.get_by_role("treeitem", name=f"/{process_file}").locator("div").nth(1).click()
+
+        # Открываем модалку выбора файла
+        self.page.get_by_role("button", name="textfield_select_file_button").click()
+        time.sleep(1)
+
+        # В актуальном UI достаточно кликнуть по файлу по тексту, без test-id модалки
+        self.page.get_by_text(process_file).nth(1).click()
+        time.sleep(1)
         self.page.get_by_role("button", name="filemanager_select_button").click()
 
     def save_endpoints(self):

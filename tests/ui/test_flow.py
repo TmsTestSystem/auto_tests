@@ -214,9 +214,10 @@ def test_flow_flow_component(login_page, flow_project):
         time.sleep(1)
         print("[SUCCESS] Нажата кнопка выбора файла")
         
-        page.get_by_test_id("Modal__Container").get_by_text(f"{process_name}.df.json").click()
+        # В модалке выбора файла достаточно кликнуть по имени процесса без расширения
+        page.get_by_text(f"{process_name}").click()
         time.sleep(1)
-        print(f"[SUCCESS] Выбран файл {process_name}.df.json")
+        print(f"[SUCCESS] Выбран файл процесса по имени: {process_name}")
         
         page.get_by_role("button", name="filemanager_select_button").click()
         time.sleep(1)

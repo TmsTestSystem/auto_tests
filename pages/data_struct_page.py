@@ -144,39 +144,49 @@ class DataStructPage(BasePage):
         self.page.get_by_role("button", name="datastructureeditor_popup_select_button").click()
 
     def select_schema_in_modal(self, schema_name):
-        modal = self.page.get_by_test_id("Modal__Container")
-        modal.wait_for(state="visible", timeout=10000)
+        """
+        Выбирает схему в новом модальном окне выбора структур данных.
+        В актуальном UI используется datastructureview вместо Modal__Container.
+        """
+        # Ожидаем появления контейнера datastructureview
+        modal_root = self.page.get_by_label("datastructureview", exact=True)
+        modal_root.wait_for(state="visible", timeout=10000)
 
-        # 0) Определяем имя текущего файла структуры данных из URL
+        # Сначала разворачиваем нужную структуру (файл .ds.json) слева в списке
         try:
             parsed = urlparse(self.page.url)
             params = parse_qs(parsed.query)
             file_param = params.get("file", [None])[0]
             if file_param:
                 current_file = unquote(file_param).lstrip("/")
-                # Клик по файлу слева в списке
-                modal.get_by_text(current_file, exact=True).click()
+                # В левой части modal_root клик по имени файла, чтобы показать схемы
+                try:
+                    modal_root.get_by_text(current_file, exact=True).click()
+                except Exception:
+                    # fallback через treeitem name="/<file>"
+                    self.page.get_by_role("treeitem", name=f"/{current_file}").locator("div").nth(1).click()
         except Exception:
+            # если не получилось определить файл — просто продолжаем, полагаясь на схему
             pass
 
-        # 1) Клик по схеме справа
+        # Пытаемся кликнуть по схеме по тексту; если внутри есть дерево с якорями,
+        # fallback'ом кликаем по treeitem с таким именем.
         try:
-            modal.get_by_text(schema_name, exact=True).click()
+            modal_root.get_by_text(schema_name, exact=True).click()
         except Exception:
-            # Фолбэк: по роли treeitem
             try:
-                modal.get_by_role("treeitem", name=schema_name).click()
+                self.page.get_by_role("treeitem", name=schema_name).click()
             except Exception:
-                modal.get_by_text(schema_name, exact=False).first.click()
+                modal_root.get_by_text(schema_name, exact=False).first.click()
 
-        # 2) Подтверждаем выбор
+        # Подтверждаем выбор схемы
         try:
             self.page.get_by_role("button", name="datastructureview_select_button").click()
         except Exception:
             try:
                 self.page.get_by_role("button", name="Выбрать").click()
             except Exception:
-                modal.get_by_text("Выбрать").click()
+                modal_root.get_by_text("Выбрать").click()
 
     def delete_schema(self, name: str):
         item = self.page.query_selector(f'{self.TREE_ITEM}[aria-label="{name}"]')
