@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# VSCode
+.vscode/
+
+# Pytest
+*.log
+.cache/
+
+# Playwright
+playwright-report/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+
+# Screenshots
+screenshots/
+
+# Load testing logs and reports
+load_testing/locust_logs/
+load_testing/reports/
+load_testing/load/locust_logs/
+load_testing/load/reports/
+
+# Reports (keep structure but ignore content)
+reports/*/
+
+# Logs
+*.log
+last_test_run.log
+logs/
+
+# Virtualenv
+.venv/
+venv/
+ENV/
+
+# Git
+.git/
+.gitignore
+
+# Temporary files
+*.tmp
+*.temp

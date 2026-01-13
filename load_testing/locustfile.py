@@ -10,40 +10,43 @@ from locust import HttpUser, task, between, events
 
 CSV_DIR = Path(os.getenv("LOCUST_CSV_DIR", "locust_logs"))
 CSV_DIR.mkdir(exist_ok=True)
-CSV_PATH = CSV_DIR / "requests.csv"
 REPORT_CSV_PATH = CSV_DIR / "requests_report.csv"
-EVENTS_CSV_PATH = CSV_DIR / "requests_events.csv"
 RESPONSES_CSV_PATH = CSV_DIR / "jobs_from_responses.csv"
-# Prefer REPORT_DIR if provided, else timestamped file to avoid accumulation across runs
+# Предпочитаем REPORT_DIR, если задан, иначе файл с временной меткой для избежания накопления между запусками
 report_dir_env = os.getenv("REPORT_DIR")
 if report_dir_env:
     report_dir_path = Path(report_dir_env)
     report_dir_path.mkdir(parents=True, exist_ok=True)
     RESPONSES_CSV_PATH = report_dir_path / "jobs_from_responses.csv"
+    # Используем REPORT_DIR для всех CSV файлов, чтобы каждый запуск имел свои файлы
+    EVENTS_CSV_PATH = report_dir_path / "requests_events.csv"
+    CSV_PATH = report_dir_path / "requests.csv"
 else:
     timestamp_name = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     RESPONSES_CSV_PATH = CSV_DIR / f"jobs_from_responses_{timestamp_name}.csv"
+    EVENTS_CSV_PATH = CSV_DIR / "requests_events.csv"
+    CSV_PATH = CSV_DIR / "requests.csv"
 RAW_NDJSON_PATH = CSV_DIR / "raw_responses.ndjson"
 
 
 def ensure_csv_header(path: Path):
-    if not path.exists():
-        with path.open("w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                "timestamp_start_ms",
-                "timestamp_start_iso",
-                "timestamp_end_ms",
-                "timestamp_end_iso",
-                "response_time_ms",
-                "method",
-                "name",
-                "path",
-                "status_code",
-                "success",
-                "request_id",
-                "exception",
-            ])
+    # Всегда пересоздаём файл для чистого запуска (как для events и responses CSV)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "timestamp_start_ms",
+            "timestamp_start_iso",
+            "timestamp_end_ms",
+            "timestamp_end_iso",
+            "response_time_ms",
+            "method",
+            "name",
+            "path",
+            "status_code",
+            "success",
+            "request_id",
+            "exception",
+        ])
 
 
 ensure_csv_header(CSV_PATH)
@@ -68,24 +71,24 @@ ensure_report_csv_header(REPORT_CSV_PATH)
 
 
 def ensure_events_csv_header(path: Path):
-    if not path.exists():
-        with path.open("w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                "event_type",  # STARTED | FINISHED
-                "event_date",
-                "event_time",
-                "status_code",
-                "duration_ms",
-                "request_id",
-            ])
+    # Всегда пересоздаём файл для чистого запуска (как для responses CSV)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "event_type",  # STARTED | FINISHED
+            "event_date",
+            "event_time",
+            "status_code",
+            "duration_ms",
+            "request_id",
+        ])
 
 
 ensure_events_csv_header(EVENTS_CSV_PATH)
 
 
 def ensure_responses_csv_header(path: Path):
-    # Always (re)create for a clean run
+    # Всегда пересоздаём для чистого запуска
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow([
@@ -102,6 +105,12 @@ def ensure_responses_csv_header(path: Path):
 
 ensure_responses_csv_header(RESPONSES_CSV_PATH)
 
+# Параметры проекта/процесса для нагрузочного теста передаются через env,
+# чтобы run.py мог создавать проект динамически и импортировать zip.
+LOAD_PROJECT_CODE = os.getenv("LOAD_PROJECT_CODE", "llda")
+LOAD_BRANCH = os.getenv("LOAD_BRANCH", "main")
+LOAD_PROCESS_PATH = os.getenv("LOAD_PROCESS_PATH", "test_que/test_1.df.json")
+
 
 class ApiUser(HttpUser):
     # Базовый хост можно переопределить переменной окружения BASE_URL
@@ -117,8 +126,8 @@ class ApiUser(HttpUser):
         # Динамический request_id для корреляции с БД
         request_id = str(uuid.uuid4())
 
-        # Параметры запроса
-        path = "/api/ide/llda/branch/main/bps/call?path=test_que/test_1.df.json"
+        # Параметры запроса: используем динамический проект/ветку/путь процесса
+        path = f"/api/ide/{LOAD_PROJECT_CODE}/branch/{LOAD_BRANCH}/bps/call?path={LOAD_PROCESS_PATH}"
 
         # Время: локальное (для обратной совместимости object_id) и UTC (для корректной корреляции с БД)
         start_dt_local = datetime.now().astimezone()
@@ -144,11 +153,54 @@ class ApiUser(HttpUser):
 
         payload = {
             "request_meta": {
-                "object_id": object_id,
-                "request_id": request_id,
+                "object_id": object_id,  # Динамическая метка времени
+                "request_id": request_id,  # UUID
                 "tags": "string",
             },
-            "request_data": {},
+            "request_data": {
+                "amount_requested": {
+                    "currency_code": "RUB",
+                    "value": 12,
+                },
+                "auto": {
+                    "VIN": "string",
+                    "is_new": True,
+                    "is_used": True,
+                    "owner": {
+                        "firstname": "string",
+                        "lastname": "string",
+                        "middlename": "string",
+                        "passport": {
+                            "number": "string",
+                            "series": "string",
+                        },
+                    },
+                },
+                "co_issuers": [
+                    {
+                        "firstname": "string",
+                        "lastname": "string",
+                        "middlename": "string",
+                        "passport": {
+                            "number": "string",
+                            "series": "string",
+                        },
+                    }
+                ],
+                "initial_payment": {
+                    "currency_code": "RUB",
+                    "value": 31,
+                },
+                "issuer": {
+                    "firstname": "string",
+                    "lastname": "string",
+                    "middlename": "string",
+                    "passport": {
+                        "number": "string",
+                        "series": "string",
+                    },
+                },
+            },
         }
         with self.client.post(
             path,
@@ -156,6 +208,7 @@ class ApiUser(HttpUser):
             headers=self.default_headers,
             name="POST /bps/call",
             catch_response=True,
+            verify=False,
         ) as resp:
             end_dt_local = datetime.now().astimezone()
             end_dt_utc = datetime.now(timezone.utc)
@@ -166,6 +219,19 @@ class ApiUser(HttpUser):
             exception_text = ""
             if not success:
                 exception_text = f"HTTP {resp.status_code}"
+                # Логируем тело ответа при ошибке для отладки
+                try:
+                    error_body = resp.text[:1000]  # Первые 1000 символов
+                    # Записываем в файл для надёжности
+                    error_log_path = CSV_DIR / "error_responses.txt"
+                    with error_log_path.open("a", encoding="utf-8") as ef:
+                        ef.write(f"\n[{datetime.now(timezone.utc).isoformat()}] Status {resp.status_code} for {path}\n")
+                        ef.write(f"Body: {error_body}\n")
+                        ef.write("-" * 80 + "\n")
+                    # Также в stdout для быстрого просмотра
+                    print(f"[ERROR] Response body (status {resp.status_code}): {error_body}")
+                except Exception as log_err:
+                    print(f"[ERROR] Failed to log error response: {log_err}")
                 resp.failure(exception_text)
             else:
                 resp.success()
@@ -191,7 +257,7 @@ class ApiUser(HttpUser):
                 # Не JSON — пропускаем
                 pass
 
-            # Запись в CSV для последующей корреляции
+            # Запись в CSV для последующей корреляции данных
             with CSV_PATH.open("a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow([
@@ -255,8 +321,8 @@ def _log_request(
     **kwargs,
 ):
     # Этот listener фиксирует все запросы, если нужно централизованное логирование
-    # Здесь можно добавить расширенный вывод, но CSV уже пишет задача выше.
-    # Оставим хуком на будущее.
+    # Здесь можно добавить расширенный вывод, но CSV уже пишет задача выше
+    # Оставляем хуком на будущее
     return
 
 
