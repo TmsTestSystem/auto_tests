@@ -20,6 +20,36 @@ from utils.auth_utils import get_auth_cookies, get_api_base_url  # type: ignore 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# Маппинг хостов на URL (как в conftest.py)
+HOST_URLS = {
+    "st1": "https://decision-flow-frontend-st1.df-st.b-pl.cloud2",
+    "st2": "https://decision-flow-frontend-st2.df-st.b-pl.cloud2",
+    "st3": "https://decision-flow-frontend-st3.df-st.b-pl.cloud2",
+    "st4": "https://decision-flow-web-1.df-st4.cloud2.b-pl.pro",
+    "local-a": "http://localhost:3333",
+    "local-b": "http://localhost:3334",
+    "local-c": "http://localhost:3335",
+    "local-192": "http://192.168.0.7:3333"
+}
+
+
+def resolve_host(host: str) -> str:
+    """
+    Преобразует алиас хоста в полный URL.
+    Если передан полный URL (начинается с http:// или https://), возвращает его как есть.
+    Если передан алиас (st1, st2, local-192 и т.д.), возвращает соответствующий URL.
+    """
+    if host.startswith(("http://", "https://")):
+        return host.rstrip("/")
+    
+    if host in HOST_URLS:
+        return HOST_URLS[host].rstrip("/")
+    
+    # Если алиас не найден, возвращаем как есть (может быть пользователь указал что-то своё)
+    print(f"[WARNING] Неизвестный алиас хоста '{host}'. Используем как есть.")
+    print(f"[INFO] Доступные алиасы: {', '.join(HOST_URLS.keys())}")
+    return host.rstrip("/")
+
 
 def find_compare_script() -> pathlib.Path:
     candidates = [
@@ -138,8 +168,11 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
     out_dir = BASE_DIR / "reports" / ts
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Преобразуем алиас хоста в полный URL (если нужно)
+    resolved_host = resolve_host(host)
+    
     # Устанавливаем BASE_URL из переданного хоста для API вызовов
-    os.environ["BASE_URL"] = host.rstrip("/")
+    os.environ["BASE_URL"] = resolved_host
     print(f"[LOAD] Используем BASE_URL: {os.environ['BASE_URL']}")
 
     # 0) Создаём и импортируем проект под нагрузку
@@ -156,7 +189,7 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
         "-r",
         str(spawn_rate),
         "--host",
-        host,
+        resolved_host,
         "--only-summary",
         "--html",
         str(out_dir / "locust_report.html"),
@@ -212,7 +245,12 @@ def main(argv=None):
     p.add_argument("--spawn-rate", "-r", type=int, default=50, help="Spawn rate")
     p.add_argument("--duration", "-t", type=int, default=None, help="Duration in seconds")
     p.add_argument("--num-requests", "-n", type=int, default=None, help="Total number of requests")
-    p.add_argument("--host", "-H", type=str, default="http://192.168.0.7:3333", help="Target host")
+    p.add_argument(
+        "--host", "-H", 
+        type=str, 
+        default="local-192", 
+        help="Целевой хост (URL или алиас: st1, st2, st3, st4, local-a, local-b, local-c, local-192)"
+    )
     args = p.parse_args(argv)
     if args.duration is None and args.num_requests is None:
         args.duration = 60  # По умолчанию 60 секунд
