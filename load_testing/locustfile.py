@@ -460,15 +460,32 @@ def _to_int_us(value: Any) -> Optional[int]:
 
 
 def _extract_events(payload: Any) -> List[Dict[str, Any]]:
+    """
+    Универсальное вытаскивание списка евентов из payload.
+    """
+    events_list: List[Dict[str, Any]] = []
+
     if isinstance(payload, dict):
         ev = payload.get("events")
         if isinstance(ev, list):
-            return [e for e in ev if isinstance(e, dict)]
-        if isinstance(ev, dict) and "items" in ev and isinstance(ev["items"], list):
-            return [e for e in ev["items"] if isinstance(e, dict)]
-    if isinstance(payload, list):
-        return [e for e in payload if isinstance(e, dict)]
-    return []
+            events_list = [e for e in ev if isinstance(e, dict)]
+        elif isinstance(ev, dict) and "items" in ev and isinstance(ev["items"], list):
+            events_list = [e for e in ev["items"] if isinstance(e, dict)]
+    elif isinstance(payload, list):
+        events_list = [e for e in payload if isinstance(e, dict)]
+
+    if DEBUG_COMPONENT_EVENTS:
+        try:
+            total = len(events_list)
+            types = {}
+            for e in events_list:
+                t = e.get("event_type")
+                types[t] = types.get(t, 0) + 1
+            print(f"[COMP_EVENTS_DEBUG] _extract_events: total={total}, by_type={types}")
+        except Exception:
+            pass
+
+    return events_list
 
 
 def _compute_component_rows(events: List[Dict[str, Any]]) -> List[Tuple[str, str, str, int, int, float]]:
@@ -477,9 +494,12 @@ def _compute_component_rows(events: List[Dict[str, Any]]) -> List[Tuple[str, str
     для component_event.
     """
     by_key: Dict[str, Dict[str, Any]] = {}
+    total_events = len(events)
+    component_events = 0
     for e in events:
         if e.get("event_type") != "component_event":
             continue
+        component_events += 1
         key = e.get("key")
         if not isinstance(key, str) or not key:
             continue
@@ -512,6 +532,16 @@ def _compute_component_rows(events: List[Dict[str, Any]]) -> List[Tuple[str, str
             rows.append((key, title, ctype, su, eu, duration_ms))
     # сортируем по старту, чтобы посчитать интервалы между компонентами
     rows.sort(key=lambda r: r[3])
+
+    if DEBUG_COMPONENT_EVENTS:
+        try:
+            print(
+                f"[COMP_EVENTS_DEBUG] _compute_component_rows: "
+                f"raw_events={total_events}, component_events={component_events}, rows={len(rows)}"
+            )
+        except Exception:
+            pass
+
     return rows
 
 
@@ -561,7 +591,11 @@ def _fetch_events(host: str, job_uuid: str, cookies=None) -> Any:
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     url = _events_url(host, job_uuid)
+    if DEBUG_COMPONENT_EVENTS:
+        print(f"[COMP_EVENTS_DEBUG] _fetch_events: url={url}, has_cookies={bool(cookies)}")
     resp = requests.get(url, cookies=cookies, verify=False, timeout=60)
+    if DEBUG_COMPONENT_EVENTS:
+        print(f"[COMP_EVENTS_DEBUG] _fetch_events: status={resp.status_code}")
     if not resp.ok:
         # Дадим максимум информации для диагностики (на тестовых стендах часто 401/403)
         err = RuntimeError(f"events fetch failed: status={resp.status_code}, url={url}, body={resp.text[:2000]}")
@@ -569,7 +603,13 @@ def _fetch_events(host: str, job_uuid: str, cookies=None) -> Any:
         setattr(err, "_events_url", url)
         setattr(err, "_events_body", resp.text)
         raise err
-    return resp.json()
+    try:
+        data = resp.json()
+    except Exception as e:
+        if DEBUG_COMPONENT_EVENTS:
+            print(f"[COMP_EVENTS_DEBUG] _fetch_events: JSON decode error: {e}")
+        raise
+    return data
 
 
 def _noop(*args, **kwargs):
