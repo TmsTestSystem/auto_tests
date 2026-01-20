@@ -1,17 +1,14 @@
 import csv
 import os
+import sys
 import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
+from gevent.lock import Semaphore
 from locust import HttpUser, task, between, events
-
-# Locust uses gevent; protect shared counters
-try:
-    from gevent.lock import Semaphore  # type: ignore
-except Exception:  # pragma: no cover
-    from threading import Lock as Semaphore  # type: ignore
 
 
 CSV_DIR = Path(os.getenv("LOCUST_CSV_DIR", "locust_logs"))
@@ -33,6 +30,27 @@ else:
     EVENTS_CSV_PATH = CSV_DIR / "requests_events.csv"
     CSV_PATH = CSV_DIR / "requests.csv"
 RAW_NDJSON_PATH = CSV_DIR / "raw_responses.ndjson"
+
+# Опциональный сбор метрик по компонентам через /api/events/{job_uuid}
+COLLECT_COMPONENT_EVENTS = os.getenv("COLLECT_COMPONENT_EVENTS", "false").lower() in ("1", "true", "yes")
+DEBUG_COMPONENT_EVENTS = os.getenv("DEBUG_COMPONENT_EVENTS", "false").lower() in ("1", "true", "yes")
+COMPONENTS_CSV_PATH = (Path(report_dir_env) if report_dir_env else CSV_DIR) / "component_timings.csv"
+EVENTS_ERRORS_CSV_PATH = (Path(report_dir_env) if report_dir_env else CSV_DIR) / "events_fetch_errors.csv"
+
+# Глобальный лимит по количеству запросов (0 = без лимита)
+TOTAL_REQUESTS_LIMIT = int(os.getenv("TOTAL_REQUESTS", "0") or "0")
+_requests_done = 0
+_requests_done_lock: Semaphore = Semaphore()
+
+# Импортируем auth utils из корня репозитория (locustfile запускается из поддиректории)
+REPO_ROOT = Path(__file__).resolve().parents[1]  # .../auto-test2_0
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+try:
+    from utils.auth_utils import get_auth_cookies, get_api_base_url  # type: ignore  # noqa: E402
+except Exception:
+    get_auth_cookies = None  # type: ignore[assignment]
+    get_api_base_url = None  # type: ignore[assignment]
 
 
 def ensure_csv_header(path: Path):
@@ -111,28 +129,53 @@ def ensure_responses_csv_header(path: Path):
 
 ensure_responses_csv_header(RESPONSES_CSV_PATH)
 
+
+def ensure_components_csv_header(path: Path):
+    if not COLLECT_COMPONENT_EVENTS:
+        return
+    # Всегда пересоздаём для чистого запуска в рамках REPORT_DIR
+    with path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow([
+            "request_id",
+            "job_uuid",
+            "component_key",
+            "component_title",
+            "component_type",
+            "start_us",
+            "end_us",
+            "duration_ms",
+            "gap_from_prev_ms",
+        ])
+
+
+ensure_components_csv_header(COMPONENTS_CSV_PATH)
+
+
+def ensure_events_errors_csv_header(path: Path):
+    if not COLLECT_COMPONENT_EVENTS:
+        return
+    if not path.exists():
+        with path.open("w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow([
+                "request_id",
+                "job_uuid",
+                "host",
+                "error_type",
+                "status_code",
+                "url",
+                "response_text",
+            ])
+
+
+ensure_events_errors_csv_header(EVENTS_ERRORS_CSV_PATH)
+
 # Параметры проекта/процесса для нагрузочного теста передаются через env,
 # чтобы run.py мог создавать проект динамически и импортировать zip.
 LOAD_PROJECT_CODE = os.getenv("LOAD_PROJECT_CODE", "llda")
 LOAD_BRANCH = os.getenv("LOAD_BRANCH", "main")
 LOAD_PROCESS_PATH = os.getenv("LOAD_PROCESS_PATH", "test_que/test_1.df.json")
-
-# Остановка теста по количеству выполненных запросов (а не по времени)
-TOTAL_REQUESTS_LIMIT = int(os.getenv("TOTAL_REQUESTS", "0") or "0")  # 0 = без лимита
-_requests_done = 0
-_requests_lock = Semaphore()
-
-
-def _maybe_stop_runner(environment) -> None:
-    if TOTAL_REQUESTS_LIMIT <= 0:
-        return
-    runner = getattr(environment, "runner", None)
-    if runner is None:
-        return
-    try:
-        runner.quit()
-    except Exception:
-        pass
 
 
 class ApiUser(HttpUser):
@@ -143,6 +186,13 @@ class ApiUser(HttpUser):
     def on_start(self):
         # Только базовые заголовки (без авторизации)
         self.default_headers = {"Content-Type": "application/json"}
+        self._auth_cookies = None
+        if COLLECT_COMPONENT_EVENTS and callable(get_auth_cookies):
+            try:
+                self._auth_cookies = get_auth_cookies()
+            except Exception:
+                # Если стенд не требует авторизации на /api/events, продолжим без cookies
+                self._auth_cookies = None
 
     @task
     def call_bps(self):
@@ -276,17 +326,37 @@ class ApiUser(HttpUser):
                             job.get("job_duration"),
                             job.get("job_uuid"),
                         ])
+
+                    # Дополнительно: по job_uuid забираем события и считаем метрики компонентов
+                    if COLLECT_COMPONENT_EVENTS:
+                        job_uuid = job.get("job_uuid")
+                        if job_uuid:
+                            try:
+                                self._collect_component_timings(
+                                    request_id=job.get("request_id", request_id),
+                                    job_uuid=job_uuid,
+                                )
+                            except Exception as e:
+                                # Не валим нагрузку из-за проблем сбора метрик, но логируем причину в отдельный CSV
+                                status_code = getattr(e, "_events_status_code", "")
+                                url = getattr(e, "_events_url", "")
+                                body = getattr(e, "_events_body", "")
+                                with EVENTS_ERRORS_CSV_PATH.open("a", newline="", encoding="utf-8") as fe:
+                                    we = csv.writer(fe)
+                                    we.writerow([
+                                        job.get("request_id", request_id),
+                                        job_uuid,
+                                        getattr(self, "host", ""),
+                                        type(e).__name__,
+                                        status_code,
+                                        url,
+                                        (str(body)[:2000] if body else str(e)[:2000]),
+                                    ])
+                                if DEBUG_COMPONENT_EVENTS:
+                                    print(f"[COMPONENT_EVENTS_ERROR] request_id={job.get('request_id', request_id)} job_uuid={job_uuid} err={e}")
             except Exception:
                 # Не JSON — пропускаем
                 pass
-
-            # Счётчик запросов и остановка по лимиту
-            if TOTAL_REQUESTS_LIMIT > 0:
-                global _requests_done
-                with _requests_lock:
-                    _requests_done += 1
-                    if _requests_done >= TOTAL_REQUESTS_LIMIT:
-                        _maybe_stop_runner(self.environment)
 
             # Запись в CSV для последующей корреляции данных
             with CSV_PATH.open("a", newline="", encoding="utf-8") as f:
@@ -338,6 +408,24 @@ class ApiUser(HttpUser):
                     request_id,
                 ])
 
+            # Лимитируем общее количество запросов, если TOTAL_REQUESTS_LIMIT > 0
+            if TOTAL_REQUESTS_LIMIT > 0 and self.environment and self.environment.runner:
+                global _requests_done
+                with _requests_done_lock:
+                    _requests_done += 1
+                    if _requests_done >= TOTAL_REQUESTS_LIMIT:
+                        print(f"[LOCUST] TOTAL_REQUESTS_LIMIT={TOTAL_REQUESTS_LIMIT} достигнут, останавливаем раннер")
+                        events.request.fire(
+                            request_type="STOP",
+                            name="Locust Stop",
+                            response_time=0,
+                            response_length=0,
+                            response=None,
+                            context=None,
+                            exception=None,
+                        )
+                        self.environment.runner.quit()
+
 
 # Дополнительно можно подписаться на события Locust (необязательно)
 @events.request.add_listener
@@ -356,4 +444,145 @@ def _log_request(
     # Оставляем хуком на будущее
     return
 
+
+def _to_int_us(value: Any) -> Optional[int]:
+    """
+    inserted_timestamp приходит как float (микросекунды от epoch).
+    Приводим к int microseconds.
+    """
+    try:
+        if value is None:
+            return None
+        # value может быть float, int или строка
+        return int(float(value))
+    except Exception:
+        return None
+
+
+def _extract_events(payload: Any) -> List[Dict[str, Any]]:
+    if isinstance(payload, dict):
+        ev = payload.get("events")
+        if isinstance(ev, list):
+            return [e for e in ev if isinstance(e, dict)]
+        if isinstance(ev, dict) and "items" in ev and isinstance(ev["items"], list):
+            return [e for e in ev["items"] if isinstance(e, dict)]
+    if isinstance(payload, list):
+        return [e for e in payload if isinstance(e, dict)]
+    return []
+
+
+def _compute_component_rows(events: List[Dict[str, Any]]) -> List[Tuple[str, str, str, int, int, float]]:
+    """
+    Возвращает список (component_key, title, component_type, start_us, end_us, duration_ms)
+    для component_event.
+    """
+    by_key: Dict[str, Dict[str, Any]] = {}
+    for e in events:
+        if e.get("event_type") != "component_event":
+            continue
+        key = e.get("key")
+        if not isinstance(key, str) or not key:
+            continue
+        status = e.get("status")
+        ts_us = _to_int_us(e.get("inserted_timestamp"))
+        if ts_us is None:
+            continue
+        rec = by_key.setdefault(key, {"start_us": None, "end_us": None, "title": None, "component_type": None})
+        if isinstance(e.get("title"), str) and e.get("title"):
+            rec["title"] = e.get("title")
+        if isinstance(e.get("component_type"), str) and e.get("component_type"):
+            rec["component_type"] = e.get("component_type")
+        if status == "in_progress":
+            # берём первый старт
+            if rec["start_us"] is None or ts_us < rec["start_us"]:
+                rec["start_us"] = ts_us
+        elif status == "done":
+            # берём последний end
+            if rec["end_us"] is None or ts_us > rec["end_us"]:
+                rec["end_us"] = ts_us
+
+    rows: List[Tuple[str, str, str, int, int, float]] = []
+    for key, rec in by_key.items():
+        su = rec.get("start_us")
+        eu = rec.get("end_us")
+        if isinstance(su, int) and isinstance(eu, int) and eu >= su:
+            title = rec.get("title") or ""
+            ctype = rec.get("component_type") or ""
+            duration_ms = (eu - su) / 1000.0
+            rows.append((key, title, ctype, su, eu, duration_ms))
+    # сортируем по старту, чтобы посчитать интервалы между компонентами
+    rows.sort(key=lambda r: r[3])
+    return rows
+
+
+def _gap_ms(prev_end_us: Optional[int], cur_start_us: int) -> Optional[float]:
+    if prev_end_us is None:
+        return None
+    return (cur_start_us - prev_end_us) / 1000.0
+
+
+def _api_base_from_host(host: str) -> str:
+    # host уже содержит base url вида http://192.168.0.7:3333
+    return host.rstrip("/")
+
+
+def _events_url(host: str, job_uuid: str) -> str:
+    return f"{_api_base_from_host(host)}/api/events/{job_uuid}"
+
+
+def _write_component_rows(request_id: str, job_uuid: str, rows: List[Tuple[str, str, str, int, int, float]]) -> None:
+    if not COLLECT_COMPONENT_EVENTS:
+        return
+    prev_end: Optional[int] = None
+    with COMPONENTS_CSV_PATH.open("a", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        for (key, title, ctype, start_us, end_us, duration_ms) in rows:
+            gap = _gap_ms(prev_end, start_us)
+            w.writerow([
+                request_id,
+                job_uuid,
+                key,
+                title,
+                ctype,
+                start_us,
+                end_us,
+                f"{duration_ms:.3f}",
+                ("" if gap is None else f"{gap:.3f}"),
+            ])
+            prev_end = end_us
+
+
+def _fetch_events(host: str, job_uuid: str, cookies=None) -> Any:
+    """
+    Запрос events делаем через requests, потому что locust self.client заточен под base_url и может не иметь cookies.
+    """
+    import requests
+    import urllib3
+
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    url = _events_url(host, job_uuid)
+    resp = requests.get(url, cookies=cookies, verify=False, timeout=60)
+    if not resp.ok:
+        # Дадим максимум информации для диагностики (на тестовых стендах часто 401/403)
+        err = RuntimeError(f"events fetch failed: status={resp.status_code}, url={url}, body={resp.text[:2000]}")
+        setattr(err, "_events_status_code", resp.status_code)
+        setattr(err, "_events_url", url)
+        setattr(err, "_events_body", resp.text)
+        raise err
+    return resp.json()
+
+
+def _noop(*args, **kwargs):
+    return None
+
+
+# Вешаем методы на класс, чтобы можно было вызывать self._collect_component_timings
+def _collect_component_timings(self: ApiUser, request_id: str, job_uuid: str) -> None:  # type: ignore[name-defined]
+    payload = _fetch_events(self.host, job_uuid, cookies=getattr(self, "_auth_cookies", None))
+    events = _extract_events(payload)
+    rows = _compute_component_rows(events)
+    _write_component_rows(request_id, job_uuid, rows)
+
+
+setattr(ApiUser, "_collect_component_timings", _collect_component_timings)
 
