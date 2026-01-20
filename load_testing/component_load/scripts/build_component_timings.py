@@ -171,6 +171,19 @@ def build_component_timings(report_dir: Path, project_code: str = "TEST12", bran
         print(f"[COMPONENT_TIMINGS] В {jobs_csv} нет записей, отчёт не будет создан.")
         return out_csv
 
+    # Стабильные totals для отчётов:
+    # - attempted_requests: сколько попыток было сделано (строк в jobs_from_responses.csv)
+    # - successful_requests: сколько успешных джоб (status=finished и есть job_uuid)
+    attempted_requests = len(jobs)
+    successful_request_ids: List[str] = []
+    for j in jobs:
+        rid = (j.get("request_id") or "").strip()
+        status = (j.get("status") or "").strip().lower()
+        job_uuid = (j.get("job_uuid") or "").strip()
+        if rid and status == "finished" and job_uuid:
+            successful_request_ids.append(rid)
+    successful_requests = len(successful_request_ids)
+
     # Попробуем сначала использовать component_timings.csv, если Locust уже собрал его
     # напрямую при прогоне (через _write_component_rows). Если там есть строки данных,
     # не будем повторно опрашивать /api/events/{job_uuid}.
@@ -359,7 +372,7 @@ def build_component_timings(report_dir: Path, project_code: str = "TEST12", bran
     from collections import defaultdict
     import statistics
     
-    # Получаем список всех request_id в порядке прогонов
+    # request_id в порядке прогонов (attempts), для графиков/порядка
     all_request_ids = [job.get("request_id") for job in jobs if job.get("request_id")]
     
     by_component: Dict[str, List[float]] = defaultdict(list)
@@ -409,6 +422,7 @@ def build_component_timings(report_dir: Path, project_code: str = "TEST12", bran
             "component_key",
             "count",
             "total_requests",
+            "attempted_requests",
             "avg_ms",
             "min_ms",
             "max_ms",
@@ -462,7 +476,8 @@ def build_component_timings(report_dir: Path, project_code: str = "TEST12", bran
                     metadata.get("component_type", ""),
                     metadata.get("component_key", ""),
                     len(durations),  # Реальное количество выполнений
-                    len(all_request_ids),  # Общее количество запросов
+                    successful_requests,  # Успешные из attempts (то, для чего ожидаем component events)
+                    attempted_requests,  # Всего attempts (то, что ты задал в --num-requests)
                     f"{statistics.mean(durations):.3f}",
                     f"{min(durations):.3f}",
                     f"{max(durations):.3f}",
@@ -515,6 +530,7 @@ def build_component_timings(report_dir: Path, project_code: str = "TEST12", bran
             "component_type",
             "count",
             "total_requests",
+            "attempted_requests",
             "avg_ms",
             "min_ms",
             "max_ms",
@@ -556,7 +572,8 @@ def build_component_timings(report_dir: Path, project_code: str = "TEST12", bran
                 group_meta.get(base, {}).get("example_title", ""),
                 group_meta.get(base, {}).get("component_type", ""),
                 len(durations),
-                len(all_request_ids),
+                successful_requests,
+                attempted_requests,
                 f"{statistics.mean(durations):.3f}",
                 f"{min(durations):.3f}",
                 f"{max(durations):.3f}",

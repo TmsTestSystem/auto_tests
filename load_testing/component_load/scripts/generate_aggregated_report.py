@@ -76,6 +76,7 @@ def generate_aggregated_html_report(aggregated_rows: List[Dict[str, Any]], detai
         title = row.get("component_title", "")
         count = int(row.get("count", 0) or 0)
         total_requests = int(row.get("total_requests", 0) or 0)
+        attempted_requests = int(row.get("attempted_requests", 0) or 0)
         avg = float(row.get("avg_ms", 0) or 0)
         min_val = float(row.get("min_ms", 0) or 0)
         max_val = float(row.get("max_ms", 0) or 0)
@@ -111,6 +112,7 @@ def generate_aggregated_html_report(aggregated_rows: List[Dict[str, Any]], detai
             "component_type": row.get("component_type", "").split(".")[-1] if row.get("component_type") else "",
             "count": count,
             "total_requests": total_requests,
+            "attempted_requests": attempted_requests,
             "avg": avg,
             "min": min_val,
             "max": max_val,
@@ -242,7 +244,7 @@ def generate_aggregated_html_report(aggregated_rows: List[Dict[str, Any]], detai
           <td class="component-type">{row['title_path']}</td>
           <td class="component-type">{row['component_type']}</td>
           <td>{row['count']}</td>
-          <td>{row['total_requests']}</td>
+          <td>{row['count']} / {row['total_requests']} (из {row.get('attempted_requests', 0)})</td>
           <td class="{avg_class}">{avg:.2f}</td>
           <td>{row['min']:.2f}</td>
           <td>{row['max']:.2f}</td>

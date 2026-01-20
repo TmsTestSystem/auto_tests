@@ -197,6 +197,8 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
         "--host",
         resolved_host,
         "--only-summary",
+        "--stop-timeout",
+        "120",
         "--html",
         str(out_dir / "locust_report.html"),
     ]
@@ -222,7 +224,9 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
         env_locust["TOTAL_REQUESTS"] = str(num_requests)
 
     # Не падаем на ошибках Locust (exit code 1 при наличии failed requests - это нормально)
-    subprocess.run(cmd, cwd=str(BASE_DIR), env=env_locust, check=False)
+    print(f"[COMPONENT_LOAD] Запускаем Locust с параметрами: users={users}, spawn_rate={spawn_rate}, num_requests={num_requests}")
+    result = subprocess.run(cmd, cwd=str(BASE_DIR), env=env_locust, check=False)
+    print(f"[COMPONENT_LOAD] Locust завершился с кодом: {result.returncode}")
     # Проект компонентной нагрузки больше НЕ удаляем автоматически,
     # чтобы на любом стенде его можно было посмотреть в UI после прогона.
     print(f"[COMPONENT_LOAD_CLEANUP] Проект {project_code} сохранён (не удаляем автоматически)")
@@ -241,11 +245,12 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
         "--samples-per-bucket", "3",
         "--limit", "500",
     ]
-    subprocess.run([sys.executable, str(compare_script), *default_args], cwd=str(BASE_DIR), env=env, check=True)
+    # compare_jobs_vs_events.py не должен ломать весь прогон (особенно если Locust завершился с code=1)
+    subprocess.run([sys.executable, str(compare_script), *default_args], cwd=str(BASE_DIR), env=env, check=False)
 
     # 3) Небольшая пауза перед сборкой компонентных отчётов,
     # чтобы на "тяжёлых" стендах все events по компонентам успели записаться/проиндексироваться.
-    delay_before_components_sec = 15.0
+    delay_before_components_sec = float(os.getenv("COMPONENT_AGGREGATION_DELAY_SEC", "60") or "60")
     print(f"[COMPONENT_LOAD] Ждём {delay_before_components_sec} секунд перед сборкой отчётов по компонентам...")
     time.sleep(delay_before_components_sec)
 
