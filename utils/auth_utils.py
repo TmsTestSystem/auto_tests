@@ -4,9 +4,11 @@ from pathlib import Path
 import requests
 import urllib3
 
-# Загружаем переменные окружения из .env файла
+# Загружаем переменные окружения из .env файла,
+# но НЕ перетираем уже установленные переменные (особенно BASE_URL,
+# которую мы пробрасываем из run_component_load.py / run.py под конкретный стенд).
 env_path = Path(__file__).parent.parent / ".env"
-load_dotenv(dotenv_path=env_path, override=True)
+load_dotenv(dotenv_path=env_path, override=False)
 
 # Отключаем предупреждения о небезопасных запросах
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
