@@ -171,63 +171,121 @@ def build_component_timings(report_dir: Path, project_code: str = "TEST12", bran
         print(f"[COMPONENT_TIMINGS] В {jobs_csv} нет записей, отчёт не будет создан.")
         return out_csv
 
-    api = ProjectProcessLogAPI(project_code=project_code, branch=branch)
-
-    # Собираем все данные
+    # Попробуем сначала использовать component_timings.csv, если Locust уже собрал его
+    # напрямую при прогоне (через _write_component_rows). Если там есть строки данных,
+    # не будем повторно опрашивать /api/events/{job_uuid}.
+    use_existing_timings = False
     all_rows: List[Dict[str, Any]] = []
     by_request: Dict[str, List[Dict[str, Any]]] = {}
     first_seen_component_order: Dict[str, int] = {}
     first_seen_group_order: Dict[str, int] = {}
     _row_seq = 0
 
-    for job in jobs:
-        request_id = job.get("request_id")
-        job_uuid = job.get("job_uuid")
-        if not job_uuid:
-            continue
-        try:
-            payload = api.get_job_events(job_uuid)
-        except Exception as e:
-            print(f"[COMPONENT_TIMINGS] Ошибка при запросе events для job_uuid={job_uuid}: {e}")
-            continue
+    if out_csv.exists():
+        with out_csv.open("r", encoding="utf-8") as f_exist:
+            reader_exist = list(csv.DictReader(f_exist))
+        if reader_exist:
+            use_existing_timings = True
+            print(f"[COMPONENT_TIMINGS] Используем уже собранный Locust'ом component_timings.csv "
+                  f"({len(reader_exist)} строк) из {out_csv}")
 
-        events = _extract_events(payload)
-        rows = _compute_component_rows(events)
+            for row in reader_exist:
+                request_id = row.get("request_id")
+                job_uuid = row.get("job_uuid")
+                key = row.get("component_key")
+                title = row.get("component_title") or ""
+                ctype = row.get("component_type") or ""
+                start_us = _to_int_us(row.get("start_us"))
+                end_us = _to_int_us(row.get("end_us"))
+                try:
+                    duration_ms = float(row.get("duration_ms") or 0)
+                except Exception:
+                    duration_ms = 0.0
+                gap_raw = row.get("gap_from_prev_ms")
+                try:
+                    gap_val = float(gap_raw) if gap_raw not in ("", None) else None
+                except Exception:
+                    gap_val = None
 
-        request_rows = []
-        prev_end: Optional[int] = None
-        for key, title, ctype, start_us, end_us, duration_ms in rows:
-            gap = _gap_ms(prev_end, start_us)
-            title_meta = parse_component_title_hierarchy(title)
-            _row_seq += 1
-            row_data = {
-                "request_id": request_id,
-                "job_uuid": job_uuid,
-                "component_key": key,
-                "component_title": title,  # сохраняем как есть
-                "component_title_base": title_meta["title_base"],
-                "component_title_level": title_meta["title_level"],
-                "component_title_path": title_meta["title_path"],
-                "component_type": ctype,
-                "start_us": start_us,
-                "end_us": end_us,
-                "duration_ms": duration_ms,
-                "gap_from_prev_ms": gap,
-            }
-            all_rows.append(row_data)
-            request_rows.append(row_data)
-            prev_end = end_us
+                title_meta = parse_component_title_hierarchy(title)
+                _row_seq += 1
+                row_data = {
+                    "request_id": request_id,
+                    "job_uuid": job_uuid,
+                    "component_key": key,
+                    "component_title": title,
+                    "component_title_base": title_meta["title_base"],
+                    "component_title_level": title_meta["title_level"],
+                    "component_title_path": title_meta["title_path"],
+                    "component_type": ctype,
+                    "start_us": start_us,
+                    "end_us": end_us,
+                    "duration_ms": duration_ms,
+                    "gap_from_prev_ms": gap_val,
+                }
+                all_rows.append(row_data)
+                if request_id:
+                    by_request.setdefault(request_id, []).append(row_data)
 
-            # порядок компонентов: по первому появлению в выполнении
-            if title and title not in first_seen_component_order:
-                first_seen_component_order[title] = _row_seq
+                # порядок компонентов: по первому появлению в выполнении
+                if title and title not in first_seen_component_order:
+                    first_seen_component_order[title] = _row_seq
 
-            base_for_group = row_data.get("component_title_base") or title
-            if base_for_group and base_for_group not in first_seen_group_order:
-                first_seen_group_order[base_for_group] = _row_seq
-        
-        if request_id:
-            by_request[request_id] = request_rows
+                base_for_group = row_data.get("component_title_base") or title
+                if base_for_group and base_for_group not in first_seen_group_order:
+                    first_seen_group_order[base_for_group] = _row_seq
+
+    if not use_existing_timings:
+        api = ProjectProcessLogAPI(project_code=project_code, branch=branch)
+
+        for job in jobs:
+            request_id = job.get("request_id")
+            job_uuid = job.get("job_uuid")
+            if not job_uuid:
+                continue
+            try:
+                payload = api.get_job_events(job_uuid)
+            except Exception as e:
+                print(f"[COMPONENT_TIMINGS] Ошибка при запросе events для job_uuid={job_uuid}: {e}")
+                continue
+
+            events = _extract_events(payload)
+            rows = _compute_component_rows(events)
+
+            request_rows = []
+            prev_end: Optional[int] = None
+            for key, title, ctype, start_us, end_us, duration_ms in rows:
+                gap = _gap_ms(prev_end, start_us)
+                title_meta = parse_component_title_hierarchy(title)
+                _row_seq += 1
+                row_data = {
+                    "request_id": request_id,
+                    "job_uuid": job_uuid,
+                    "component_key": key,
+                    "component_title": title,  # сохраняем как есть
+                    "component_title_base": title_meta["title_base"],
+                    "component_title_level": title_meta["title_level"],
+                    "component_title_path": title_meta["title_path"],
+                    "component_type": ctype,
+                    "start_us": start_us,
+                    "end_us": end_us,
+                    "duration_ms": duration_ms,
+                    "gap_from_prev_ms": gap,
+                }
+                all_rows.append(row_data)
+                request_rows.append(row_data)
+                prev_end = end_us
+
+                # порядок компонентов: по первому появлению в выполнении
+                if title and title not in first_seen_component_order:
+                    first_seen_component_order[title] = _row_seq
+
+                base_for_group = row_data.get("component_title_base") or title
+                if base_for_group and base_for_group not in first_seen_group_order:
+                    first_seen_group_order[base_for_group] = _row_seq
+            
+            if request_id:
+                by_request[request_id] = request_rows
 
     # Записываем общий файл
     with out_csv.open("w", newline="", encoding="utf-8") as f:
