@@ -243,7 +243,13 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
     ]
     subprocess.run([sys.executable, str(compare_script), *default_args], cwd=str(BASE_DIR), env=env, check=True)
 
-    # 3) Генерируем файлы и отчёты по компонентам
+    # 3) Небольшая пауза перед сборкой компонентных отчётов,
+    # чтобы на "тяжёлых" стендах все events по компонентам успели записаться/проиндексироваться.
+    delay_before_components_sec = 15.0
+    print(f"[COMPONENT_LOAD] Ждём {delay_before_components_sec} секунд перед сборкой отчётов по компонентам...")
+    time.sleep(delay_before_components_sec)
+
+    # Затем генерируем файлы и отчёты по компонентам
     build_timings_script = BASE_DIR / "scripts" / "build_component_timings.py"
     build_diagram_and_gaps_script = BASE_DIR / "scripts" / "build_diagram_and_gaps.py"
     component_report_script = BASE_DIR / "scripts" / "generate_component_report.py"
