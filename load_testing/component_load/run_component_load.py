@@ -221,17 +221,11 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
     if num_requests:
         env_locust["TOTAL_REQUESTS"] = str(num_requests)
 
-    try:
-        # Не падаем на ошибках Locust (exit code 1 при наличии failed requests - это нормально)
-        subprocess.run(cmd, cwd=str(BASE_DIR), env=env_locust, check=False)
-    finally:
-        # По умолчанию удаляем проект после прогона,
-        # но можно сохранить его для анализа из UI, установив KEEP_LOAD_PROJECT=true
-        keep_project = os.getenv("KEEP_LOAD_PROJECT", "false").lower() in ("1", "true", "yes")
-        if keep_project:
-            print(f"[COMPONENT_LOAD_CLEANUP] KEEP_LOAD_PROJECT включён — проект {project_code} НЕ будет удалён")
-        else:
-            delete_project_safely(project_code, project_info)
+    # Не падаем на ошибках Locust (exit code 1 при наличии failed requests - это нормально)
+    subprocess.run(cmd, cwd=str(BASE_DIR), env=env_locust, check=False)
+    # Проект компонентной нагрузки больше НЕ удаляем автоматически,
+    # чтобы на любом стенде его можно было посмотреть в UI после прогона.
+    print(f"[COMPONENT_LOAD_CLEANUP] Проект {project_code} сохранён (не удаляем автоматически)")
 
     # CSV файлы (requests.csv, requests_events.csv) теперь создаются напрямую в REPORT_DIR через locustfile.py
     # Копирование больше не требуется
