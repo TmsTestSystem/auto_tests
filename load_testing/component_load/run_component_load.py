@@ -1,6 +1,7 @@
 """
 Скрипт для запуска нагрузочного тестирования компонентов.
-Использует проект TEST12 и project_for_component_test.zip
+Для каждого прогона создаёт ОТДЕЛЬНЫЙ проект с уникальным кодом
+и импортирует в него `project_for_component_test.zip`.
 """
 
 import argparse
@@ -74,59 +75,44 @@ def find_compare_script() -> pathlib.Path:
 
 def setup_component_project() -> Tuple[str, Optional[dict]]:
     """
-    Создать или использовать проект TEST12 для нагрузочного теста компонентов 
-    и импортировать в него zip project_for_component_test.zip.
+    Создать ОТДЕЛЬНЫЙ проект для компонентного нагрузочного теста
+    и импортировать в него zip `project_for_component_test.zip`.
+
+    Код проекта всегда уникален (component_load_YYYYMMDDHHMMSS), чтобы
+    каждый прогон был изолирован и легко отличим в UI.
 
     Возвращает (project_code, project_info) — при ошибке импорта project_info может быть None.
     """
     base_url = get_api_base_url()
     cookies = get_auth_cookies()
 
-    # Используем фиксированный проект TEST12 для тестирования компонентов
-    project_code = "TEST12"
-    project_title = "Test Component Load Project"
+    ts = dt.datetime.now().strftime("%Y%m%d%H%M%S")
+    project_code = f"component_load_{ts}"
+    project_title = f"Component Load Project {ts}"
 
-    # Проверяем, существует ли проект TEST12
-    print(f"[COMPONENT_LOAD_SETUP] Проверяем существование проекта: {project_code}")
-    resp_projects = requests.get(
+    print(f"[COMPONENT_LOAD_SETUP] Создаём проект: {project_code}")
+    create_data = {
+        "title": project_title,
+        "code": project_code,
+        "git_url": "/opt/app/empty_repo",
+        "default_branch": "master",
+        "gradient": "blue",
+        "description": f"API тестовый проект для нагрузочного тестирования компонентов {project_code}",
+        "git": "/opt/app/empty_repo",
+    }
+    resp = requests.post(
         f"{base_url}/api/projects",
+        json=create_data,
         cookies=cookies,
         verify=False,
         timeout=60,
     )
-    resp_projects.raise_for_status()
-    projects = resp_projects.json()
-    
-    project_info = None
-    for prj in projects:
-        if prj.get("code") == project_code:
-            project_info = prj
-            print(f"[COMPONENT_LOAD_SETUP] Проект {project_code} уже существует (id={prj.get('id')})")
-            break
+    resp.raise_for_status()
+    project_info = resp.json()
 
-    # Если проекта нет, создаём его
-    if not project_info:
-        print(f"[COMPONENT_LOAD_SETUP] Создаём проект: {project_code}")
-        create_data = {
-            "title": project_title,
-            "code": project_code,
-            "git_url": "/opt/app/empty_repo",
-            "default_branch": "master",
-            "gradient": "blue",
-            "description": f"API тестовый проект для нагрузочного тестирования компонентов {project_code}",
-            "git": "/opt/app/empty_repo",
-        }
-        resp = requests.post(
-            f"{base_url}/api/projects",
-            json=create_data,
-            cookies=cookies,
-            verify=False,
-            timeout=60,
-        )
-        resp.raise_for_status()
-        project_info = resp.json()
-        print("[COMPONENT_LOAD_SETUP] Ждём 2 секунды после создания проекта...")
-        time.sleep(2)
+    # Небольшая пауза, чтобы проект успел полностью инициализироваться до импорта репозитория
+    print("[COMPONENT_LOAD_SETUP] Ждём 2 секунды после создания проекта...")
+    time.sleep(2)
 
     # Импортируем zip project_for_component_test.zip из корня репозитория
     zip_path = PROJECT_ROOT / "project_for_component_test.zip"
