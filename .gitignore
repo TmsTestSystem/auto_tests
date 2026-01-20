@@ -30,6 +30,7 @@ load_testing/locust_logs/
 load_testing/reports/
 load_testing/load/locust_logs/
 load_testing/load/reports/
+load_testing/component_load/reports/
 
 # Reports (keep structure but ignore content)
 reports/*/
