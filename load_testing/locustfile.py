@@ -578,9 +578,37 @@ def _noop(*args, **kwargs):
 
 # Вешаем методы на класс, чтобы можно было вызывать self._collect_component_timings
 def _collect_component_timings(self: ApiUser, request_id: str, job_uuid: str) -> None:  # type: ignore[name-defined]
-    payload = _fetch_events(self.host, job_uuid, cookies=getattr(self, "_auth_cookies", None))
-    events = _extract_events(payload)
-    rows = _compute_component_rows(events)
+    """
+    Получаем события по job_uuid и несколько раз пробуем,
+    т.к. на боевых стендах компоненты в /api/events/{job_uuid}
+    могут появляться с небольшой задержкой после завершения джоба.
+    """
+    max_attempts = int(os.getenv("COMP_EVENTS_RETRY_ATTEMPTS", "3") or "3")
+    delay_sec = float(os.getenv("COMP_EVENTS_RETRY_DELAY", "0.5") or "0.5")
+
+    attempts = 0
+    rows: List[Tuple[str, str, str, int, int, float]] = []
+
+    while attempts < max_attempts and not rows:
+        attempts += 1
+        payload = _fetch_events(self.host, job_uuid, cookies=getattr(self, "_auth_cookies", None))
+        events = _extract_events(payload)
+        rows = _compute_component_rows(events)
+
+        if rows:
+            break
+
+        # Если компоненты ещё не успели появиться в events — подождём и попробуем ещё раз
+        if attempts < max_attempts:
+            if DEBUG_COMPONENT_EVENTS:
+                print(f"[COMP_EVENTS_RETRY] job_uuid={job_uuid} attempt={attempts} no component rows yet, sleep {delay_sec}s")
+            time.sleep(delay_sec)
+
+    if not rows:
+        if DEBUG_COMPONENT_EVENTS:
+            print(f"[COMP_EVENTS_RETRY] job_uuid={job_uuid} no component rows after {max_attempts} attempts")
+        return
+
     _write_component_rows(request_id, job_uuid, rows)
 
 
