@@ -7,6 +7,12 @@ from pathlib import Path
 
 from locust import HttpUser, task, between, events
 
+# Locust uses gevent; protect shared counters
+try:
+    from gevent.lock import Semaphore  # type: ignore
+except Exception:  # pragma: no cover
+    from threading import Lock as Semaphore  # type: ignore
+
 
 CSV_DIR = Path(os.getenv("LOCUST_CSV_DIR", "locust_logs"))
 CSV_DIR.mkdir(exist_ok=True)
@@ -110,6 +116,23 @@ ensure_responses_csv_header(RESPONSES_CSV_PATH)
 LOAD_PROJECT_CODE = os.getenv("LOAD_PROJECT_CODE", "llda")
 LOAD_BRANCH = os.getenv("LOAD_BRANCH", "main")
 LOAD_PROCESS_PATH = os.getenv("LOAD_PROCESS_PATH", "test_que/test_1.df.json")
+
+# Остановка теста по количеству выполненных запросов (а не по времени)
+TOTAL_REQUESTS_LIMIT = int(os.getenv("TOTAL_REQUESTS", "0") or "0")  # 0 = без лимита
+_requests_done = 0
+_requests_lock = Semaphore()
+
+
+def _maybe_stop_runner(environment) -> None:
+    if TOTAL_REQUESTS_LIMIT <= 0:
+        return
+    runner = getattr(environment, "runner", None)
+    if runner is None:
+        return
+    try:
+        runner.quit()
+    except Exception:
+        pass
 
 
 class ApiUser(HttpUser):
@@ -256,6 +279,14 @@ class ApiUser(HttpUser):
             except Exception:
                 # Не JSON — пропускаем
                 pass
+
+            # Счётчик запросов и остановка по лимиту
+            if TOTAL_REQUESTS_LIMIT > 0:
+                global _requests_done
+                with _requests_lock:
+                    _requests_done += 1
+                    if _requests_done >= TOTAL_REQUESTS_LIMIT:
+                        _maybe_stop_runner(self.environment)
 
             # Запись в CSV для последующей корреляции данных
             with CSV_PATH.open("a", newline="", encoding="utf-8") as f:

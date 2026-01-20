@@ -215,8 +215,13 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
         # Не падаем на ошибках Locust (exit code 1 при наличии failed requests - это нормально)
         subprocess.run(cmd, cwd=str(BASE_DIR), env=env_locust, check=False)
     finally:
-        # Гарантируем попытку удаления проекта даже при ошибках Locust
-        delete_project_safely(project_code, project_info)
+        # По умолчанию удаляем проект после прогона,
+        # но можно сохранить его для анализа из UI, установив KEEP_LOAD_PROJECT=true
+        keep_project = os.getenv("KEEP_LOAD_PROJECT", "false").lower() in ("1", "true", "yes")
+        if keep_project:
+            print(f"[LOAD_CLEANUP] KEEP_LOAD_PROJECT включён — проект {project_code} НЕ будет удалён")
+        else:
+            delete_project_safely(project_code, project_info)
 
     # CSV файлы (requests.csv, requests_events.csv) теперь создаются напрямую в REPORT_DIR через locustfile.py
     # Копирование больше не требуется
