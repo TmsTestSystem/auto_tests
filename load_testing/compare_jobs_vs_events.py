@@ -124,44 +124,58 @@ def compare_times(
         if not rid:
             skipped_no_rid += 1
             continue
-        if not obj:
-            skipped_no_obj += 1
-            continue
+        # Включаем все записи, даже если нет всех полей (будем показывать None для недостающих)
+        # if not obj:
+        #     skipped_no_obj += 1
+        #     continue
         if not sa:
             skipped_no_sa += 1
-            continue
         if not fa:
             skipped_no_fa += 1
-            continue
         if rid not in started_map:
             skipped_not_in_started_map += 1
-            continue
 
-        # object_id может быть с суффиксом 'Z' (UTC). Уберём 'Z' при парсинге.
-        try:
-            obj_dt = dt.datetime.strptime(obj.rstrip('Z'), "%d.%m.%Y %H:%M:%S.%f")
-        except Exception:
-            continue
+        # Парсим поля, если они есть
+        obj_dt = None
+        if obj:
+            try:
+                obj_dt = dt.datetime.strptime(obj.rstrip('Z'), "%d.%m.%Y %H:%M:%S.%f")
+            except Exception:
+                pass
 
-        try:
-            sa_dt = dt.datetime.fromisoformat(sa)
-        except Exception:
-            continue
+        sa_dt = None
+        if sa:
+            try:
+                sa_dt = dt.datetime.fromisoformat(sa)
+                # Нормализуем started_at к naive UTC для вычисления разницы
+                if sa_dt.tzinfo is not None:
+                    sa_dt = sa_dt.astimezone(dt.timezone.utc).replace(tzinfo=None)
+            except Exception:
+                pass
 
-        # Нормализуем started_at/finished_at к naive UTC для вычисления разницы
-        if sa_dt.tzinfo is not None:
-            sa_dt = sa_dt.astimezone(dt.timezone.utc).replace(tzinfo=None)
-        try:
-            fa_dt = dt.datetime.fromisoformat(fa)
-            if fa_dt.tzinfo is not None:
-                fa_dt = fa_dt.astimezone(dt.timezone.utc).replace(tzinfo=None)
-        except Exception:
-            continue
+        fa_dt = None
+        if fa:
+            try:
+                fa_dt = dt.datetime.fromisoformat(fa)
+                # Нормализуем finished_at к naive UTC для вычисления разницы
+                if fa_dt.tzinfo is not None:
+                    fa_dt = fa_dt.astimezone(dt.timezone.utc).replace(tzinfo=None)
+            except Exception:
+                pass
 
-        ev_dt = started_map[rid]
-        d_started_ms = int((sa_dt - ev_dt).total_seconds() * 1000)
-        d_object_ms = int((obj_dt - ev_dt).total_seconds() * 1000)
-        db_duration_ms = int((fa_dt - sa_dt).total_seconds() * 1000)
+        # Получаем ev_dt из started_map, если есть
+        ev_dt = started_map.get(rid)
+        
+        # Вычисляем дельты только если есть все необходимые поля
+        d_started_ms = None
+        d_object_ms = None
+        db_duration_ms = None
+        if ev_dt and sa_dt:
+            d_started_ms = int((sa_dt - ev_dt).total_seconds() * 1000)
+        if ev_dt and obj_dt:
+            d_object_ms = int((obj_dt - ev_dt).total_seconds() * 1000)
+        if sa_dt and fa_dt:
+            db_duration_ms = int((fa_dt - sa_dt).total_seconds() * 1000)
 
         # Locust metrics - сначала по request_id, потом fallback по object_id
         rm = req_metrics.get(rid)
@@ -187,46 +201,48 @@ def compare_times(
             # end_ms это epoch миллисекунды UTC
             response_end_dt = dt.datetime.utcfromtimestamp(end_ms / 1000.0)
 
-        # Вычисленные сравнения согласно требованиям
-        delta_started_at_vs_object_id_ms = int((sa_dt - obj_dt).total_seconds() * 1000)
-        delta_finished_at_vs_response_end_ms = (
-            int((fa_dt - response_end_dt).total_seconds() * 1000)
-            if response_end_dt is not None
-            else None
-        )
-        delta_object_id_to_response_end_ms = (
-            int((response_end_dt - obj_dt).total_seconds() * 1000)
-            if response_end_dt is not None
-            else None
-        )
-        delta_job_duration_vs_object_to_response_end_ms = (
-            (int(job_duration) - delta_object_id_to_response_end_ms)
-            if (job_duration is not None and delta_object_id_to_response_end_ms is not None)
-            else None
-        )
+        # Вычисленные сравнения согласно требованиям (только если есть все поля)
+        delta_started_at_vs_object_id_ms = None
+        if sa_dt and obj_dt:
+            delta_started_at_vs_object_id_ms = int((sa_dt - obj_dt).total_seconds() * 1000)
+        
+        delta_finished_at_vs_response_end_ms = None
+        if fa_dt and response_end_dt:
+            delta_finished_at_vs_response_end_ms = int((fa_dt - response_end_dt).total_seconds() * 1000)
+        
+        delta_object_id_to_response_end_ms = None
+        if obj_dt and response_end_dt:
+            delta_object_id_to_response_end_ms = int((response_end_dt - obj_dt).total_seconds() * 1000)
+        
+        delta_job_duration_vs_object_to_response_end_ms = None
+        if job_duration is not None and delta_object_id_to_response_end_ms is not None:
+            try:
+                job_dur_int = int(job_duration) if isinstance(job_duration, (int, str)) and str(job_duration).strip() else None
+                if job_dur_int is not None:
+                    delta_job_duration_vs_object_to_response_end_ms = (job_dur_int - delta_object_id_to_response_end_ms)
+            except (ValueError, TypeError):
+                pass
 
         # Бизнесовые метрики под ТЗ
         # RequestSent_DT: когда система приняла запрос (STARTED event)
-        request_sent_dt = ev_dt  # naive UTC (без таймзоны)
+        request_sent_dt = ev_dt.isoformat(sep=" ") if ev_dt else None
         # EvalStart_DT / EvalEnd_DT: как есть в API (строки, могут быть с таймзоной)
         eval_start_dt_raw = sa
         eval_end_dt_raw = fa
         # ResponseReceived_DT: момент окончания HTTP‑запроса с точки зрения клиента
         response_received_dt = response_end_dt
 
-        delay_req_eval_ms = int((sa_dt - ev_dt).total_seconds() * 1000)
-        duration_eval_ms = db_duration_ms
-        delay_eval_resp_ms: Any
-        if response_end_dt is not None:
+        delay_req_eval_ms = d_started_ms  # уже вычислено выше
+        duration_eval_ms = db_duration_ms  # уже вычислено выше
+        delay_eval_resp_ms: Any = None
+        if response_end_dt is not None and fa_dt is not None:
             delay_eval_resp_ms = int((response_end_dt - fa_dt).total_seconds() * 1000)
-        else:
-            delay_eval_resp_ms = None
 
         results.append(
             {
                 "request_id": rid,
                 # Бизнесовые таймстемпы/метрики под ТЗ
-                "RequestSent_DT": request_sent_dt.isoformat(sep=" "),
+                "RequestSent_DT": request_sent_dt,
                 "EvalStart_DT": eval_start_dt_raw,
                 "EvalEnd_DT": eval_end_dt_raw,
                 "ResponseReceived_DT": (
@@ -522,7 +538,8 @@ def main() -> int:
         and r.get("Duration_Eval_ms") is not None
         and r.get("Delay_Eval_Resp_ms") is not None
     ]
-    used_for_graphs = valid_results if valid_results else results
+    # Для графиков используем ВСЕ результаты, чтобы видеть полную картину
+    used_for_graphs = results  # Всегда используем все результаты для графиков
 
     # Применяем опциональную фильтрацию/выборку
     filtered: List[Dict[str, Any]] = list(used_for_graphs)
@@ -569,13 +586,16 @@ def main() -> int:
     # Графики строим по всем данным (для полной картины)
     filtered_for_plot = filtered
     
-    # Для таблицы в HTML: если запросов более 500 - каждую 10-ю, иначе каждую 2-ю
+    # Для таблицы в HTML: показываем ВСЕ записи (убрали пропуск через STEP_TABLE)
+    # Если записей очень много (>1000), можно ограничить для производительности браузера
     # Полные данные всегда доступны в CSV
-    if len(filtered) > 500:
-        STEP_TABLE = 10
+    if len(filtered) > 1000:
+        # Для очень больших наборов показываем каждую 5-ю запись, чтобы таблица не тормозила
+        STEP_TABLE = 5
+        filtered_for_table = [filtered[i] for i in range(0, len(filtered), STEP_TABLE)]
     else:
-        STEP_TABLE = 2
-    filtered_for_table = [filtered[i] for i in range(0, len(filtered), STEP_TABLE)]
+        # Для обычных наборов показываем ВСЕ записи
+        filtered_for_table = filtered
 
     # Ось X — время по ResponseReceived_DT (если нет, то EvalEnd/EvalStart/RequestSent)
     labels_time = [

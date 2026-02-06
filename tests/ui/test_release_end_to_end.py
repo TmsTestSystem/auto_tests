@@ -142,8 +142,18 @@ def test_release_end_to_end(login_page):
             },
         }
         response = requests.post(execute_url, json=request_payload, verify=False, timeout=30)
-        assert response.status_code == 404, f"Ожидали статус 404, получили {response.status_code}: {response.text}"
-        print("[SUCCESS] API ответило 404, как и ожидалось")
+        # Для непубликованного релиза сейчас возвращается 422 с сообщением "Release not published".
+        assert response.status_code in (404, 422), (
+            f"Ожидали статус 404 или 422, получили {response.status_code}: {response.text}"
+        )
+        if response.status_code == 422:
+            body = response.text or ""
+            assert "release not published" in body.lower(), (
+                f"Для кода 422 ожидаем сообщение 'Release not published', получили: {body}"
+            )
+            print("[SUCCESS] API ответило 422 Release not published для непубликованного релиза")
+        else:
+            print("[SUCCESS] API ответило 404 для непубликованного релиза")
 
         print("[STEP 9] Открываем созданный релиз и валидируем данные")
         release_page.open_release_from_table()

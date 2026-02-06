@@ -145,8 +145,61 @@ def setup_component_project() -> Tuple[str, Optional[dict]]:
     print(f"[COMPONENT_LOAD_SETUP] ZIP импортирован, статус: {upload_resp.status_code}")
 
     # Небольшая пауза, чтобы репозиторий успел примениться и процессы проиндексировались
-    print("[COMPONENT_LOAD_SETUP] Ждём 10 секунд после импорта для индексации процессов...")
-    time.sleep(10)
+    wait_after_import_sec = float(os.getenv("PROJECT_IMPORT_WAIT_SEC", "20") or "20")
+    print(f"[COMPONENT_LOAD_SETUP] Ждём {wait_after_import_sec} секунд после импорта для индексации процессов...")
+    time.sleep(wait_after_import_sec)
+
+    # Проверяем готовность проекта: делаем тестовый запрос к процессу
+    process_path = os.getenv("LOAD_PROCESS_PATH", "Test_1.df.json")
+    test_url = f"{base_url}/api/ide/{project_code}/branch/master/bps/call?path={process_path}"
+    test_payload = {
+        "request_meta": {
+            "object_id": "test_readiness_check",
+            "request_id": "test_readiness_check",
+            "tags": "test",
+        },
+        "request_data": {
+            "amount_requested": {"currency_code": "RUB", "value": 12},
+            "auto": {"VIN": "test", "is_new": True, "is_used": True, "owner": {"firstname": "test", "lastname": "test", "middlename": "test", "passport": {"number": "test", "series": "test"}}},
+            "co_issuers": [],
+            "initial_payment": {"currency_code": "RUB", "value": 31},
+            "issuer": {"firstname": "test", "lastname": "test", "middlename": "test", "passport": {"number": "test", "series": "test"}},
+        },
+    }
+    
+    max_readiness_checks = 5
+    readiness_check_delay = 3.0
+    project_ready = False
+    
+    for check_num in range(1, max_readiness_checks + 1):
+        try:
+            print(f"[COMPONENT_LOAD_SETUP] Проверка готовности проекта (попытка {check_num}/{max_readiness_checks})...")
+            test_resp = requests.post(
+                test_url,
+                json=test_payload,
+                cookies=cookies,
+                verify=False,
+                timeout=30,
+            )
+            if test_resp.status_code == 200:
+                print(f"[COMPONENT_LOAD_SETUP] Проект готов! Тестовый запрос вернул 200")
+                project_ready = True
+                break
+            elif test_resp.status_code == 422:
+                error_msg = test_resp.text[:200] if test_resp.text else ""
+                print(f"[COMPONENT_LOAD_SETUP] Проект ещё не готов (422): {error_msg}")
+            else:
+                print(f"[COMPONENT_LOAD_SETUP] Неожиданный статус при проверке готовности: {test_resp.status_code}")
+        except Exception as e:
+            print(f"[COMPONENT_LOAD_SETUP] Ошибка при проверке готовности: {e}")
+        
+        if check_num < max_readiness_checks:
+            time.sleep(readiness_check_delay)
+    
+    if not project_ready:
+        print(f"[COMPONENT_LOAD_SETUP_WARN] Проект не прошёл проверку готовности после {max_readiness_checks} попыток. Продолжаем запуск, но возможны ошибки 422.")
+    else:
+        print(f"[COMPONENT_LOAD_SETUP] Проект готов к нагрузочному тестированию")
 
     return project_code, project_info
 
@@ -227,9 +280,6 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
     print(f"[COMPONENT_LOAD] Запускаем Locust с параметрами: users={users}, spawn_rate={spawn_rate}, num_requests={num_requests}")
     result = subprocess.run(cmd, cwd=str(BASE_DIR), env=env_locust, check=False)
     print(f"[COMPONENT_LOAD] Locust завершился с кодом: {result.returncode}")
-    # Проект компонентной нагрузки больше НЕ удаляем автоматически,
-    # чтобы на любом стенде его можно было посмотреть в UI после прогона.
-    print(f"[COMPONENT_LOAD_CLEANUP] Проект {project_code} сохранён (не удаляем автоматически)")
 
     # CSV файлы (requests.csv, requests_events.csv) теперь создаются напрямую в REPORT_DIR через locustfile.py
     # Копирование больше не требуется
@@ -239,12 +289,9 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
     env = os.environ.copy()
     env["BASE_DIR"] = str(BASE_DIR)
     env["REPORT_DIR"] = str(out_dir)
-    # Скрытые фильтры по умолчанию для компактного отчёта; настраиваются здесь без CLI флагов
-    default_args = [
-        "--bucket-ms", "20",
-        "--samples-per-bucket", "3",
-        "--limit", "500",
-    ]
+    # Убрали фильтры по умолчанию, чтобы показывать ВСЕ данные в графике и таблице
+    # Если нужно ограничить, можно добавить --limit, --bucket-ms и т.д. через переменные окружения
+    default_args = []
     # compare_jobs_vs_events.py не должен ломать весь прогон (особенно если Locust завершился с code=1)
     subprocess.run([sys.executable, str(compare_script), *default_args], cwd=str(BASE_DIR), env=env, check=False)
 
@@ -260,8 +307,12 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
     component_report_script = BASE_DIR / "scripts" / "generate_component_report.py"
     aggregated_report_script = BASE_DIR / "scripts" / "generate_aggregated_report.py"
     grouped_report_script = BASE_DIR / "scripts" / "generate_grouped_report.py"
+    link_events_script = BASE_DIR / "scripts" / "build_link_events.py"
+    link_report_script = BASE_DIR / "scripts" / "generate_link_report.py"
     diagram_report_script = BASE_DIR / "scripts" / "generate_diagram_report.py"
     gaps_report_script = BASE_DIR / "scripts" / "generate_gaps_report.py"
+    level_comparison_script = BASE_DIR / "scripts" / "generate_level_comparison_report.py"
+    execution_summary_script = BASE_DIR / "scripts" / "generate_execution_summary_report.py"
     
     # Сначала строим CSV файлы по компонентам
     if build_timings_script.exists():
@@ -275,6 +326,40 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
             print(f"[WARNING] Не удалось создать файлы по компонентам: {e}")
     else:
         print(f"[INFO] Скрипт build_component_timings.py не найден, пропускаем генерацию CSV")
+
+    # link_event: собираем отдельный CSV из /api/events/{job_uuid} и строим HTML отчёт
+    if link_events_script.exists():
+        try:
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(link_events_script),
+                    "--report-dir",
+                    str(out_dir),
+                    "--project-code",
+                    str(project_code),
+                    "--branch",
+                    "master",
+                ],
+                cwd=str(BASE_DIR),
+                check=False,
+            )
+        except Exception as e:
+            print(f"[WARNING] Не удалось собрать link_event CSV: {e}")
+    else:
+        print(f"[INFO] Скрипт build_link_events.py не найден, пропускаем link_event CSV")
+
+    if link_report_script.exists():
+        try:
+            subprocess.run(
+                [sys.executable, str(link_report_script), "--report-dir", str(out_dir)],
+                cwd=str(BASE_DIR),
+                check=False,
+            )
+        except Exception as e:
+            print(f"[WARNING] Не удалось создать link_event HTML отчёт: {e}")
+    else:
+        print(f"[INFO] Скрипт generate_link_report.py не найден, пропускаем link_event HTML")
 
     # Затем строим диаграмму и GAP отчёты (на основе component_timings.csv)
     if build_diagram_and_gaps_script.exists():
@@ -341,6 +426,37 @@ def run(users: int, spawn_rate: int, duration_sec: int, host: str, num_requests:
             )
         except Exception as e:
             print(f"[WARNING] Не удалось создать отчёт по GAP: {e}")
+
+    # Отчёт сравнения производительности по уровням (test1/test2/test3)
+    if level_comparison_script.exists():
+        try:
+            subprocess.run(
+                [sys.executable, str(level_comparison_script), "--report-dir", str(out_dir)],
+                cwd=str(BASE_DIR),
+                check=False,
+            )
+        except Exception as e:
+            print(f"[WARNING] Не удалось создать отчёт сравнения по уровням: {e}")
+
+    # Отчёт сводки выполнения: стрелки vs компоненты по каждому прогону
+    if execution_summary_script.exists():
+        try:
+            subprocess.run(
+                [sys.executable, str(execution_summary_script), "--report-dir", str(out_dir)],
+                cwd=str(BASE_DIR),
+                check=False,
+            )
+        except Exception as e:
+            print(f"[WARNING] Не удалось создать отчёт сводки выполнения: {e}")
+
+    # Удаляем проект после сбора всех результатов
+    # Проверяем флаг KEEP_LOAD_PROJECT: если он установлен в 'true', проект не удаляем
+    keep_project = os.getenv("KEEP_LOAD_PROJECT", "").lower() == "true"
+    if keep_project:
+        print(f"[COMPONENT_LOAD_CLEANUP] Проект {project_code} сохранён (KEEP_LOAD_PROJECT=true)")
+    else:
+        print(f"[COMPONENT_LOAD_CLEANUP] Удаляем проект {project_code} после сбора результатов...")
+        delete_project_safely(project_code, project_info)
 
     print(f"Done. Reports: {out_dir}")
 

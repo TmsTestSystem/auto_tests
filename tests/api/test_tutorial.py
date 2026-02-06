@@ -241,7 +241,20 @@ class TestTutorialAPI:
             logger.info("[INFO] Ожидание индексации Python модулей (10 секунд)...")
             time.sleep(10)
             
-            logger.info("[STEP 7] Вызов процесса TutorialProcess.df.json")
+            logger.info("[STEP 7] ensure_exist для git‑репозитория проекта")
+            base_url = get_api_base_url()
+            cookies = get_auth_cookies()
+            project_code = tutorial_file_panel_api.project_code
+
+            ensure_url = f"{base_url}/api/ide/{project_code}/branch/master/git/repository/ensure_exist"
+            logger.info(f"[TUTORIAL] GET {ensure_url}")
+            ensure_resp = requests.get(ensure_url, cookies=cookies, verify=False, timeout=60)
+            logger.info(f"[TUTORIAL] ensure_exist -> {ensure_resp.status_code}: {ensure_resp.text[:500]}")
+            assert ensure_resp.status_code == 200, (
+                f"Ошибка ensure_exist: {ensure_resp.status_code}, {ensure_resp.text}"
+            )
+
+            logger.info("[STEP 8] Вызов процесса TutorialProcess.df.json")
             request_data = {
                 "customer_id": "4535464sdf",
                 "loans": [
@@ -303,7 +316,7 @@ class TestTutorialAPI:
             if attempt >= max_attempts:
                 raise AssertionError(f"Процесс не завершился за {max_attempts} секунд")
             
-            logger.info("[STEP 8] Проверка результата процесса")
+            logger.info("[STEP 9] Проверка результата процесса")
             assert result.get('status') == 'finished', f"Процесс не завершился успешно: {result.get('status')}"
             assert 'result' in result, f"Отсутствует результат выполнения процесса. Доступные ключи: {list(result.keys())}"
             
@@ -343,7 +356,7 @@ class TestTutorialAPI:
             assert result_data['customer_id'] == "4535464sdf", "Неверный customer_id в результате"
             assert isinstance(result_data['total_monthly_payment_RUR'], (int, float)), "total_monthly_payment_RUR должен быть числом"
             
-            logger.info("[STEP 9] Мониторинг job")
+            logger.info("[STEP 10] Мониторинг job")
             jobs_result = tutorial_process_log_api.get_jobs(page=0, page_size=10)
             logger.info("[SUCCESS] Список jobs получен")
             
@@ -360,7 +373,7 @@ class TestTutorialAPI:
             
             assert job_found, f"Job {job_uuid} не найден в списке jobs"
             
-            logger.info("[STEP 10] Получение деталей job")
+            logger.info("[STEP 11] Получение деталей job")
             job_details_response = tutorial_process_log_api.get_job_details(job_uuid)
             logger.info("[SUCCESS] Детали job получены")
             
@@ -400,7 +413,7 @@ class TestTutorialAPI:
             else:
                 logger.info(f"[SUCCESS] Детали job (не словарь): {job_details}")
             
-            logger.info("[STEP 11] Получение событий job")
+            logger.info("[STEP 12] Получение событий job")
             job_events = tutorial_process_log_api.get_job_events(job_uuid)
             logger.info("[SUCCESS] События job получены")
             

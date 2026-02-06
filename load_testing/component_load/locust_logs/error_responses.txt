@@ -1,0 +1,92 @@
+
+[2026-01-20T12:02:47.505748+00:00] Status 422 for /api/ide/component_load_20260120150233/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=7eecb33b-c1e5-4c92-a3b9-e0df66fc8f09 на диаграмме component_load_20260120150233@branch@master@Test_1.df.json.\n  Доступные key стрелок: 86634db2-2640-437d-9fa6-a308ab832822, 0d33b000-7fb8-4a50-9407-80a7c305ee3c, 017c2485-e323-4d12-8c5a-d380e5a34441\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T12:03:57.725500+00:00] Status 422 for /api/ide/component_load_20260120150233/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=fca2ed24-2dc0-470d-9b4e-c98fb4e7f3c0 на диаграмме component_load_20260120150233@branch@master@Test_1.df.json.\n  Доступные key стрелок: fd7d9400-7146-41cb-bf78-4e2f9c199fc9, 86634db2-2640-437d-9fa6-a308ab832822, 7eecb33b-c1e5-4c92-a3b9-e0df66fc8f09, 740ba6bc-fe01-4b64-8144-2262fb5bb180, 562dca9d-3e11-4c97-a61e-be68e8807e28, 4a651821-2ade-4aba-96d9-f36752c1cb78, 40966119-4c82-40a6-9142-8a15c2c141ac, 2ec85bd6-42b1-4a0c-8f79-5c8cad11f263, 0f8e3b43-8f73-466a-a153-474873e9c61c, 0d33b000-7fb8-4a50-9407-80a7c305ee3c, 017c2485-e323-4d12-8c5a-d380e5a34441\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T12:24:59.482581+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=86634db2-2640-437d-9fa6-a308ab832822 на диаграмме component_load_20260120152445@branch@master@Test_1.df.json.\n  Доступные key стрелок: 98dcb993-c41a-461f-b6fb-1a55acf5ba6a, 740ba6bc-fe01-4b64-8144-2262fb5bb180, 562dca9d-3e11-4c97-a61e-be68e8807e28, 4a651821-2ade-4aba-96d9-f36752c1cb78, 40966119-4c82-40a6-9142-8a15c2c141ac, 2ec85bd6-42b1-4a0c-8f79-5c8cad11f263, 0f8e3b43-8f73-466a-a153-474873e9c61c, 0d33b000-7fb8-4a50-9407-80a7c305ee3c, 017c2485-e323-4d12-8c5a-d380e5a34441\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T12:29:18.681959+00:00] Status 422 for /api/ide/component_load_20260120152904/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=98dcb993-c41a-461f-b6fb-1a55acf5ba6a на диаграмме component_load_20260120152904@branch@master@Test_1.df.json.\n  Доступные key стрелок: a3a61738-f415-4fbd-a617-7307226e8804, a6e0964a-9e98-4b15-abd6-cd0ec439aca2\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T12:29:18.691788+00:00] Status 422 for /api/ide/component_load_20260120152904/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=a6e0964a-9e98-4b15-abd6-cd0ec439aca2 на диаграмме component_load_20260120152904@branch@master@Test_1.df.json.\n  Доступные key стрелок: a3a61738-f415-4fbd-a617-7307226e8804, a6e0964a-9e98-4b15-abd6-cd0ec439aca2\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T12:36:30.933262+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"%MatchError{term: nil}"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T13:05:42.867345+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"%MatchError{term: nil}"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T13:45:21.800478+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=2ec85bd6-42b1-4a0c-8f79-5c8cad11f263 на диаграмме component_load_20260120152445@branch@master@Test_1.df.json.\n  Доступные key стрелок: 40966119-4c82-40a6-9142-8a15c2c141ac, 017c2485-e323-4d12-8c5a-d380e5a34441\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T13:59:09.276926+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=0d33b000-7fb8-4a50-9407-80a7c305ee3c на диаграмме component_load_20260120152445@branch@master@Test_1.df.json.\n  Доступные key стрелок: 0f8e3b43-8f73-466a-a153-474873e9c61c\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T14:00:35.357873+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=c600a610-7e87-4005-a43a-eb3825dcc66c на диаграмме component_load_20260120152445@branch@master@Test_2.df.json.\n  Доступные key стрелок: ccc20617-5c7c-470f-b98b-912aa2ed633c, 941977bf-db26-4c88-a607-436157655b37, 5b18f948-a9f6-436d-a3af-8c423003929a, 4cf27318-4b10-4c25-99dc-60e85cd15188, 418745d9-0ee9-4c30-90f7-78b3ba5a39e0, 2f94f530-c3a7-4548-9f99-aaeeafcad731\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T14:49:16.265868+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"%MatchError{term: nil}"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T16:23:50.273962+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=a6e0964a-9e98-4b15-abd6-cd0ec439aca2 на диаграмме component_load_20260120152445@branch@master@Test_1.df.json.\n  Доступные key стрелок: b174eaf0-0660-451c-af3d-8e85ad10d225, 740ba6bc-fe01-4b64-8144-2262fb5bb180, 562dca9d-3e11-4c97-a61e-be68e8807e28, 4a651821-2ade-4aba-96d9-f36752c1cb78, 40966119-4c82-40a6-9142-8a15c2c141ac, 2ec85bd6-42b1-4a0c-8f79-5c8cad11f263, 0f8e3b43-8f73-466a-a153-474873e9c61c, 0d33b000-7fb8-4a50-9407-80a7c305ee3c, 017c2485-e323-4d12-8c5a-d380e5a34441\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T16:28:05.343835+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"%MatchError{term: nil}"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T16:37:21.459700+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=d7a69ad8-5ebb-421a-90c1-bf2ff77b9775 на диаграмме component_load_20260120152445@branch@master@Test_2.df.json.\n  Доступные key стрелок: dfcc783e-ebd2-498a-a50e-1add3c0084cc\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T16:40:50.964176+00:00] Status 422 for /api/ide/component_load_20260120152445/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=562dca9d-3e11-4c97-a61e-be68e8807e28 на диаграмме component_load_20260120152445@branch@master@Test_1.df.json.\n  Доступные key стрелок: 740ba6bc-fe01-4b64-8144-2262fb5bb180\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T17:41:58.078728+00:00] Status 422 for /api/ide/component_load_20260120204017/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=941977bf-db26-4c88-a607-436157655b37 на диаграмме component_load_20260120204017@branch@master@Test_2.df.json.\n  Доступные key стрелок: b1865f29-8c91-4632-a884-7131a74d5a27\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T17:42:12.748766+00:00] Status 422 for /api/ide/component_load_20260120204017/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=86634db2-2640-437d-9fa6-a308ab832822 на диаграмме component_load_20260120204017@branch@master@Test_1.df.json.\n  Доступные key стрелок: 98dcb993-c41a-461f-b6fb-1a55acf5ba6a\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T17:55:53.303443+00:00] Status 422 for /api/ide/component_load_20260120205539/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=fca2ed24-2dc0-470d-9b4e-c98fb4e7f3c0 на диаграмме component_load_20260120205539@branch@master@Test_1.df.json.\n  Доступные key стрелок: fd7d9400-7146-41cb-bf78-4e2f9c199fc9, 2ec85bd6-42b1-4a0c-8f79-5c8cad11f263, 0f8e3b43-8f73-466a-a153-474873e9c61c, 0d33b000-7fb8-4a50-9407-80a7c305ee3c, 017c2485-e323-4d12-8c5a-d380e5a34441\n"}}
+--------------------------------------------------------------------------------
+
+[2026-01-20T19:04:14.047450+00:00] Status 422 for /api/ide/component_load_20260120220359/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"%MatchError{term: nil}"}}
+--------------------------------------------------------------------------------
+
+[2026-01-22T08:38:28.925314+00:00] Status 422 for /api/ide/component_load_20260122113812/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"%MatchError{term: nil}"}}
+--------------------------------------------------------------------------------
+
+[2026-01-22T08:38:28.932157+00:00] Status 422 for /api/ide/component_load_20260122113812/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"%MatchError{term: nil}"}}
+--------------------------------------------------------------------------------
+
+[2026-01-22T09:42:45.853193+00:00] Status 422 for /api/ide/component_load_20260122124213/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"%MatchError{term: nil}"}}
+--------------------------------------------------------------------------------
+
+[2026-01-22T09:44:47.902274+00:00] Status 422 for /api/ide/component_load_20260122124213/branch/master/bps/call?path=Test_1.df.json
+Body: {"error":{"message":"  Нет стрелки с key=4ba86449-7c34-4675-ba74-118fb4582511 на диаграмме component_load_20260122124213@branch@master@Test_3.df.json.\n  Доступные key стрелок: 6c95cd4b-17bc-4ef3-a922-e177a551c0ae\n"}}
+--------------------------------------------------------------------------------

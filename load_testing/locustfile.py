@@ -307,139 +307,112 @@ class ApiUser(HttpUser):
             },
         }
         resp = None
+        max_retries = 2  # Максимум 2 повтора для 422 ошибок
+        retry_delay = 0.5  # Задержка между повторами (секунды)
+        
         try:
-            with self.client.post(
-                path,
-                json=payload,
-                headers=self.default_headers,
-                name="POST /bps/call",
-                catch_response=True,
-                verify=False,
-            ) as resp:
-                end_dt_local = datetime.now().astimezone()
-                end_dt_utc = datetime.now(timezone.utc)
-                end_ms = int(end_dt_utc.timestamp() * 1000)
-                response_time_ms = end_ms - start_ms
-
-                success = 200 <= resp.status_code < 400
-                exception_text = ""
-                if not success:
-                    exception_text = f"HTTP {resp.status_code}"
-                    # Логируем тело ответа при ошибке для отладки
-                    try:
-                        error_body = resp.text[:1000]  # Первые 1000 символов
-                        # Записываем в файл для надёжности
-                        error_log_path = CSV_DIR / "error_responses.txt"
-                        with error_log_path.open("a", encoding="utf-8") as ef:
-                            ef.write(f"\n[{datetime.now(timezone.utc).isoformat()}] Status {resp.status_code} for {path}\n")
-                            ef.write(f"Body: {error_body}\n")
-                            ef.write("-" * 80 + "\n")
-                        # Также в stdout для быстрого просмотра
-                        print(f"[ERROR] Response body (status {resp.status_code}): {error_body}")
-                    except Exception as log_err:
-                        print(f"[ERROR] Failed to log error response: {log_err}")
-                    resp.failure(exception_text)
-                else:
-                    resp.success()
-
-                # Парсим JSON и сохраняем ключевые поля из ответа
+            for attempt in range(max_retries + 1):
                 try:
-                    data = resp.json()
-                    job = data if isinstance(data, dict) else (data[0] if isinstance(data, list) and data else {})
-                    if isinstance(job, dict):
-                        with RESPONSES_CSV_PATH.open("a", newline="", encoding="utf-8") as fj:
-                            wj = csv.writer(fj)
-                            wj.writerow([
-                                job.get("request_id", request_id),
-                                job.get("object_id", object_id),
-                                job.get("status"),
-                                job.get("path"),
-                                job.get("started_at"),
-                                job.get("finished_at"),
-                                job.get("job_duration"),
-                                job.get("job_uuid"),
-                            ])
-
-                        # Дополнительно: по job_uuid забираем события и считаем метрики компонентов
-                        if COLLECT_COMPONENT_EVENTS:
-                            job_uuid = job.get("job_uuid")
-                            if job_uuid:
-                                try:
-                                    self._collect_component_timings(
-                                        request_id=job.get("request_id", request_id),
-                                        job_uuid=job_uuid,
-                                    )
-                                except Exception as e:
-                                    # Не валим нагрузку из-за проблем сбора метрик, но логируем причину в отдельный CSV
-                                    status_code = getattr(e, "_events_status_code", "")
-                                    url = getattr(e, "_events_url", "")
-                                    body = getattr(e, "_events_body", "")
-                                    with EVENTS_ERRORS_CSV_PATH.open("a", newline="", encoding="utf-8") as fe:
-                                        we = csv.writer(fe)
-                                        we.writerow([
-                                            job.get("request_id", request_id),
-                                            job_uuid,
-                                            getattr(self, "host", ""),
-                                            type(e).__name__,
-                                            status_code,
-                                            url,
-                                            (str(body)[:2000] if body else str(e)[:2000]),
-                                        ])
-                                    if DEBUG_COMPONENT_EVENTS:
-                                        print(f"[COMPONENT_EVENTS_ERROR] request_id={job.get('request_id', request_id)} job_uuid={job_uuid} err={e}")
-                except Exception:
-                    # Не JSON — пропускаем
-                    pass
-
-                # Запись в CSV для последующей корреляции данных
-                with CSV_PATH.open("a", newline="", encoding="utf-8") as f:
-                    writer = csv.writer(f)
-                    writer.writerow([
-                        start_ms,
-                        start_dt_utc.isoformat(),
-                        end_ms,
-                        end_dt_utc.isoformat(),
-                        response_time_ms,
-                        "POST",
-                        "POST /bps/call",
+                    with self.client.post(
                         path,
-                        resp.status_code,
-                        success,
-                        request_id,
-                        exception_text,
-                    ])
+                        json=payload,
+                        headers=self.default_headers,
+                        name="POST /bps/call",
+                        catch_response=True,
+                        verify=False,
+                    ) as resp:
+                        end_dt_local = datetime.now().astimezone()
+                        end_dt_utc = datetime.now(timezone.utc)
+                        end_ms = int(end_dt_utc.timestamp() * 1000)
+                        response_time_ms = end_ms - start_ms
 
-                # Кастомный отчёт в требуемом формате
-                # В отчёт по-прежнему пишем локальное время для читаемости
-                req_date = start_dt_local.strftime("%d.%m.%Y")
-                req_time = f"{start_dt_local.strftime('%H:%M:%S')}.{start_dt_local.strftime('%f')[:5]}"
-                resp_date = end_dt_local.strftime("%d.%m.%Y")
-                resp_time = f"{end_dt_local.strftime('%H:%M:%S')}.{end_dt_local.strftime('%f')[:5]}"
-                with REPORT_CSV_PATH.open("a", newline="", encoding="utf-8") as f2:
-                    writer2 = csv.writer(f2)
-                    writer2.writerow([
-                        req_date,
-                        req_time,
-                        resp_date,
-                        resp_time,
-                        resp.status_code,
-                        response_time_ms,
-                        request_id,
-                    ])
+                        success = 200 <= resp.status_code < 400
+                        exception_text = ""
+                        if not success:
+                            exception_text = f"HTTP {resp.status_code}"
+                            
+                            # Для 422 ошибок делаем retry (если не последняя попытка)
+                            if resp.status_code == 422 and attempt < max_retries:
+                                error_body = resp.text[:200] if resp.text else ""
+                                print(f"[RETRY] 422 error on attempt {attempt + 1}/{max_retries + 1}, retrying in {retry_delay}s: {error_body}")
+                                gevent.sleep(retry_delay)
+                                continue  # Повторяем запрос
+                            
+                            # Логируем тело ответа при ошибке для отладки
+                            try:
+                                error_body = resp.text[:1000]  # Первые 1000 символов
+                                # Записываем в файл для надёжности
+                                error_log_path = CSV_DIR / "error_responses.txt"
+                                with error_log_path.open("a", encoding="utf-8") as ef:
+                                    ef.write(f"\n[{datetime.now(timezone.utc).isoformat()}] Status {resp.status_code} for {path} (attempt {attempt + 1})\n")
+                                    ef.write(f"Body: {error_body}\n")
+                                    ef.write("-" * 80 + "\n")
+                                # Также в stdout для быстрого просмотра
+                                print(f"[ERROR] Response body (status {resp.status_code}): {error_body}")
+                            except Exception as log_err:
+                                print(f"[ERROR] Failed to log error response: {log_err}")
+                            resp.failure(exception_text)
+                        else:
+                            resp.success()
+                            
+                            # Парсим JSON и сохраняем ключевые поля из ответа (только при успехе)
+                            try:
+                                data = resp.json()
+                                job = data if isinstance(data, dict) else (data[0] if isinstance(data, list) and data else {})
+                                if isinstance(job, dict):
+                                    with RESPONSES_CSV_PATH.open("a", newline="", encoding="utf-8") as fj:
+                                        wj = csv.writer(fj)
+                                        wj.writerow([
+                                            job.get("request_id", request_id),
+                                            job.get("object_id", object_id),
+                                            job.get("status"),
+                                            job.get("path"),
+                                            job.get("started_at"),
+                                            job.get("finished_at"),
+                                            job.get("job_duration"),
+                                            job.get("job_uuid"),
+                                        ])
 
-                # МГНОВЕННАЯ запись события завершения после получения ответа
-                finished_date = end_dt_utc.strftime("%d.%m.%Y")
-                finished_time = f"{end_dt_utc.strftime('%H:%M:%S')}.{end_dt_utc.strftime('%f')[:5]}Z"
-                with EVENTS_CSV_PATH.open("a", newline="", encoding="utf-8") as fe:
-                    writer_e = csv.writer(fe)
-                    writer_e.writerow([
-                        "FINISHED",
-                        finished_date,
-                        finished_time,
-                        resp.status_code,
-                        response_time_ms,
-                        request_id,
-                    ])
+                                    # Дополнительно: по job_uuid забираем события и считаем метрики компонентов
+                                    if COLLECT_COMPONENT_EVENTS:
+                                        job_uuid = job.get("job_uuid")
+                                        if job_uuid:
+                                            try:
+                                                self._collect_component_timings(
+                                                    request_id=job.get("request_id", request_id),
+                                                    job_uuid=job_uuid,
+                                                )
+                                            except Exception as e:
+                                                # Не валим нагрузку из-за проблем сбора метрик, но логируем причину в отдельный CSV
+                                                status_code = getattr(e, "_events_status_code", "")
+                                                url = getattr(e, "_events_url", "")
+                                                body = getattr(e, "_events_body", "")
+                                                with EVENTS_ERRORS_CSV_PATH.open("a", newline="", encoding="utf-8") as fe:
+                                                    we = csv.writer(fe)
+                                                    we.writerow([
+                                                        job.get("request_id", request_id),
+                                                        job_uuid,
+                                                        getattr(self, "host", ""),
+                                                        type(e).__name__,
+                                                        status_code,
+                                                        url,
+                                                        (str(body)[:2000] if body else str(e)[:2000]),
+                                                    ])
+                                                if DEBUG_COMPONENT_EVENTS:
+                                                    print(f"[COMPONENT_EVENTS_ERROR] request_id={job.get('request_id', request_id)} job_uuid={job_uuid} err={e}")
+                            except Exception:
+                                # Не JSON — пропускаем
+                                pass
+                            
+                            # Успешный ответ - выходим из цикла retry
+                            break
+                except Exception as e:
+                    # Если произошла ошибка при выполнении запроса (не HTTP ошибка), логируем и продолжаем
+                    print(f"[ERROR] Exception during request attempt {attempt + 1}: {e}")
+                    if attempt >= max_retries:
+                        # Все попытки исчерпаны
+                        break
+                    gevent.sleep(retry_delay)
 
         finally:
             # Обновляем счётчики завершений и планируем остановку после достижения лимита завершённых попыток.
@@ -526,10 +499,19 @@ def _extract_events(payload: Any) -> List[Dict[str, Any]]:
         try:
             total = len(events_list)
             types = {}
+            link_events_samples = []
             for e in events_list:
                 t = e.get("event_type")
                 types[t] = types.get(t, 0) + 1
+                if t == "link_event" and len(link_events_samples) < 2:
+                    # Сохраняем примеры link_event для анализа структуры
+                    link_events_samples.append(e)
             print(f"[COMP_EVENTS_DEBUG] _extract_events: total={total}, by_type={types}")
+            if link_events_samples:
+                print(f"[COMP_EVENTS_DEBUG] link_event samples (first {len(link_events_samples)}):")
+                for i, le in enumerate(link_events_samples):
+                    print(f"[COMP_EVENTS_DEBUG]   link_event[{i}] keys: {list(le.keys())}")
+                    print(f"[COMP_EVENTS_DEBUG]   link_event[{i}] sample: {le}")
         except Exception:
             pass
 
@@ -692,6 +674,20 @@ def _collect_component_timings(self: ApiUser, request_id: str, job_uuid: str) ->
         attempts += 1
         payload = _fetch_events(self.host, job_uuid, cookies=getattr(self, "_auth_cookies", None))
         events = _extract_events(payload)
+        
+        # ВРЕМЕННОЕ ЛОГИРОВАНИЕ: проверяем все типы событий, включая link_event
+        if DEBUG_COMPONENT_EVENTS and attempts == 1:
+            event_types = {}
+            link_events = []
+            for e in events:
+                et = e.get("event_type")
+                event_types[et] = event_types.get(et, 0) + 1
+                if et == "link_event":
+                    link_events.append(e)
+            print(f"[COMP_EVENTS_DEBUG] job_uuid={job_uuid} event_types={event_types}")
+            if link_events:
+                print(f"[COMP_EVENTS_DEBUG] Found {len(link_events)} link_events, sample: {link_events[0]}")
+        
         rows = _compute_component_rows(events)
         row_count = len(rows)
 
