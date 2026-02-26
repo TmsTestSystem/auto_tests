@@ -1,6 +1,7 @@
 import sys
 import uuid
 import base64
+import json
 import requests
 import pytest
 from pathlib import Path
@@ -38,18 +39,25 @@ class TestTutorialAPI:
                 create_data = {
                     "title": project_title,
                     "code": project_code,
-                    "git_url": "/opt/app/empty_repo",
-                    "default_branch": "master",
-                    "gradient": "green",
                     "description": f"Проект для тестирования туториала {project_code}",
-                    "git": "/opt/app/empty_repo"
+                    "gradient": "#9D80CB,#F7C2E6",
+                    "type": "directory",
                 }
-                
-                response = requests.post(f"{base_url}/api/projects", json=create_data, cookies=cookies, verify=False, timeout=30)
+                files = {
+                    "project_json": (None, json.dumps(create_data), "application/json"),
+                    "zip_template": ("empty.zip", b"", "application/octet-stream"),
+                }
+                response = requests.post(
+                    f"{base_url}/api/projects",
+                    cookies=cookies,
+                    files=files,
+                    verify=False,
+                    timeout=30,
+                )
                 response.raise_for_status()
                 project_info = response.json()
                 logger.info(f"[TUTORIAL_SETUP] Проект туториала создан: {project_info}")
-                
+
                 yield project_code, project_info
                 
             except Exception as e:
@@ -209,8 +217,9 @@ class TestTutorialAPI:
             assert models_folder_found, "Папка models не найдена"
             
             logger.info("[STEP 5] Импорт остальных файлов туториала")
-            
-            tutorial_files_dir = Path(__file__).parent.parent.parent.parent / "TutorialProcess"
+
+            # Файлы туториала лежат в папке TutorialProcess внутри репозитория (рядом с корнем проекта)
+            tutorial_files_dir = Path(__file__).parent.parent.parent / "TutorialProcess"
             files_to_import = [
                 ("tutorial_script.py", "/tutorial_script.py"),
                 ("tutorial_success.test.json", "/tutorial_success.test.json"),
@@ -219,21 +228,17 @@ class TestTutorialAPI:
             
             for filename, import_path in files_to_import:
                 file_path = tutorial_files_dir / filename
-                
-                if file_path.exists():
-                    logger.info(f"[STEP] Импорт файла {filename}")
-                    
-                    with open(file_path, 'rb') as f:
-                        file_content = f.read()
-                        content_base64 = base64.b64encode(file_content).decode()
-                    
-                    import_result = tutorial_file_panel_api.import_file(import_path, content_base64)
-                    logger.info(f"[SUCCESS] Файл {filename} импортирован: {import_result}")
-                    
-                    read_result = tutorial_file_panel_api.read_file(import_path)
-                    logger.info(f"[SUCCESS] Файл {filename} прочитан для проверки")
-                else:
-                    logger.warning(f"[WARNING] Файл {filename} не найден в {tutorial_files_dir}")
+                logger.info(f"[STEP] Импорт файла {filename} из {file_path}")
+
+                with open(file_path, 'rb') as f:
+                    file_content = f.read()
+                    content_base64 = base64.b64encode(file_content).decode()
+
+                import_result = tutorial_file_panel_api.import_file(import_path, content_base64)
+                logger.info(f"[SUCCESS] Файл {filename} импортирован: {import_result}")
+
+                read_result = tutorial_file_panel_api.read_file(import_path)
+                logger.info(f"[SUCCESS] Файл {filename} прочитан для проверки")
             
             logger.info("[STEP 6] Ожидание обработки файла процесса сервером...")
             import time
@@ -241,7 +246,7 @@ class TestTutorialAPI:
             logger.info("[INFO] Ожидание индексации Python модулей (10 секунд)...")
             time.sleep(10)
             
-            logger.info("[STEP 7] ensure_exist для git‑репозитория проекта")
+            logger.info("[STEP 7] ensure_exist для git-репозитория проекта")
             base_url = get_api_base_url()
             cookies = get_auth_cookies()
             project_code = tutorial_file_panel_api.project_code

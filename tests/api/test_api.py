@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 import requests
@@ -47,14 +48,22 @@ def test_proj_func():
         create_data = {
             "title": project_title,
             "code": project_code,
-            "git_url": "/opt/app/empty_repo",
-            "default_branch": "master",
-            "gradient": "blue",
             "description": f"API тестовый проект {project_code}",
-            "git": "/opt/app/empty_repo"
+            "gradient": "#9D80CB,#F7C2E6",
+            "type": "directory",
         }
         
-        create_resp = requests.post(f"{base_url}/api/projects", json=create_data, cookies=cookies, verify=False, timeout=30)
+        files = {
+            "project_json": (None, json.dumps(create_data), "application/json"),
+            "zip_template": ("empty.zip", b"", "application/octet-stream"),
+        }
+        create_resp = requests.post(
+            f"{base_url}/api/projects",
+            cookies=cookies,
+            files=files,
+            verify=False,
+            timeout=30,
+        )
         assert create_resp.status_code == 200, f"Ошибка создания проекта: {create_resp.status_code}, {create_resp.text}"
         project_info = create_resp.json()
         project_id = project_info['id']
@@ -80,23 +89,21 @@ def test_proj_func():
             "title": updated_title,
             "code": project_code,
             "description": f"API тестовый проект {project_code} - ОБНОВЛЕН",
-            "git": "/opt/app/empty_repo",
-            "default_branch": "master",
-            "gradient": "blue"
+            "gradient": "#9D80CB,#F7C2E6",
+            "type": "directory",
         }
         
-        update_resp = requests.put(f"{base_url}/api/projects/{project_id}", 
-                                 json=update_data, cookies=cookies, verify=False, timeout=30)
+        update_resp = requests.put(
+            f"{base_url}/api/projects/{project_id}",
+            json=update_data,
+            cookies=cookies,
+            verify=False,
+            timeout=30,
+        )
         assert update_resp.status_code == 200, f"Ошибка обновления проекта: {update_resp.status_code}, {update_resp.text}"
         logger.info(f"[SUCCESS] Проект обновлен: {updated_title}")
         
-        logger.info(f"[STEP 5] Fetch проекта")
-        fetch_resp = requests.post(f"{base_url}/api/ide/{project_code}/git/branches/fetch?prune=true", 
-                                 cookies=cookies, verify=False, timeout=30)
-        assert fetch_resp.status_code == 200, f"Ошибка fetch: {fetch_resp.status_code}, {fetch_resp.text}"
-        logger.info(f"[SUCCESS] Fetch выполнен успешно")
-        
-        logger.info(f"[STEP 6] Удаление проекта")
+        logger.info(f"[STEP 5] Удаление проекта")
         delete_resp = requests.delete(f"{base_url}/api/projects/{project_id}", 
                                     cookies=cookies, verify=False, timeout=30)
         assert delete_resp.status_code in [200, 204], f"Ошибка удаления проекта: {delete_resp.status_code}, {delete_resp.text}"

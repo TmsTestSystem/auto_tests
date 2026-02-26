@@ -1,7 +1,7 @@
 {
   "description": null,
-  "object_path": "min_list/min_list_error.df.json",
-  "path": "min_list/min_list_error.test.json",
+  "object_path": "Project_expression/min_list/min_list_error.df.json",
+  "path": "Project_expression/min_list/min_list_error.test.json",
   "save_test_results": true,
   "tests": [
     {
@@ -34,7 +34,7 @@
       "mocks": [],
       "test_result": {
         "check_results": [],
-        "job_uuid": "dfa7941f-57d4-4b04-8eb4-e37d7c279131",
+        "job_uuid": "769656b6-2fb0-4aba-a4ff-b8366b93ce19",
         "object_result": {
           "data": null,
           "error": {
@@ -42,13 +42,13 @@
             "code": null,
             "field": "data",
             "level": "error",
-            "message": "'min' не поддерживает аргументы следующих типов [%{\"wrong\" => true}]",
+            "message": "'min' не поддерживает аргументы следующих типов [object()]",
             "type": "expression"
           }
         },
         "object_result_check_results": [
           {
-            "actual_value": "'min' не поддерживает аргументы следующих типов [%{\"wrong\" => true}]",
+            "actual_value": "'min' не поддерживает аргументы следующих типов [object()]",
             "check": {
               "field": null,
               "path": [
@@ -59,15 +59,15 @@
               "value": "'min' не поддерживает аргументы следующих типов [%{\"wrong\" => true}]"
             },
             "key": null,
-            "result": "success"
+            "result": "error"
           }
         ],
-        "result": "success",
+        "result": "checks_failed",
         "stderr": [],
         "stdout": [],
-        "time": 6
+        "time": 2
       },
-      "timeout": 60000,
+      "timeout": 600000,
       "title": ""
     }
   ]

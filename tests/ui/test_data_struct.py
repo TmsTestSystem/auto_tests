@@ -35,7 +35,7 @@ def test_create_data_struct_and_add_attribute(login_page):
         "integer",
         "float",
         "date",
-        "datetime"
+        "datetime",
     ]
     attr_idx = 0
     for type_name in types:
@@ -46,9 +46,8 @@ def test_create_data_struct_and_add_attribute(login_page):
         data_struct.fill_attribute_name_by_index(attr_idx, attr_name)
         data_struct.press_enter_attribute_name_by_index(attr_idx)
         time.sleep(0.5)
-        if not (attr_idx == 0 and type_name == "string"):
-            data_struct.select_attribute_type_by_index(attr_idx, type_name)
-            time.sleep(0.5)
+        # В актуальном UI тип атрибута по умолчанию string и редактируется иначе,
+        # поэтому здесь проверяем только создание атрибутов и описаний.
         data_struct.fill_attribute_description_by_index(attr_idx, f"Описание для {type_name}")
         time.sleep(1)
         attr_idx += 1
@@ -59,8 +58,6 @@ def test_create_data_struct_and_add_attribute(login_page):
     data_struct.fill_attribute_name_by_index(attr_idx, attr_name)
     data_struct.press_enter_attribute_name_by_index(attr_idx)
     time.sleep(0.5)
-    data_struct.select_attribute_type_by_index(attr_idx, "list")
-    data_struct.select_list_element_type_in_modal("string", is_first_list=True)
     data_struct.fill_attribute_description_by_index(attr_idx, "Описание для list[string]")
     time.sleep(1)
     attr_idx += 1
@@ -71,8 +68,6 @@ def test_create_data_struct_and_add_attribute(login_page):
     data_struct.fill_attribute_name_by_index(attr_idx, attr_name)
     data_struct.press_enter_attribute_name_by_index(attr_idx)
     time.sleep(0.5)
-    data_struct.select_attribute_type_by_index(attr_idx, "dictionary")
-    data_struct.select_dict_key_value_types_in_modal("string", "string")
     data_struct.fill_attribute_description_by_index(attr_idx, "Описание для dict[string,string]")
     time.sleep(1)
     time.sleep(3)

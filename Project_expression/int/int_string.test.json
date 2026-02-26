@@ -1,7 +1,7 @@
 {
   "description": null,
-  "object_path": "int/int_string.df.json",
-  "path": "int/int_string.test.json",
+  "object_path": "Project_expression/int/int_string.df.json",
+  "path": "Project_expression/int/int_string.test.json",
   "save_test_results": true,
   "tests": [
     {
@@ -13,7 +13,7 @@
       "mocks": [],
       "test_result": {
         "check_results": [],
-        "job_uuid": "c5b72323-c817-45a7-8979-96fd3ce1e119",
+        "job_uuid": "1cb78d80-b999-421c-a36c-7bb725aec23d",
         "object_result": {
           "data": {
             "value": 52
@@ -24,9 +24,9 @@
         "result": "success",
         "stderr": [],
         "stdout": [],
-        "time": 11
+        "time": 1
       },
-      "timeout": 60000,
+      "timeout": 600000,
       "title": ""
     }
   ]

@@ -1,7 +1,7 @@
 {
   "description": null,
-  "object_path": "min_list/min_list_positive.df.json",
-  "path": "min_list/min_list_positive.test.json",
+  "object_path": "Project_expression/min_list/min_list_positive.df.json",
+  "path": "Project_expression/min_list/min_list_positive.test.json",
   "save_test_results": true,
   "tests": [
     {
@@ -19,7 +19,7 @@
       "mocks": [],
       "test_result": {
         "check_results": [],
-        "job_uuid": "8a9144d9-6b5e-4dad-92f3-4a2fe322eb4c",
+        "job_uuid": "c878462d-33f6-467e-b93a-410708aafe7f",
         "object_result": {
           "data": {
             "minList": 1
@@ -30,9 +30,9 @@
         "result": "success",
         "stderr": [],
         "stdout": [],
-        "time": 12
+        "time": 1
       },
-      "timeout": 60000,
+      "timeout": 600000,
       "title": ""
     }
   ]

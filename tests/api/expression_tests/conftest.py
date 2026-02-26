@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 import os
 import uuid
 import time
+import json
 import pytest
 import requests
 from utils.auth_utils import get_auth_cookies, get_api_base_url
@@ -25,13 +26,21 @@ def expression_project():
         create_data = {
             "title": project_title,
             "code": project_code,
-            "git_url": "/opt/app/empty_repo",
-            "default_branch": "master",
-            "gradient": "orange",
             "description": f"Проект для expression API-тестов ({project_code})",
-            "git": "/opt/app/empty_repo"
+            "gradient": "#9D80CB,#F7C2E6",
+            "type": "directory",
         }
-        response = requests.post(f"{base_url}/api/projects", json=create_data, cookies=cookies, verify=False, timeout=30)
+        files = {
+            "project_json": (None, json.dumps(create_data), "application/json"),
+            "zip_template": ("empty.zip", b"", "application/octet-stream"),
+        }
+        response = requests.post(
+            f"{base_url}/api/projects",
+            cookies=cookies,
+            files=files,
+            verify=False,
+            timeout=30,
+        )
         response.raise_for_status()
         project_info = response.json()
 

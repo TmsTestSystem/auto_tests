@@ -1,7 +1,7 @@
 {
   "description": null,
-  "object_path": "coalesce/coalesce_positive.df.json",
-  "path": "coalesce/coalesce_positive.test.json",
+  "object_path": "Project_expression/coalesce/coalesce_positive.df.json",
+  "path": "Project_expression/coalesce/coalesce_positive.test.json",
   "save_test_results": true,
   "tests": [
     {
@@ -11,7 +11,7 @@
       "mocks": [],
       "test_result": {
         "check_results": [],
-        "job_uuid": "2af4612f-3dcf-4043-b1b9-85b893fe5d24",
+        "job_uuid": "48fcfdac-35b8-4ae3-b4fc-a98009b18cac",
         "object_result": {
           "data": {
             "coalesce": 1
@@ -22,9 +22,9 @@
         "result": "success",
         "stderr": [],
         "stdout": [],
-        "time": 3
+        "time": 2
       },
-      "timeout": 60000,
+      "timeout": 600000,
       "title": ""
     }
   ]

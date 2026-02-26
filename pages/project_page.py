@@ -2,9 +2,10 @@ from playwright.sync_api import Page
 from .base_page import BasePage
 import os
 import time
+import re
 
 class ProjectPage(BasePage):
-    CREATE_BUTTON = 'button:has-text("Создать проект")'
+    CREATE_BUTTON = 'button[aria-label="projects_create_button"]'
     MODAL_FORM = 'form'
     MODAL_BACKDROP = '.Modal__Backdrop'
     PROJECT_LIST = '[data-testid="project-list"]'
@@ -14,15 +15,21 @@ class ProjectPage(BasePage):
     def __init__(self, page: Page):
         super().__init__(page)
         # Главная страница уже является списком проектов, перехода на /projects не требуется
-        self.projects_url = f"{os.getenv('BASE_URL')}"
+        raw_base = (os.getenv("BASE_URL") or "").strip()
+        if raw_base and not raw_base.startswith(("http://", "https://")):
+            raw_base = "https://" + raw_base
+        base_url = raw_base.rstrip("/")
+        self.projects_url = base_url or ""
 
     def goto(self):
         self.page.goto(self.projects_url)
         self.page.wait_for_load_state('networkidle')
 
     def open_create_project_modal(self):
-        self.page.wait_for_selector(self.CREATE_BUTTON, timeout=15000)
-        self.page.click(self.CREATE_BUTTON)
+        # Новый диалог создаётся кнопкой с aria-label / accessible name "projects_create_button"
+        btn = self.page.get_by_role("button", name="projects_create_button")
+        btn.wait_for(state="visible", timeout=15000)
+        btn.click()
         self.page.wait_for_selector(self.MODAL_FORM, timeout=10000)
 
     def create_project(self, title: str, code: str, git: str, default_branch: str):
@@ -32,35 +39,57 @@ class ProjectPage(BasePage):
         print(f"[DEBUG] - git: {git}")
         print(f"[DEBUG] - default_branch: {default_branch}")
         
-        # Используем новый метод с get_by_role для заполнения полей
+        # Новый UI создаёт проект через форму project_json.*
         try:
-            # Заполняем поле title
-            title_field = self.page.get_by_role("textbox", name="title")
+            # Title
+            title_field = self.page.get_by_role("textbox", name="project_json.title")
             title_field.wait_for(state="visible", timeout=10000)
+            title_field.click()
             title_field.fill(title)
-            print(f"[DEBUG] Поле title заполнено: {title}")
+            print(f"[DEBUG] Поле project_json.title заполнено: {title}")
             
-            # Заполняем поле code
-            code_field = self.page.get_by_role("textbox", name="code")
+            # Code
+            code_field = self.page.get_by_role("textbox", name="project_json.code")
             code_field.wait_for(state="visible", timeout=10000)
+            code_field.click()
             code_field.fill(code)
-            print(f"[DEBUG] Поле code заполнено: {code}")
+            print(f"[DEBUG] Поле project_json.code заполнено: {code}")
             
-            # Заполняем поле git
-            git_field = self.page.get_by_role("textbox", name="git")
-            git_field.wait_for(state="visible", timeout=10000)
-            git_field.fill(git)
-            print(f"[DEBUG] Поле git заполнено: {git}")
-            
-            # Заполняем поле default_branch
-            branch_field = self.page.get_by_role("textbox", name="default_branch")
-            branch_field.wait_for(state="visible", timeout=10000)
-            branch_field.fill(default_branch)
-            print(f"[DEBUG] Поле default_branch заполнено: {default_branch}")
-            
-            # Нажимаем кнопку отправки
-            self.page.click(self.SUBMIT_BUTTON)
-            print(f"[DEBUG] Кнопка отправки нажата")
+            # Description (опционально)
+            try:
+                desc_field = self.page.get_by_role("textbox", name="project_json.description")
+                desc_field.wait_for(state="visible", timeout=5000)
+                desc_field.click()
+                desc_field.fill(f"Автотестовый проект {title}")
+                print("[DEBUG] Поле project_json.description заполнено")
+            except Exception:
+                print("[WARN] Поле project_json.description не найдено, пропускаем")
+
+            # Тип проекта: выбираем вариант "Пустой"
+            try:
+                empty_option = self.page.locator("div").filter(has_text=re.compile(r"^Пустой$"))
+                empty_option.first.click()
+                print("[DEBUG] Выбран тип проекта 'Пустой'")
+            except Exception:
+                print("[WARN] Не удалось выбрать тип проекта 'Пустой'")
+
+            # Отмечаем чекбокс "Преобразовать в git", чтобы проект поддерживал git-операции
+            try:
+                git_checkbox = (
+                    self.page.locator("label")
+                    .filter(has_text=re.compile(r"Преобразовать в git"))
+                    .locator("div")
+                )
+                git_checkbox.first.click()
+                print("[DEBUG] Установлен чекбокс 'Преобразовать в git'")
+            except Exception:
+                print("[WARN] Не удалось установить чекбокс 'Преобразовать в git'")
+
+            # Отправка формы
+            submit_btn = self.page.get_by_role("button", name="Отправить")
+            submit_btn.wait_for(state="visible", timeout=10000)
+            submit_btn.click()
+            print("[DEBUG] Кнопка 'Отправить' нажата")
             
         except Exception as e:
             print(f"[ERROR] Ошибка при заполнении модального окна: {e}")
@@ -95,9 +124,8 @@ class ProjectPage(BasePage):
             # Получаем путь к папке project_for_tests
             project_folder_path = get_project_folder_path()
             
-            # Создаем временный ZIP архив
-            temp_zip_path = os.path.join(tempfile.gettempdir(), f"project_for_tests_{int(time.time())}.zip")
-            zip_path = create_project_zip(project_folder_path, temp_zip_path)
+            # Создаем временный ZIP архив (уникальное имя, чтобы не ловить WinError 32)
+            zip_path = create_project_zip(project_folder_path)
             
             try:
                 # Импортируем ZIP архив

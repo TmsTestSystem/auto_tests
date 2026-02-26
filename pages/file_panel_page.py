@@ -513,7 +513,8 @@ class FilePanelPage(BasePage):
                 branch_index = url_parts.index('branch')
                 branch = url_parts[branch_index + 1].split('?')[0]
             else:
-                branch = 'master'
+                # Для новых git‑проектов дефолтная ветка — main
+                branch = 'main'
             
             # Получаем API URL и cookies
             sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -523,19 +524,21 @@ class FilePanelPage(BasePage):
             api_url = f"{base_url}/api/ide/{project_code}/branch/{branch}/git/repository/upload"
             cookies = get_auth_cookies()
             
-            # Отправляем ZIP файл
+            # Отправляем ZIP файл сырым бинарём, как в скриптах нагрузочного теста
             with open(zip_file_path, 'rb') as zip_file:
                 file_data = zip_file.read()
-                
                 headers = {
-                    'Accept': '*/*',
-                    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-                    'Content-Type': 'application/binary',
-                    'Origin': base_url,
-                    'Referer': current_url
+                    "Accept": "*/*",
+                    "Content-Type": "application/binary",
                 }
-                
-                response = requests.post(api_url, data=file_data, headers=headers, cookies=cookies, timeout=60, verify=False)
+                response = requests.post(
+                    api_url,
+                    data=file_data,
+                    headers=headers,
+                    cookies=cookies,
+                    timeout=60,
+                    verify=False,
+                )
                 
                 if response.status_code == 200:
                     time.sleep(3)
@@ -579,7 +582,7 @@ class FilePanelPage(BasePage):
                     found_files = [f for f in expected_files if any(f in imported_file for imported_file in imported_files)]
                     print(f"[FILE_PANEL] Импорт завершен, найдены файлы: {found_files}")
                 else:
-                    raise Exception(f"API запрос failed: {response.status_code}")
+                    raise Exception(f"API запрос failed: {response.status_code}, body={response.text[:500]}")
             
         except Exception as e:
             print(f"[ERROR] Ошибка при загрузке ZIP файла {zip_file_path}: {e}")

@@ -15,7 +15,9 @@
       "key": "d28b3e20-62b8-4f87-8002-83c133e3c09f",
       "loc": "1012.5 562.5",
       "parent_component_key": null,
-      "post_config": {},
+      "post_config": {
+        "postprocessing": null
+      },
       "title": "Output",
       "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
     },
@@ -49,6 +51,7 @@
       },
       "from": "ea2912ef-b17e-4709-b134-5301f1c15db3",
       "key": "cc3f1960-3890-44f9-8c01-a0cad7418bd6",
+      "points": null,
       "title": "",
       "to": "d28b3e20-62b8-4f87-8002-83c133e3c09f"
     }

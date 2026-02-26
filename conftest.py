@@ -8,6 +8,7 @@ from pathlib import Path
 import requests
 import uuid
 import urllib3
+import json
 
 # Загружаем переменные окружения из .env файла
 env_path = Path(__file__).parent / ".env"
@@ -20,7 +21,7 @@ def pytest_addoption(parser):
         "--test-host", 
         action="store", 
         default=None,
-        help="Выбор хоста для тестирования (st1, st2, st3, st4, local-a, local-b, local-c, local-192)"
+        help="Выбор хоста для тестирования (st1, st2, st3, st4, local-a, local-b, local-c, local-192, local-192-https)"
     )
 
 def pytest_configure(config):
@@ -36,7 +37,8 @@ def pytest_configure(config):
             "local-a": "http://localhost:3333",
             "local-b": "http://localhost:3334", 
             "local-c": "http://localhost:3335",
-            "local-192": "http://192.168.0.7:3333"
+            "local-192": "http://192.168.0.7:3333",
+            "local-192-https": "https://192.168.0.7/"
         }
         
         if host in host_urls:
@@ -55,8 +57,8 @@ def pytest_configure(config):
                 except Exception:
                     pass
             
-            # Если MAILHOG_URL не найден, устанавливаем значение по умолчанию для local-192
-            if not mailhog_url and host == "local-192":
+            # Если MAILHOG_URL не найден, устанавливаем значение по умолчанию для local-192 / local-192-https
+            if not mailhog_url and host in ("local-192", "local-192-https"):
                 mailhog_url = "http://192.168.0.7:8025"
             
             # Обновляем .env файл
@@ -264,15 +266,23 @@ def create_project_via_api(title: str, code: str, git_url: str = "/opt/app/empty
     data = {
         "title": title,
         "code": code,
-        "git_url": git_url,
-        "default_branch": default_branch,
-        "gradient": "blue",  # Добавляем обязательное поле
-        "description": f"API тестовый проект {code}",  # Добавляем обязательное поле
-        "git": git_url  # Добавляем обязательное поле
+        "description": f"API тестовый проект {code}",
+        "gradient": "#9D80CB,#F7C2E6",
+        "type": "directory",
     }
     
     try:
-        response = requests.post(get_projects_api(), json=data, cookies=get_auth_cookies(), verify=False, timeout=30)
+        files = {
+            "project_json": (None, json.dumps(data), "application/json"),
+            "zip_template": ("empty.zip", b"", "application/octet-stream"),
+        }
+        response = requests.post(
+            get_projects_api(),
+            cookies=get_auth_cookies(),
+            files=files,
+            verify=False,
+            timeout=30,
+        )
         
         if response.status_code == 422:
             print(f"[DEBUG] Ошибка валидации при создании проекта:")

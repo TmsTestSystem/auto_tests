@@ -1,7 +1,7 @@
 {
   "description": null,
-  "object_path": "max_list/max_list_positive.df.json",
-  "path": "max_list/max_list_positive.test.json",
+  "object_path": "Project_expression/min_list/min_list_positive.df.json",
+  "path": "Project_expression/max_list/max_list_positive.test.json",
   "save_test_results": true,
   "tests": [
     {
@@ -19,10 +19,10 @@
       "mocks": [],
       "test_result": {
         "check_results": [],
-        "job_uuid": "8fae929e-73f9-483b-b04c-516f69510daa",
+        "job_uuid": "635913ec-53b7-4dfb-9412-69c1058f270e",
         "object_result": {
           "data": {
-            "maxList": 3
+            "minList": 1
           },
           "error": null
         },
@@ -30,9 +30,9 @@
         "result": "success",
         "stderr": [],
         "stdout": [],
-        "time": 5
+        "time": 1
       },
-      "timeout": 60000,
+      "timeout": 600000,
       "title": ""
     }
   ]

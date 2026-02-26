@@ -15,6 +15,7 @@ from pages.endpoints_page import EndpointsPage
 from pages.commit_page import CommitPage
 from locators import FilePanelLocators
 from conftest import get_project_by_code, get_api_base_url, delete_project_by_id
+from api.file_panel_api import FilePanelAPI
 
 
 TUTORIAL_FOLDER = Path(__file__).parent.parent.parent / "TutorialProcess"
@@ -69,7 +70,7 @@ def test_process_schedule_create_and_manage(login_page):
         assert project_page.goto_project(project_code), f"Проект {project_code} не найден в списке"
         time.sleep(2)
 
-        print("[STEP 2] Импортируем TutorialProcess через файловую панель")
+        print("[STEP 2] Импортируем TutorialProcess через файловую панель (ZIP через /git/repository/upload)")
         tutorial_zip = _create_tutorial_zip()
         file_panel.import_project_zip(tutorial_zip)
 
@@ -246,8 +247,11 @@ def test_process_schedule_create_and_manage(login_page):
 
     finally:
         if tutorial_zip and os.path.exists(tutorial_zip):
-            os.remove(tutorial_zip)
-            print(f"[CLEANUP] Временный архив удалён: {tutorial_zip}")
+            try:
+                os.remove(tutorial_zip)
+                print(f"[CLEANUP] Временный архив удалён: {tutorial_zip}")
+            except Exception as e:
+                print(f"[WARN] Не удалось удалить временный архив {tutorial_zip}: {e}")
         
         try:
             project_info = get_project_by_code(project_code)

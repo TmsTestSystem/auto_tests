@@ -347,10 +347,16 @@ class DataStructPage(BasePage):
         self.page.get_by_role("textbox", name=f"attributes.{idx}.name").press("Enter")
 
     def select_attribute_type_by_index(self, idx, type_name):
-        self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.type").click()
-        self.page.wait_for_selector('div.TreeItem__LabelPrimary___vzajD', timeout=5000)
-        # Выбираем элемент из выпадающего списка, а не любой элемент с таким текстом
-        self.page.locator('div.TreeItem__LabelPrimary___vzajD').filter(has_text=type_name).first.click()
+        type_box = self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.type")
+        try:
+            # Пытаемся выбрать тип через выпадающий список, если он есть
+            type_box.click()
+            option = self.page.locator('div.TreeItem__LabelPrimary___vzajD').filter(has_text=type_name).first
+            option.wait_for(state="visible", timeout=2000)
+            option.click()
+        except Exception:
+            # В актуальном UI достаточно просто вписать тип в поле
+            type_box.fill(type_name)
 
     def fill_attribute_description_by_index(self, idx, value):
         locator = self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.description")

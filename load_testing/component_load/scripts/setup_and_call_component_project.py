@@ -20,6 +20,7 @@ from typing import Any, Dict, Optional
 
 import requests
 import urllib3
+import json
 
 # Обеспечиваем импорт модулей из корня репозитория при запуске файла как скрипта
 REPO_ROOT = Path(__file__).resolve().parents[3]  # .../auto-test2_0
@@ -65,17 +66,19 @@ def ensure_project_exists(project_code: str) -> dict:
     create_data = {
         "title": f"Component Load Project {project_code}",
         "code": project_code,
-        "git_url": "/opt/app/empty_repo",
-        "default_branch": BRANCH,
-        "gradient": "blue",
         "description": f"API тестовый проект {project_code}",
-        "git": "/opt/app/empty_repo",
+        "gradient": "#9D80CB,#F7C2E6",
+        "type": "directory",
     }
     print(f"[SETUP] Создаём проект: {project_code}")
+    files = {
+        "project_json": (None, json.dumps(create_data), "application/json"),
+        "zip_template": ("empty.zip", b"", "application/octet-stream"),
+    }
     create_resp = requests.post(
         f"{base_url}/api/projects",
-        json=create_data,
         cookies=cookies,
+        files=files,
         verify=False,
         timeout=60,
     )

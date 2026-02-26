@@ -51,6 +51,7 @@ python -m pytest tests/ui/test_python_interpritator_flow.py::test_python_interpr
 | `local-b` | Local B | http://localhost:3334 |
 | `local-c` | Local C | http://localhost:3335 |
 | `local-192` | Local 192 | http://192.168.0.7:3333 |
+| `local-192-https` | Local 192 (HTTPS, эта машина) | https://192.168.0.7/ |
 
 ## 📁 Структура проекта
 
@@ -90,6 +91,7 @@ pip install -r requirements.txt
 ```env
 # Выберите хост, раскомментировав одну строку:
 BASE_URL=http://192.168.0.7:3333  # Local 192
+# BASE_URL=https://192.168.0.7/   # Local 192 (HTTPS, эта машина)
 # BASE_URL=https://decision-flow-web-1.df-st1.cloud.b-pl.pro  # ST1
 LOGIN=admin@balance-pl.ru
 PASSWORD=admin
@@ -239,7 +241,7 @@ python utils/clear_logs.py info
 ### Ошибка подключения API
 ```bash
 # Проверьте доступность хоста
-curl -k http://192.168.0.7:3333/api/projects
+curl -k https://192.168.0.7/api/projects
 
 # Проверьте .env файл
 cat .env

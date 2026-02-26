@@ -8,6 +8,7 @@ from typing import Tuple, Optional
 
 import requests
 import urllib3
+import json
 
 BASE_DIR = pathlib.Path(__file__).parent.resolve()
 PROJ_DIR = BASE_DIR.parent.resolve()
@@ -29,7 +30,8 @@ HOST_URLS = {
     "local-a": "http://localhost:3333",
     "local-b": "http://localhost:3334",
     "local-c": "http://localhost:3335",
-    "local-192": "http://192.168.0.7:3333"
+    "local-192": "http://192.168.0.7:3333",
+    "local-192-https": "https://192.168.0.7/"
 }
 
 
@@ -84,18 +86,20 @@ def create_and_import_load_project() -> Tuple[str, Optional[dict]]:
     create_data = {
         "title": project_title,
         "code": project_code,
-        "git_url": "/opt/app/empty_repo",
-        "default_branch": "master",
-        "gradient": "blue",
         "description": f"API тестовый проект {project_code}",
-        "git": "/opt/app/empty_repo",
+        "gradient": "#9D80CB,#F7C2E6",
+        "type": "directory",
     }
 
     print(f"[LOAD_SETUP] Создаём проект: {project_code}")
+    files = {
+        "project_json": (None, json.dumps(create_data), "application/json"),
+        "zip_template": ("empty.zip", b"", "application/octet-stream"),
+    }
     resp = requests.post(
         f"{base_url}/api/projects",
-        json=create_data,
         cookies=cookies,
+        files=files,
         verify=False,
         timeout=60,
     )

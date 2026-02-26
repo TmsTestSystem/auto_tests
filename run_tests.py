@@ -12,7 +12,7 @@ def main():
     if len(sys.argv) < 2:
         print("Использование: python run_tests.py <хост> [аргументы pytest]")
         print("\nПримеры:")
-        print("  python run_tests.py http://192.168.0.7:3333/")
+        print("  python run_tests.py https://192.168.0.7/")
         print("  python run_tests.py st1 -v")
         print("  python run_tests.py local-a tests/ui/test_login.py")
         sys.exit(1)
@@ -29,7 +29,8 @@ def main():
         "local-a": "http://localhost:3333",
         "local-b": "http://localhost:3334", 
         "local-c": "http://localhost:3335",
-        "local-192": "http://192.168.0.7:3333"
+        "local-192": "http://192.168.0.7:3333",
+        "local-192-https": "https://192.168.0.7/"
     }
     
     # Определяем URL хоста
@@ -43,7 +44,7 @@ def main():
         available_hosts = ", ".join(host_urls.keys())
         print(f"Ошибка: Неизвестный хост '{host_arg}'")
         print(f"Доступные хосты: {available_hosts}")
-        print("Или используйте полный URL: http://192.168.0.7:3333/")
+        print("Или используйте полный URL: https://192.168.0.7/")
         sys.exit(1)
     
     # Обновляем .env файл

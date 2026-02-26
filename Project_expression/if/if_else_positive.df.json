@@ -3,7 +3,8 @@
   "components": [
     {
       "config": {
-        "path": "",
+        "openapi_schema": {},
+        "path": null,
         "schema": null
       },
       "description": null,
@@ -23,7 +24,8 @@
     },
     {
       "config": {
-        "path": "",
+        "openapi_schema": {},
+        "path": null,
         "schema": null
       },
       "description": null,
@@ -35,7 +37,9 @@
       "key": "cb6a667c-8fa4-4522-835f-ff2398df461c",
       "loc": "1312.5 562.5",
       "parent_component_key": null,
-      "post_config": {},
+      "post_config": {
+        "postprocessing": null
+      },
       "title": "Output",
       "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
     }
@@ -49,6 +53,7 @@
       },
       "from": "a7c52836-be8f-4193-a2c7-faff75f4b6fa",
       "key": "ca746eaa-d215-48fc-986a-ca08136c73c4",
+      "points": null,
       "title": "",
       "to": "cb6a667c-8fa4-4522-835f-ff2398df461c"
     }

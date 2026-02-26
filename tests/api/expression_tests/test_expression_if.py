@@ -144,8 +144,17 @@ def test_if_negative_error(expression_project):
         assert resp_json.get("status") == "error", f"Ожидали status=error, получили: {resp_json}"
         error_obj = (((resp_json or {}).get("result") or {}).get("error"))
         assert isinstance(error_obj, dict), "Ожидали объект error в result"
-        logger.info(f"[INFO] error.message (call): {error_obj.get('message')}")
-        assert error_obj.get("message") == expected_error_message, f"Неверное сообщение об ошибке: {error_obj}"
+        raw_message = error_obj.get("message")
+        # Новый формат: message может быть объектом {"__exception__": true, "message": "..."}
+        if isinstance(raw_message, dict) and raw_message.get("__exception__") and "message" in raw_message:
+            message_text = raw_message.get("message")
+        else:
+            message_text = raw_message
+        logger.info(f"[INFO] error.message (call): {message_text}")
+        # Бэкенд теперь добавляет префикс ("Тест валидации: ..."), поэтому сравниваем по вхождению
+        assert isinstance(message_text, str) and expected_error_message in message_text, (
+            f"Неверное сообщение об ошибке: {error_obj}"
+        )
         job_uuid = resp_json.get("job_uuid")
         assert job_uuid, "job_uuid отсутствует в ответе вызова процесса"
         logger.info(f"[SUCCESS] Вызов процесса вернул error: message match, job_uuid={job_uuid}")
@@ -161,8 +170,15 @@ def test_if_negative_error(expression_project):
         assert isinstance(result_obj, dict), "Отсутствует объект result в деталях"
         error_details = result_obj.get("error")
         assert isinstance(error_details, dict), "Отсутствует объект error в деталях"
-        logger.info(f"[INFO] error.message: {error_details.get('message')}")
-        assert error_details.get("message") == expected_error_message, f"Неверное сообщение об ошибке в деталях: {error_details}"
+        raw_message_details = error_details.get("message")
+        if isinstance(raw_message_details, dict) and raw_message_details.get("__exception__") and "message" in raw_message_details:
+            message_text_details = raw_message_details.get("message")
+        else:
+            message_text_details = raw_message_details
+        logger.info(f"[INFO] error.message: {message_text_details}")
+        assert isinstance(message_text_details, str) and expected_error_message in message_text_details, (
+            f"Неверное сообщение об ошибке в деталях: {error_details}"
+        )
         logger.info("[SUCCESS] Детали job корректны для негативного кейса: status=error, message совпадает")
 
         logger.info("[STEP 3] Юнит-тест диаграммы: ожидаем result=success (по error.message)")
@@ -170,7 +186,8 @@ def test_if_negative_error(expression_project):
         payload_success = {
             "checks": {
                 "object_result_checks": [
-                    {"field": None, "path": ["error", "type"], "type": "equal", "value": "BadArgumentTypes"}
+                    # Бэкенд теперь возвращает тип ошибки PostProcessingError
+                    {"field": None, "path": ["error", "type"], "type": "equal", "value": "PostProcessingError"}
                 ]
             },
             "input_data": {"age": 18},

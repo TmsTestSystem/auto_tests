@@ -27,6 +27,7 @@ python run.py -u 10 -r 10 -t 60
 - `local-b` - http://localhost:3334
 - `local-c` - http://localhost:3335
 - `local-192` - http://192.168.0.7:3333 (по умолчанию)
+- `local-192-https` - https://192.168.0.7/ (только для этой машины)
 
 Также можно указать полный URL напрямую: `http://192.168.1.100:3333`
 

@@ -35,12 +35,14 @@
       "key": "be18a169-b2ae-4415-9623-fe8e95baa316",
       "loc": "1012.5 562.5",
       "parent_component_key": null,
-      "post_config": {},
+      "post_config": {
+        "postprocessing": null
+      },
       "title": "Output",
       "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
     }
   ],
-  "data": {},
+  "data": "{}",
   "description": "Проверка функции matchValue",
   "links": [
     {
@@ -49,6 +51,7 @@
       },
       "from": "89d5f635-0d0f-40a8-a764-e0c6eb7dc8b4",
       "key": "f40cb2cd-1657-474d-989c-1dd2a2b0cc3d",
+      "points": null,
       "title": "",
       "to": "be18a169-b2ae-4415-9623-fe8e95baa316"
     }

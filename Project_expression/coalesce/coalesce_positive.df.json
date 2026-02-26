@@ -15,7 +15,9 @@
       "key": "014db9da-a4bf-4326-9ec1-791209a42b78",
       "loc": "862.5 487.5",
       "parent_component_key": null,
-      "post_config": {},
+      "post_config": {
+        "postprocessing": null
+      },
       "title": "Output",
       "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
     },
@@ -40,7 +42,7 @@
       "type": "Elixir.Df.Diagram.Components.Entrypoint.OpenAPI"
     }
   ],
-  "data": {},
+  "data": "{}",
   "description": "coalesce - успешное выполнение",
   "links": [
     {
@@ -49,6 +51,7 @@
       },
       "from": "2fa8ca14-4eed-4f18-951e-0f9cc26d2307",
       "key": "84fcdc80-2951-46d5-820e-665e61a87365",
+      "points": null,
       "title": "",
       "to": "014db9da-a4bf-4326-9ec1-791209a42b78"
     }

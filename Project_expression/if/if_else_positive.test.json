@@ -1,7 +1,7 @@
 {
   "description": null,
-  "object_path": "if/if_else_positive.df.json",
-  "path": "if/if_else_positive.test.json",
+  "object_path": "Project_expression/if/if_else_positive.df.json",
+  "path": "Project_expression/if/if_else_positive.test.json",
   "save_test_results": true,
   "tests": [
     {
@@ -13,7 +13,7 @@
       "mocks": [],
       "test_result": {
         "check_results": [],
-        "job_uuid": "a2a00752-6dac-42e2-b58a-ecc404260887",
+        "job_uuid": "a670063e-6ef1-459a-b8fe-9243fb66d302",
         "object_result": {
           "data": {
             "decision": "REJECT"
@@ -24,9 +24,9 @@
         "result": "success",
         "stderr": [],
         "stdout": [],
-        "time": 13
+        "time": 2
       },
-      "timeout": 60000,
+      "timeout": 600000,
       "title": ""
     }
   ]

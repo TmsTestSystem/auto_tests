@@ -3,6 +3,8 @@ import zipfile
 import tempfile
 from pathlib import Path
 import shutil
+import time
+import uuid
 
 
 def create_project_zip(project_folder_path: str, output_zip_path: str = None) -> str:
@@ -22,7 +24,9 @@ def create_project_zip(project_folder_path: str, output_zip_path: str = None) ->
     # Если путь не указан, создаем временный файл
     if output_zip_path is None:
         temp_dir = tempfile.gettempdir()
-        output_zip_path = os.path.join(temp_dir, "project_for_tests.zip")
+        output_zip_path = os.path.join(
+            temp_dir, f"project_for_tests_{int(time.time())}_{uuid.uuid4().hex[:8]}.zip"
+        )
     
     # Удаляем существующий архив, если он есть
     if os.path.exists(output_zip_path):
@@ -53,8 +57,17 @@ def cleanup_temp_zip(zip_path: str):
     """
     try:
         if os.path.exists(zip_path):
-            os.remove(zip_path)
-            print(f"[ZIP] Временный архив удален: {zip_path}")
+            last_err = None
+            for _ in range(10):
+                try:
+                    os.remove(zip_path)
+                    print(f"[ZIP] Временный архив удален: {zip_path}")
+                    return
+                except PermissionError as e:
+                    last_err = e
+                    time.sleep(0.2)
+            if last_err:
+                raise last_err
     except Exception as e:
         print(f"[WARNING] Не удалось удалить временный архив {zip_path}: {e}")
 

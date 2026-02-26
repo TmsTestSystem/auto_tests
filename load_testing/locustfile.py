@@ -582,7 +582,7 @@ def _gap_ms(prev_end_us: Optional[int], cur_start_us: int) -> Optional[float]:
 
 
 def _api_base_from_host(host: str) -> str:
-    # host уже содержит base url вида http://192.168.0.7:3333
+    # host уже содержит base url вида http(s)://192.168.0.7[:порт]
     return host.rstrip("/")
 
 

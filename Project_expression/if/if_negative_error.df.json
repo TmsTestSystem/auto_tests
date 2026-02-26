@@ -3,7 +3,8 @@
   "components": [
     {
       "config": {
-        "path": "",
+        "openapi_schema": {},
+        "path": null,
         "schema": null
       },
       "description": "Синтаксическая ошибка - тип данных результата условия отличен от boolean ",
@@ -23,7 +24,8 @@
     },
     {
       "config": {
-        "path": "",
+        "openapi_schema": {},
+        "path": null,
         "schema": null
       },
       "description": null,
@@ -35,7 +37,9 @@
       "key": "d74d488f-5103-4271-8186-fc3cb446f855",
       "loc": "1312.5 487.5",
       "parent_component_key": null,
-      "post_config": {},
+      "post_config": {
+        "postprocessing": null
+      },
       "title": "Output",
       "type": "Elixir.Df.Diagram.Components.Exit.OpenAPI"
     }
@@ -49,6 +53,7 @@
       },
       "from": "22caf218-f7ec-49d8-af6e-5cd225af60fb",
       "key": "efad2329-fdbd-4f1e-8673-8802ae90c736",
+      "points": null,
       "title": "",
       "to": "d74d488f-5103-4271-8186-fc3cb446f855"
     }
