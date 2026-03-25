@@ -122,7 +122,7 @@ def mailhog(request):
         test_resp = requests.get(f"{client.api_url}/messages", params={"limit": 1}, timeout=5, verify=False)
         test_resp.raise_for_status()
     except requests.exceptions.ConnectionError as e:
-        pytest.skip(f"MailHog недоступен по адресу {mailhog_url}. Установите MAILHOG_URL=http://192.168.0.7:8025 в .env или запустите MailHog. Ошибка: {e}")
+        pytest.skip(f"MailHog недоступен по адресу {mailhog_url}. Установите MAILHOG_URL=http://192.168.0.10:8025 в .env или запустите MailHog. Ошибка: {e}")
     except requests.exceptions.RequestException as e:
         pytest.skip(f"Ошибка при обращении к MailHog {mailhog_url}: {e}")
     

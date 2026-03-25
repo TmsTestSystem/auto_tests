@@ -1,20 +1,21 @@
 """
-UI‑тест для проверки встроенного Python‑интерпретатора через простую диаграмму
+UI-тест для проверки встроенного Python-интерпретатора через простую диаграмму
 Input → Function → Output.
 
 Подход:
-- используем тот же проект, что и flow‑тесты (fixture flow_project);
-- перед запуском диаграммы импортируем один готовый Python‑скрипт
+- используем тот же проект, что и flow-тесты (fixture flow_project);
+- перед запуском диаграммы импортируем один готовый Python-скрипт
   (scripts/math_functions.py) в проект через OpenAPI (`/files/import`);
 - открываем диаграмму test_flow_component/test_func.df.json;
 - выполняем её с функцией interpreter_diagnostics;
 - проверяем:
-  * что в консоли есть [PY_TIMER]‑логи с duration_ms;
+  * что в консоли есть [PY_TIMER]-логи с duration_ms;
   * что Output настроен на $node.Function.result.
 """
 
 import base64
 import os
+import re
 import time
 
 import pytest
@@ -25,16 +26,71 @@ from api.file_panel_api import FilePanelAPI
 from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.diagram_page import DiagramPage
-from pages.canvas_utils import CanvasUtils
 from locators import FilePanelLocators
-from conftest import wait_for_canvas_with_refresh, get_api_base_url, get_auth_cookies
+from conftest import (
+    wait_for_canvas_with_refresh,
+    get_api_base_url,
+    get_auth_cookies,
+    get_project_by_code,
+)
 
 
-def _import_math_functions_via_api(project_code: str, branch: str = "master"):
+def _ide_branch(page, project_code: str) -> str:
+    """Ветка IDE: из URL (/branch/main|master) или из карточки проекта — иначе main."""
+    u = getattr(page, "url", None) or ""
+    m = re.search(r"/branch/([^/?#]+)", u)
+    if m:
+        return m.group(1)
+    prj = get_project_by_code(project_code)
+    if prj:
+        b = prj.get("default_branch") or prj.get("defaultBranch")
+        if b:
+            return str(b)
+    return "main"
+
+
+def _select_math_functions_for_function_component(page) -> None:
+    """
+    В модалке выбора файла выбирает math_functions.py.
+    Папку scripts не трогаем: в модалке она обычно уже раскрыта; лишний клик по папке может свернуть дерево.
+    """
+    timeout_ms = 20_000
+    candidates = [
+        page.locator(FilePanelLocators.get_treeitem_by_path("scripts/math_functions.py")),
+        page.get_by_role("treeitem", name="/scripts/math_functions.py"),
+        page.get_by_role("treeitem", name="math_functions.py"),
+        page.locator(FilePanelLocators.get_treeitem_by_name("math_functions.py")),
+        page.locator('[aria-label="treeitem_label"]').filter(has_text="math_functions.py"),
+    ]
+    last_err: Exception | None = None
+    for loc in candidates:
+        try:
+            first = loc.first
+            first.wait_for(state="visible", timeout=timeout_ms)
+            if first.count() > 0:
+                first.click()
+                print("[PY_INT] Выбран math_functions.py в модалке")
+                return
+        except Exception as e:
+            last_err = e
+            continue
+    raise TimeoutError(
+        f"math_functions.py не найден в дереве модалки: {last_err!r}"
+    ) from last_err
+
+
+def _import_math_functions_via_api(project_code: str, *, page=None, branch: str | None = None) -> str:
     """
     Импортирует локальный scripts/math_functions.py в проект через OpenAPI.
-    Скрипт кладётся по пути /scripts/math_functions.py, без взаимодействия с UI‑редактором.
+    Скрипт кладётся по пути /scripts/math_functions.py в той же ветке, что открыта в IDE (main/master).
+
+    Returns:
+        Имя ветки, в которую писали (нужно для bps/call).
     """
+    if branch is None:
+        branch = _ide_branch(page, project_code)
+    print(f"[PY_INT] Импорт math_functions в ветку API/IDE: {branch}")
+
     script_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
         "scripts",
@@ -57,6 +113,7 @@ def _import_math_functions_via_api(project_code: str, branch: str = "master"):
     
     print(f"[PY_INT] Импортируем math_functions.py в проект {project_code} через API...")
     api.import_file("/scripts/math_functions.py", content_b64)
+    return branch
 
 
 FUNCS_TO_TEST = [
@@ -74,7 +131,7 @@ FUNCS_TO_TEST = [
 @pytest.mark.parametrize("func_name", FUNCS_TO_TEST)
 def test_python_interpritator_flow(login_page, flow_project, func_name):
     """
-    Базовая проверка Python‑интерпретатора через диаграмму Input → Function → Output.
+    Базовая проверка Python-интерпретатора через диаграмму Input → Function → Output.
 
     Шаги:
     - открыть проект с test_flow_component;
@@ -89,15 +146,14 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
     project_page = ProjectPage(page)
     file_panel = FilePanelPage(page)
     diagram_page = DiagramPage(page)
-    canvas_utils = CanvasUtils(page)
 
-    print(f"[PY_INT] Проверяем Python‑интерпретатор в проекте: {project_code}, функция: {func_name}")
+    print(f"[PY_INT] Проверяем Python-интерпретатор в проекте: {project_code}, функция: {func_name}")
 
     assert project_page.goto_project(project_code), f"Не удалось открыть проект {project_code}"
     time.sleep(2)
 
-    # Импортируем scripts/math_functions.py в проект через API
-    _import_math_functions_via_api(project_code)
+    # Импортируем scripts/math_functions.py в ту же ветку, что в URL IDE (иначе файл не виден в модалке)
+    git_branch = _import_math_functions_via_api(project_code, page=page)
 
     # Открываем файловую панель и диаграмму test_func.df.json
     file_panel.open_file_panel()
@@ -137,15 +193,8 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
             time.sleep(1)
             print("[PY_INT] Модалка выбора файла открыта")
 
-            python_script = page.locator(FilePanelLocators.get_treeitem_by_name("math_functions.py"))
-            try:
-                python_script.first.wait_for(state="visible", timeout=4000)
-            except TimeoutError:
-                # Даем ещё немного времени на появление файла после импорта
-                time.sleep(2)
-                python_script.first.wait_for(state="visible", timeout=4000)
-            assert python_script.count() > 0, "math_functions.py не найден в дереве файлов модалки"
-            python_script.first.click()
+            time.sleep(1.5)
+            _select_math_functions_for_function_component(page)
             time.sleep(0.5)
 
             select_button = page.get_by_role("button", name="filemanager_select_button")
@@ -251,7 +300,7 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
 
     # Закрываем правый сайдбар (если открыт)
     try:
-        details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
+        details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher").first
         if details_panel_switcher.is_visible():
             details_panel_switcher.click()
             time.sleep(1)
@@ -269,7 +318,7 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
     # Открываем правый сайдбар для настройки Output
     print("[PY_INT] Открываем правый сайдбар для настройки Output")
     try:
-        details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
+        details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher").first
         if details_panel_switcher.is_visible():
             details_panel_switcher.click()
             time.sleep(1)
@@ -288,14 +337,14 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
         assert current_value.strip() == "$node.Function.result", (
             f"Ожидали '$node.Function.result' в поле данных Output, получили: {current_value!r}"
         )
-        print("[PY_INT] Output настроен на $node.Function.result – результат Python‑функции пробрасывается корректно")
+        print("[PY_INT] Output настроен на $node.Function.result – результат Python-функции пробрасывается корректно")
     except Exception as e:
         pytest.fail(f"Не удалось настроить поле 'Данные' в Output: {e}")
 
     # Закрываем правый сайдбар перед запуском
     print("[PY_INT] Закрываем правый сайдбар перед запуском диаграммы")
     try:
-        details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher")
+        details_panel_switcher = page.get_by_role("button", name="diagram_details_panel_switcher").first
         if details_panel_switcher.is_visible():
             details_panel_switcher.click()
             time.sleep(1)
@@ -304,16 +353,28 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
         print(f"[PY_INT][WARN] Ошибка при закрытии правого сайдбара перед запуском: {e}")
 
     # 3) Запускаем диаграмму и ждём успешного завершения
-    assert diagram_page.run_diagram_and_wait(), "Диаграмма с Function не выполнилась успешно"
+    diagram_wait_ms = 60_000
+    if func_name in ("cpu_stress", "big_structure"):
+        diagram_wait_ms = 300_000
+    elif func_name in ("interpreter_diagnostics", "recursion_demo", "traceback_demo", "timezone_demo"):
+        diagram_wait_ms = 120_000
+    assert diagram_page.run_diagram_and_wait(completion_timeout=diagram_wait_ms), (
+        "Диаграмма с Function не выполнилась успешно"
+    )
     print("[PY_INT] Диаграмма выполнена успешно")
 
     # 4) Открываем панель вывода и вкладку "Консоль"
+    # Несколько кнопок с одинаковым aria-label (Валидация / Консоль) — нужна именно «Консоль»
     try:
-        output_panel_button = page.get_by_role("button", name="outputpanel_switch_button")
-        if output_panel_button.is_visible():
-            output_panel_button.click()
-            time.sleep(1)
-            print("[PY_INT] Панель вывода открыта")
+        console_toggle = page.locator(
+            'button[aria-label="outputpanel_switch_button"][data-tooltip="Консоль"]'
+        )
+        if console_toggle.count() == 0:
+            console_toggle = page.get_by_role("button", name="outputpanel_switch_button").nth(1)
+        console_toggle.wait_for(state="visible", timeout=8000)
+        console_toggle.click()
+        time.sleep(1)
+        print("[PY_INT] Панель вывода (Консоль) открыта")
     except Exception as e:
         print(f"[PY_INT][WARN] Не удалось открыть панель вывода: {e}")
 
@@ -337,13 +398,15 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
     ):
         try:
             time.sleep(2)
-            console_output = page.locator('.OutputPanel__Body___ypo3o > div').first
+            console_output = page.locator(".OutputPanel__Body___ypo3o > div").first
+            if not console_output.is_visible():
+                console_output = page.locator('[class*="OutputPanel__Body"] > div').first
             if console_output.is_visible():
                 console_text = console_output.text_content()
                 print(f"[PY_INT] Текст консоли: {console_text}")
-                assert "[PY_TIMER]" in console_text, "В консоли нет логов [PY_TIMER] от врапера выполнения Python‑функций"
+                assert "[PY_TIMER]" in console_text, "В консоли нет логов [PY_TIMER] от врапера выполнения Python-функций"
                 assert "duration_ms=" in console_text, "В логах [PY_TIMER] нет duration_ms="
-                print("[PY_INT] Консоль содержит логи [PY_TIMER] с временем выполнения Python‑кода")
+                print("[PY_INT] Консоль содержит логи [PY_TIMER] с временем выполнения Python-кода")
             else:
                 pytest.fail("Консольный вывод не отображается")
         except Exception as e:
@@ -355,7 +418,14 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
     cookies = get_auth_cookies()
 
     process_path = "/test_flow_component/test_func.df.json"
-    url = f"{api_base}/api/ide/{project_code}/branch/master/bps/call?path={process_path}"
+    url = f"{api_base}/api/ide/{project_code}/branch/{git_branch}/bps/call?path={process_path}"
+
+    # Тяжёлые функции — дольше считаются на бэкенде
+    bps_timeout = 60
+    if func_name in ("cpu_stress", "big_structure"):
+        bps_timeout = 300
+    elif func_name in ("interpreter_diagnostics", "recursion_demo", "traceback_demo", "timezone_demo"):
+        bps_timeout = 120
 
     req_body = {
         "request_meta": {
@@ -363,11 +433,11 @@ def test_python_interpritator_flow(login_page, flow_project, func_name):
             "request_id": f"req_{func_name}",
             "tags": func_name,
         },
-        # Диаграмма берет входы из Input‑ноды, request_data ей не нужен
+        # Диаграмма берет входы из Input-ноды, request_data ей не нужен
         "request_data": {},
     }
 
-    resp = requests.post(url, json=req_body, cookies=cookies, verify=False, timeout=60)
+    resp = requests.post(url, json=req_body, cookies=cookies, verify=False, timeout=bps_timeout)
     print(f"[PY_INT] POST {url} -> {resp.status_code}: {resp.text[:500]}")
     assert resp.status_code == 200, f"Ожидали 200 от вызова процесса, получили {resp.status_code}: {resp.text}"
 

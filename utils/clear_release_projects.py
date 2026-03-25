@@ -11,7 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 ENV_PATH = Path(__file__).parent.parent / ".env"
 load_dotenv(ENV_PATH)
 
-BASE_URL = os.getenv("BASE_URL", "http://localhost:3333").rstrip("/")
+BASE_URL = os.getenv("BASE_URL", "http://192.168.0.10:3333").rstrip("/")
 PROJECTS_API = f"{BASE_URL}/api/projects"
 LOGIN = os.getenv("LOGIN")
 PASSWORD = os.getenv("PASSWORD")

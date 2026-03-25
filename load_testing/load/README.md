@@ -23,11 +23,11 @@ python run.py -u 10 -r 10 -t 60
 - `st2` - https://decision-flow-frontend-st2.df-st.b-pl.cloud2
 - `st3` - https://decision-flow-frontend-st3.df-st.b-pl.cloud2
 - `st4` - https://decision-flow-web-1.df-st4.cloud2.b-pl.pro
-- `local-a` - http://localhost:3333
+- `local-a` - http://192.168.0.10:3333
 - `local-b` - http://localhost:3334
 - `local-c` - http://localhost:3335
-- `local-192` - http://192.168.0.7:3333 (по умолчанию)
-- `local-192-https` - https://192.168.0.7/ (только для этой машины)
+- `local-192` - http://192.168.0.10:3333 (по умолчанию)
+- `local-192-https` - https://192.168.0.10/ (только для этой машины)
 
 Также можно указать полный URL напрямую: `http://192.168.1.100:3333`
 
@@ -57,7 +57,7 @@ python run.py -u 10 -r 10 -t 60 -H st4
 
 ### Локальные стенды (через алиасы)
 ```bash
-# local-a (localhost:3333)
+# local-a (192.168.0.10:3333)
 python run.py -u 10 -r 10 -t 60 -H local-a
 
 # local-b (localhost:3334)

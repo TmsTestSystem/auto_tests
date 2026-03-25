@@ -89,7 +89,7 @@ ensure_responses_csv_header(RESPONSES_CSV_PATH)
 
 
 class ApiUser(HttpUser):
-    host = os.getenv("BASE_URL", "http://192.168.0.7:3333").rstrip("/")
+    host = os.getenv("BASE_URL", "http://192.168.0.10:3333").rstrip("/")
     wait_time = between(1, 2)
 
     def on_start(self):

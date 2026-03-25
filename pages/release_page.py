@@ -104,8 +104,17 @@ class ReleasePage(BasePage):
         self.page.get_by_role("button", name="Снять с публикации").click()
         self.page.wait_for_timeout(2000)
 
-    def change_release_version(self, version_label: str = "Initial"):
-        """Изменяет версию релиза"""
+    def change_release_version(
+        self,
+        version_label: str = "Initial",
+        *,
+        avoid_commit_message: str | None = None,
+    ):
+        """
+        Меняет версию релиза (привязку к другому коммиту).
+        В UI список коммитов как при create_release; подписи вроде «Initial» часто отсутствуют —
+        тогда надёжнее выбрать строку таблицы, отличную от коммита релиза (avoid_commit_message).
+        """
         # Сначала снимаем с публикации, если релиз опубликован
         try:
             unpublish_btn = self.page.get_by_role("button", name="release_unpublish_button")
@@ -115,14 +124,82 @@ class ReleasePage(BasePage):
                 self.page.wait_for_timeout(2000)
         except Exception:
             pass  # Релиз уже в черновике
-        
+
         self.page.get_by_role("button", name="release_change_button").click()
-        self.page.get_by_role("textbox", name="version").click()
-        version_commit = self.page.get_by_label(version_label).first
-        version_commit.wait_for(state="visible", timeout=10000)
-        version_commit.click()
-        self.page.get_by_role("button", name="Отправить").click()
-        self.page.wait_for_timeout(2000)
+        self.page.wait_for_timeout(500)
+        version_field = self.page.get_by_role("textbox", name="version")
+        version_field.wait_for(state="visible", timeout=10000)
+        version_field.click()
+        self.page.wait_for_timeout(500)
+
+        try:
+            self.page.locator("label").nth(2).click()
+            self.page.wait_for_timeout(300)
+        except Exception:
+            pass
+        commits_btn = self.page.locator("button").filter(has_text="Коммиты")
+        if commits_btn.count() > 0:
+            commits_btn.first.click()
+            self.page.wait_for_timeout(500)
+
+        # Модалка смены версии: та, где есть поле version (не «последний» dialog — он может быть другим)
+        version_tb = self.page.get_by_role("textbox", name="version")
+        dlg_with_version = self.page.get_by_role("dialog").filter(has=version_tb)
+        dialog = dlg_with_version.first if dlg_with_version.count() > 0 else self.page.get_by_role("dialog").last
+
+        # Таблица коммитов; клик по <tr> перехватывается вкладкой — кликаем td с force
+        rows = dialog.locator("tbody tr")
+        if rows.count() == 0:
+            rows = self.page.locator("tbody tr")
+        rows.first.wait_for(state="visible", timeout=15000)
+        n = rows.count()
+
+        def _click_row(idx: int) -> None:
+            cell = rows.nth(idx).locator("td").first
+            cell.click(force=True)
+            self.page.wait_for_timeout(300)
+
+        picked = False
+        if avoid_commit_message and n >= 2:
+            for i in range(n):
+                txt = rows.nth(i).inner_text() or ""
+                if avoid_commit_message not in txt:
+                    _click_row(i)
+                    picked = True
+                    break
+        if not picked:
+            for exact in (True, False):
+                try:
+                    opt = dialog.get_by_text(version_label, exact=exact).first
+                    opt.wait_for(state="visible", timeout=4000)
+                    opt.click(force=True)
+                    picked = True
+                    break
+                except Exception:
+                    continue
+        if not picked:
+            for pattern in (r"Initial\s+commit", r"\bInitial\b"):
+                try:
+                    opt = dialog.get_by_text(re.compile(pattern, re.IGNORECASE)).first
+                    opt.wait_for(state="visible", timeout=4000)
+                    opt.click(force=True)
+                    picked = True
+                    break
+                except Exception:
+                    continue
+        if not picked and n >= 1:
+            _click_row(0)
+            picked = True
+        if not picked:
+            raise RuntimeError(
+                f"Не удалось выбрать коммит для смены версии (version_label={version_label!r}, строк={n})"
+            )
+
+        send_button = self.page.get_by_role("button", name="Отправить")
+        send_button.wait_for(state="visible", timeout=10000)
+        send_button.click(force=True)
+        self.page.wait_for_load_state("networkidle")
+        self.page.wait_for_timeout(1000)
 
     def delete_release(self):
         """Удаляет релиз"""

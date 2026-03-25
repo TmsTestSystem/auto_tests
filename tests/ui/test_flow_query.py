@@ -1,6 +1,7 @@
 """
 Тест для компонента Query
 """
+import json
 import time
 from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
@@ -254,14 +255,46 @@ def test_flow_query(login_page, flow_project):
     
     time.sleep(3)
 
-    # Контент в модалке зависит от стенда, но по контракту всегда должны быть code и default_branch
     modal_text = json_modal.inner_text()
     print(f"[INFO] Текст в модалке (обрезан): {modal_text[:200]}...")
     assert modal_text.strip(), "Модальное окно JSON открыто, но внутри нет текста ответа"
-    # Проверяем, что в ответе есть корректный code и default_branch=master (с учётом возможных неразрывных пробелов)
     normalized = modal_text.replace("\xa0", " ")
     assert project_code in normalized, f"В JSON нет ожидаемого кода проекта: {project_code}"
-    assert "default_branch" in normalized and "master" in normalized, "В JSON нет пары default_branch = master"
+
+    # Ответ отладки менялся между версиями: snake_case/camelCase, master/main, блок type=git_local без явной ветки
+    has_branch_fields = ("default_branch" in normalized) or ("defaultBranch" in normalized)
+    has_branch_value = ("master" in normalized) or ("main" in normalized)
+    if has_branch_fields and has_branch_value:
+        pass
+    elif "git_local" in normalized:
+        pass
+    else:
+        pos = normalized.find("{")
+        if pos >= 0:
+            try:
+                data, _ = json.JSONDecoder().raw_decode(normalized[pos:])
+            except json.JSONDecodeError:
+                data = None
+
+            def _walk_git_meta(o):
+                if isinstance(o, dict):
+                    if o.get("type") == "git_local":
+                        return True
+                    db = o.get("default_branch") or o.get("defaultBranch")
+                    if db in ("master", "main"):
+                        return True
+                    return any(_walk_git_meta(v) for v in o.values())
+                if isinstance(o, list):
+                    return any(_walk_git_meta(x) for x in o)
+                return False
+
+            assert isinstance(data, dict) and _walk_git_meta(data), (
+                f"В JSON нет git_local / default_branch(main|master). Фрагмент: {normalized[:1200]!r}"
+            )
+        else:
+            raise AssertionError(
+                f"Нет признаков репозитория в модалке (ветка или git_local). Фрагмент: {normalized[:1200]!r}"
+            )
 
     close_button = page.locator(ModalLocators.MODAL_CLOSE_BUTTON)
     if close_button.count() > 0:

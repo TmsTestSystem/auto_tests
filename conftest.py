@@ -34,11 +34,11 @@ def pytest_configure(config):
             "st2": "https://decision-flow-frontend-st2.df-st.b-pl.cloud2", 
             "st3": "https://decision-flow-frontend-st3.df-st.b-pl.cloud2",
             "st4": "https://decision-flow-web-1.df-st4.cloud2.b-pl.pro",
-            "local-a": "http://localhost:3333",
+            "local-a": "http://192.168.0.10:3333",
             "local-b": "http://localhost:3334", 
             "local-c": "http://localhost:3335",
-            "local-192": "http://192.168.0.7:3333",
-            "local-192-https": "https://192.168.0.7/"
+            "local-192": "http://192.168.0.10:3333",
+            "local-192-https": "https://192.168.0.10/"
         }
         
         if host in host_urls:
@@ -59,7 +59,7 @@ def pytest_configure(config):
             
             # Если MAILHOG_URL не найден, устанавливаем значение по умолчанию для local-192 / local-192-https
             if not mailhog_url and host in ("local-192", "local-192-https"):
-                mailhog_url = "http://192.168.0.7:8025"
+                mailhog_url = "http://192.168.0.10:8025"
             
             # Обновляем .env файл
             env_content = f"""# Конфигурация хостов для тестирования
@@ -90,7 +90,7 @@ REPO_URL_FLOW=git@gitlab.infra.b-pl.pro:ilya.kurilin/qa_auto_test.git"""
 
 def get_api_base_url():
     """Получить BASE_URL из переменных окружения"""
-    return os.getenv("BASE_URL", "http://localhost:3333").rstrip("/")
+    return os.getenv("BASE_URL", "http://192.168.0.10:3333").rstrip("/")
 
 def get_projects_api():
     """Получить URL для API проектов"""

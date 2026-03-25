@@ -16,7 +16,7 @@ load_dotenv(dotenv_path=env_path, override=True)
 # Отключаем предупреждения о небезопасных запросах
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-API_BASE_URL = os.getenv("BASE_URL", "http://localhost:3333").rstrip("/")
+API_BASE_URL = os.getenv("BASE_URL", "http://192.168.0.10:3333").rstrip("/")
 PROJECTS_API = f"{API_BASE_URL}/api/projects"
 
 def get_auth_cookies():

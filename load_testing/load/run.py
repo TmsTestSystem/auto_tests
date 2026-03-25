@@ -27,11 +27,11 @@ HOST_URLS = {
     "st2": "https://decision-flow-frontend-st2.df-st.b-pl.cloud2",
     "st3": "https://decision-flow-frontend-st3.df-st.b-pl.cloud2",
     "st4": "https://decision-flow-web-1.df-st4.cloud2.b-pl.pro",
-    "local-a": "http://localhost:3333",
+    "local-a": "http://192.168.0.10:3333",
     "local-b": "http://localhost:3334",
     "local-c": "http://localhost:3335",
-    "local-192": "http://192.168.0.7:3333",
-    "local-192-https": "https://192.168.0.7/"
+    "local-192": "http://192.168.0.10:3333",
+    "local-192-https": "https://192.168.0.10/"
 }
 
 

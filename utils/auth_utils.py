@@ -15,7 +15,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def get_api_base_url():
     """Получить BASE_URL из переменных окружения"""
-    return os.getenv("BASE_URL", "http://localhost:3333").rstrip("/")
+    return os.getenv("BASE_URL", "http://192.168.0.10:3333").rstrip("/")
 
 def get_auth_cookies():
     """

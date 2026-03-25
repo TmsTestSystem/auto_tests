@@ -192,7 +192,7 @@ LOAD_PROCESS_PATH = os.getenv("LOAD_PROCESS_PATH", "test_que/test_1.df.json")
 
 class ApiUser(HttpUser):
     # Базовый хост можно переопределить переменной окружения BASE_URL
-    host = os.getenv("BASE_URL", "http://192.168.0.7:3333").rstrip("/")
+    host = os.getenv("BASE_URL", "http://192.168.0.10:3333").rstrip("/")
     wait_time = between(1, 2)
 
     def on_start(self):
@@ -582,7 +582,7 @@ def _gap_ms(prev_end_us: Optional[int], cur_start_us: int) -> Optional[float]:
 
 
 def _api_base_from_host(host: str) -> str:
-    # host уже содержит base url вида http(s)://192.168.0.7[:порт]
+    # host уже содержит base url вида http(s)://192.168.0.10[:порт]
     return host.rstrip("/")
 
 
