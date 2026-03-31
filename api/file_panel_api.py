@@ -2,9 +2,10 @@
 API методы для работы с файловой панелью
 """
 
+import json
 import requests
 import urllib3
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional, Union
 from conftest import get_auth_cookies, get_api_base_url
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -117,7 +118,8 @@ class FilePanelAPI:
         try:
             response = requests.get(url, params=params, cookies=self.cookies, verify=False, timeout=30)
             response.raise_for_status()
-            return response.json()
+            # Ответ files/read: text/plain; charset=utf-8 (тело — текст файла, не JSON)
+            return response.text
         except requests.exceptions.RequestException as e:
             print(f"[ERROR] Ошибка при получении содержимого файла {file_path}: {e}")
             raise
@@ -311,7 +313,7 @@ class FilePanelAPI:
             print(f"[ERROR] Ошибка при импорте файла {file_path}: {e}")
             raise
     
-    def read_file(self, file_path: str) -> Dict[str, Any]:
+    def read_file(self, file_path: str) -> Union[str, Dict[str, Any], List[Any]]:
         """
         Прочитать содержимое файла
         
@@ -319,7 +321,8 @@ class FilePanelAPI:
             file_path: Путь к файлу
             
         Returns:
-            Dict с содержимым файла
+            Для .json (или application/json) — распарсенный JSON (dict/list).
+            Иначе — текст файла в UTF-8 (как отдаёт files/read: text/plain).
         """
         url = f"{self.api_base}/files/read"
         
@@ -330,7 +333,18 @@ class FilePanelAPI:
         try:
             response = requests.get(url, params=params, cookies=self.cookies, verify=False, timeout=30)
             response.raise_for_status()
-            return response.json()
+            text = response.text
+            ct = (response.headers.get("Content-Type") or "").lower()
+            if "application/json" in ct:
+                if not text.strip():
+                    return {}
+                return json.loads(text)
+            basename = file_path.rstrip("/").rsplit("/", 1)[-1].lower()
+            if basename.endswith(".json"):
+                if not text:
+                    return {}
+                return json.loads(text)
+            return text
         except requests.exceptions.RequestException as e:
             print(f"[ERROR] Ошибка при чтении файла {file_path}: {e}")
             raise

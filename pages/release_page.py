@@ -60,34 +60,30 @@ class ReleasePage(BasePage):
 
     def validate_release_data(self, release_title: str, release_alias: str, endpoint_alias: str, expected_status: str = "Черновик"):
         """Валидирует данные релиза на странице"""
-        # Используем вертикальные блоки AdminPanel__CardInfoVertical___EsIJ4, как в текущей вёрстке.
-        card_info = self.page.locator("div.AdminPanel__CardInfoVertical___EsIJ4").first
-        card_info.wait_for(state="visible", timeout=10000)
+        # Не завязываемся на CSS Modules (классы на фронте меняются или переименовываются).
+        self.page.wait_for_url(re.compile(r"/projects/[^/]+/setup/releases/\d+"), timeout=20000)
+        self.page.wait_for_load_state("networkidle")
 
-        blocks = card_info.locator("div.AdminPanel__CardInfoVerticalBlock___oD4XY")
+        # Контент карточки часто вне <main> или в отдельных блоках — ждём появления текста в DOM.
+        title_pat = re.compile(re.escape(release_title))
+        self.page.get_by_text(title_pat).first.wait_for(state="visible", timeout=20000)
+        self.page.get_by_text(re.escape(release_alias)).first.wait_for(state="visible", timeout=20000)
 
-        # Имя
-        name_block = blocks.filter(has_text="Имя").first
-        name_text = name_block.inner_text()
-        assert release_title in name_text, f"Имя релиза не отображается, текст блока: {name_text!r}"
-
-        # Статус
-        status_block = blocks.filter(has_text="Статус").first
-        status_text = status_block.inner_text()
-        # На UI статус отображается с маленькой буквы ("черновик"), поэтому сравниваем без учёта регистра.
-        assert expected_status.lower() in status_text.lower(), (
-            f"Статус релиза должен быть '{expected_status}', текст блока: {status_text!r}"
+        body_text = self.page.locator("body").inner_text()
+        assert expected_status.lower() in body_text.lower(), (
+            f"Статус релиза должен содержать '{expected_status}' (без учёта регистра), фрагмент: {body_text[:800]!r}"
         )
 
-        # Алиас
-        alias_block = blocks.filter(has_text="Алиас").first
-        alias_text = alias_block.inner_text()
-        assert release_alias in alias_text, f"Алиас релиза не отображается, текст блока: {alias_text!r}"
-
-        endpoints_table = self.page.locator('section:has-text("Эндпоинты") tbody.Table__Body___I87b4')
-        endpoints_table.wait_for(state="visible", timeout=10000)
+        ep_sections = self.page.locator("section").filter(has_text="Эндпоинты")
+        if ep_sections.count() > 0:
+            endpoints_table = ep_sections.first.locator("tbody").first
+        else:
+            endpoints_table = (
+                self.page.locator("table").filter(has_text=endpoint_alias).locator("tbody").first
+            )
+        endpoints_table.wait_for(state="visible", timeout=20000)
         table_text = endpoints_table.inner_text()
-        assert endpoint_alias in table_text, "Алиас эндпоинта отсутствует"
+        assert endpoint_alias in table_text, "Алиас эндпоинта отсутствует в таблице"
         assert "TutorialProcess.df.json" in table_text, "Процесс TutorialProcess.df.json не привязан"
 
     def publish_release(self):

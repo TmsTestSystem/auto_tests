@@ -17,7 +17,7 @@ class ProcessLogPage(BasePage):
 
     def get_log_table(self):
         """Получает таблицу журнала процессов"""
-        log_table = self.page.locator('tbody.Table__Body___I87b4')
+        log_table = self.page.locator('tbody[class*="Table__Body"]')
         log_table.wait_for(state="visible", timeout=10000)
         return log_table
 
@@ -64,7 +64,7 @@ class ProcessLogPage(BasePage):
                 except Exception:
                     pass
             try:
-                log_table = self.page.locator("tbody.Table__Body___I87b4")
+                log_table = self.page.locator('tbody[class*="Table__Body"]')
                 log_table.wait_for(state="visible", timeout=8000)
                 text = log_table.inner_text()
                 n = log_table.locator("tr").count()
