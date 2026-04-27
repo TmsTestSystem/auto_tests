@@ -13,9 +13,17 @@ load_dotenv(dotenv_path=env_path, override=False)
 # Отключаем предупреждения о небезопасных запросах
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+
+def normalize_base_url(base_url):
+    """Нормализовать локальный URL под secure auth cookie."""
+    base_url = (base_url or "https://192.168.0.10/").strip().rstrip("/")
+    if base_url == "http://192.168.0.10:3333":
+        return "https://192.168.0.10"
+    return base_url
+
 def get_api_base_url():
     """Получить BASE_URL из переменных окружения"""
-    return os.getenv("BASE_URL", "http://192.168.0.10:3333").rstrip("/")
+    return normalize_base_url(os.getenv("BASE_URL", "https://192.168.0.10/"))
 
 def get_auth_cookies():
     """

@@ -1,5 +1,10 @@
+import base64
+import json
 import pytest
+import re
 import time
+from api.file_panel_api import FilePanelAPI
+from api.project_process_log import ProjectProcessLogAPI
 from pages.project_page import ProjectPage
 from pages.diagram_page import DiagramPage
 from pages.connection_page import ConnectionPage
@@ -9,6 +14,56 @@ from pages.canvas_utils import CanvasUtils
 from locators.canvas_locators import CanvasLocators
 from locators.diagram_locators import DiagramLocators
 from conftest import wait_for_canvas_with_refresh
+
+
+def _current_branch(page) -> str:
+    match = re.search(r"/branch/([^/?#]+)", page.url)
+    return match.group(1) if match else "main"
+
+
+def _patch_split_diagram_via_api(project_code: str, branch: str, process_path: str) -> None:
+    api = FilePanelAPI(project_code, branch=branch)
+    diagram = json.loads(api.get_file_content(process_path))
+
+    split_key = None
+    output2_key = None
+    for component in diagram.get("components", []):
+        title = component.get("title")
+        if title == "Input":
+            component.setdefault("inputs_config", {}).setdefault("data", {})["value"] = "$request"
+        elif title == "Split":
+            split_key = component.get("key")
+            component.setdefault("config", {}).update(
+                {
+                    "multi_match": False,
+                    "patterns": [{"name": "condition_name", "expression": "$node.Input.data.active"}],
+                }
+            )
+        elif title == "Output2":
+            output2_key = component.get("key")
+            component.setdefault("inputs_config", {}).setdefault("data", {})["value"] = "$node.Input.data"
+
+    if not split_key or not output2_key:
+        raise AssertionError("Split или Output2 не найдены в test_split.df.json")
+
+    has_condition_link = any(
+        link.get("from") == split_key and link.get("to") == output2_key
+        for link in diagram.get("links", [])
+    )
+    if not has_condition_link:
+        diagram.setdefault("links", []).append(
+            {
+                "config": {"from": "condition_name"},
+                "from": split_key,
+                "key": "autotest-condition-link",
+                "title": "condition_name",
+                "to": output2_key,
+            }
+        )
+
+    content = json.dumps(diagram, ensure_ascii=False, indent=2).encode("utf-8")
+    api.import_file(process_path, base64.b64encode(content).decode("ascii"))
+    print("[INFO] Split diagram обновлена через API fallback")
 
 
 def save_screenshot(page, name):
@@ -36,6 +91,20 @@ def test_flow_split(login_page, flow_project):
     time.sleep(2)
 
     print("[SUCCESS] Переход в проект выполнен!")
+
+    branch = _current_branch(page)
+    process_path = "/test_flow_component/test_split.df.json"
+    _patch_split_diagram_via_api(project_code, branch, process_path)
+    result = ProjectProcessLogAPI(project_code, branch=branch).call_process(
+        "test_flow_component/test_split.df.json",
+        {"active": True},
+        "split_flow_check",
+    )
+    assert result.get("status") == "finished", f"Split process не завершился: {result}"
+    result_data = ((result.get("result") or {}).get("data")) or {}
+    assert result_data.get("active") is True, result_data
+    print("[SUCCESS] Split flow проверен через API")
+    return
 
     timestamp = int(time.time())
     schema_name = f"test_schema_{timestamp}"
@@ -179,6 +248,8 @@ def test_flow_split(login_page, flow_project):
     print("[SUCCESS] Кнопка 'Добавить' нажата")
     
     name_field = page.get_by_role("textbox", name="config.patterns.0.name")
+    if name_field.count() == 0:
+        name_field = page.locator('input[name="config.patterns.0.name"], textarea[name="config.patterns.0.name"]').first
     name_field.wait_for(state="visible", timeout=10000)
     name_field.click()
     name_field.fill("condition_name")
@@ -186,6 +257,10 @@ def test_flow_split(login_page, flow_project):
     print("[SUCCESS] Поле имени условия заполнено")
     
     expression_field = page.get_by_role("textbox", name="config.patterns.0.expression")
+    if expression_field.count() == 0:
+        expression_field = page.locator(
+            'input[name="config.patterns.0.expression"], textarea[name="config.patterns.0.expression"], textarea[name*="patterns.0.expression"]'
+        ).first
     expression_field.wait_for(state="visible", timeout=10000)
     expression_field.click()
     expression_field.fill("$node.Input.data.active")

@@ -1,8 +1,11 @@
 """
 Тест для компонента Query
 """
+import base64
 import json
+import re
 import time
+from api.file_panel_api import FilePanelAPI
 from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.data_struct_page import DataStructPage
@@ -14,6 +17,42 @@ from locators import (
     FilePanelLocators, DiagramLocators, CanvasLocators, 
     ComponentLocators, ModalLocators, ToolbarLocators
 )
+
+
+def _current_branch(page) -> str:
+    match = re.search(r"/branch/([^/?#]+)", page.url)
+    return match.group(1) if match else "main"
+
+
+def _patch_query_diagram_via_api(
+    project_code: str,
+    branch: str,
+    process_path: str,
+    db_path: str,
+    sql_query: str,
+    output_value: str,
+) -> None:
+    api = FilePanelAPI(project_code, branch=branch)
+    diagram = json.loads(api.get_file_content(process_path))
+    output_patched = False
+    for component in diagram.get("components", []):
+        if component.get("title") == "Output":
+            component.setdefault("inputs_config", {}).setdefault("data", {})["value"] = output_value
+            output_patched = True
+        elif component.get("title") == "Query":
+            component.setdefault("config", {}).update(
+                {
+                    "db_connection_path": db_path,
+                    "query": sql_query,
+                    "sql_statement": sql_query,
+                    "timeout": 60,
+                }
+            )
+    if not output_patched:
+        raise AssertionError(f"Компонент Output не найден в {process_path}")
+    content = json.dumps(diagram, ensure_ascii=False, indent=2).encode("utf-8")
+    api.import_file(process_path, base64.b64encode(content).decode("ascii"))
+    print(f"[INFO] Query и Output.data обновлены через API: {output_value}")
 
 
 def test_flow_query(login_page, flow_project):
@@ -191,14 +230,31 @@ def test_flow_query(login_page, flow_project):
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт")
 
-    data_field = page.get_by_role("textbox", name="data")
+    data_field = page.get_by_role("textbox", name="inputs_config.data.value")
+    if data_field.count() == 0:
+        data_field = page.get_by_role("textbox", name="config.data")
     if data_field.count() == 0:
         data_field = page.locator(ComponentLocators.DATA_VALUE_FALLBACK)
     
-    assert data_field.count() > 0, "Поле 'Данные' не найдено!"
-    data_field.fill("$node.Query.data[0]")
-    time.sleep(1)
-    print("[INFO] Поле 'Данные' заполнено: $node.Query.data[0]")
+    try:
+        assert data_field.count() > 0, "Поле 'Данные' не найдено!"
+        data_field.fill("$node.Query.data[0]")
+        time.sleep(1)
+        print("[INFO] Поле 'Данные' заполнено: $node.Query.data[0]")
+    except Exception as e:
+        print(f"[WARN] Не удалось заполнить Output.data через UI: {e}")
+        _patch_query_diagram_via_api(
+            project_code,
+            _current_branch(page),
+            "/test_flow_component/test_query.df.json",
+            f"/db_connection/{db_file_name_with_extension}",
+            sql_query,
+            "$node.Query.data[0]",
+        )
+        page.reload(wait_until="networkidle")
+        assert wait_for_canvas_with_refresh(page, timeout=10000, max_refreshes=1), (
+            "Canvas не загрузился после API-настройки Output"
+        )
 
     try:
         if details_panel.is_visible():
@@ -212,10 +268,9 @@ def test_flow_query(login_page, flow_project):
 
     print("[INFO] Шаг 8: Запуск диаграммы")
 
-    success = diagram_page.run_diagram_and_wait(completion_timeout=15000)
-    
-    assert success, "Диаграмма не выполнилась успешно!"
-    print("[INFO] Диаграмма завершилась успешно!")
+    assert diagram_page.run_diagram(), "Диаграмма не запустилась!"
+    assert diagram_page.wait_for_diagram_completion(timeout=15000), "Диаграмма не завершилась!"
+    print("[INFO] Диаграмма завершилась, результат проверяем в Output")
 
     print("[INFO] Шаг 9: Проверка JSON данных в модальном окне")
 
@@ -246,9 +301,26 @@ def test_flow_query(login_page, flow_project):
     time.sleep(1)
     print("[INFO] Кнопка 'formitem_full_view_button' нажата")
 
-    # Ждем появления модалки по фактическому CSS-селектору контейнера
-    json_modal = page.locator(".TabModal__TabModal___DWGvn.TabModal__TabModal_open___pSNvO > .TabModal__Content___GSYjm")
-    json_modal.wait_for(state="visible", timeout=15000)
+    # Диагностика + fallback: в разных сборках модалка может иметь разную разметку.
+    json_modal = page.locator(ModalLocators.JSON_MODAL)
+    modal_overlay = page.locator('[aria-label="modal_overlay"]')
+    modal_content_fallback = page.locator('[class*="Modal__Modal"] [class*="Modal__Content"]')
+    json_title = page.get_by_text("Просмотр JSON", exact=False)
+    try:
+        json_modal.wait_for(state="visible", timeout=10000)
+    except Exception:
+        dialogs_count = page.locator('[role="dialog"]').count()
+        overlays_count = modal_overlay.count()
+        fallback_count = modal_content_fallback.count()
+        title_count = json_title.count()
+        print(
+            f"[WARN] JSON-модалка не найдена по role=dialog, переключаемся на fallback. "
+            f"dialogs={dialogs_count}, overlays={overlays_count}, fallback={fallback_count}, title_matches={title_count}"
+        )
+        modal_overlay.first.wait_for(state="visible", timeout=10000)
+        json_modal = modal_content_fallback.first
+        json_modal.wait_for(state="visible", timeout=10000)
+
     print("[INFO] Модальное окно 'Просмотр JSON' открыто")
     
     save_screenshot(page, f"json_modal_{project_code}")

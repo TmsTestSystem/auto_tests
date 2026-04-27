@@ -29,7 +29,8 @@ def main():
         "local-a": "http://192.168.0.10:3333",
         "local-b": "http://localhost:3334", 
         "local-c": "http://localhost:3335",
-        "local-192": "http://192.168.0.10:3333",
+        # HTTP-порт логинит, но не принимает session cookie на API (/api/projects -> 401).
+        "local-192": "https://192.168.0.10/",
         "local-192-https": "https://192.168.0.10/"
     }
     
@@ -49,6 +50,19 @@ def main():
     
     # Обновляем .env файл
     env_path = Path(__file__).parent / ".env"
+    mailhog_url = None
+    if env_path.exists():
+        try:
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line.startswith("MAILHOG_URL="):
+                    mailhog_url = line.split("=", 1)[1]
+                    break
+        except OSError:
+            pass
+    if not mailhog_url and host_id in ("local-192", "local-192-https"):
+        mailhog_url = "http://192.168.0.10:8025"
+
     env_content = f"""# Конфигурация хостов для тестирования
 # Автоматически обновлено для хоста: {host_id}
 
@@ -59,6 +73,8 @@ PASSWORD=admin
 DATABASE_URL=$env.DATABASE_URL
 REPO_URL_FLOW=git@gitlab.infra.b-pl.pro:ilya.kurilin/qa_auto_test.git
 """
+    if mailhog_url:
+        env_content += f"MAILHOG_URL={mailhog_url}\n"
     
     with open(env_path, 'w', encoding='utf-8') as f:
         f.write(env_content)
@@ -68,7 +84,10 @@ REPO_URL_FLOW=git@gitlab.infra.b-pl.pro:ilya.kurilin/qa_auto_test.git
     print(f"[ARGS] Аргументы pytest: {pytest_args}")
     
     # Запускаем pytest
-    cmd = ["python", "-m", "pytest"] + pytest_args
+    host_option = []
+    if host_id != "custom" and not any(arg.startswith("--test-host") for arg in pytest_args):
+        host_option = [f"--test-host={host_id}"]
+    cmd = ["python", "-m", "pytest"] + host_option + pytest_args
     print(f"[CMD] Выполняется: {' '.join(cmd)}")
     
     try:

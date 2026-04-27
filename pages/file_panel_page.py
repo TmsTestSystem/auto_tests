@@ -14,13 +14,19 @@ class FilePanelPage(BasePage):
     def __init__(self, page: Page):
         super().__init__(page)
         self.page = page
+        self._tree_selectors = [
+            'div[role="treeitem"]',
+            '[role="tree"]',
+            '[data-testid="file-tree"]',
+            '.tree',
+            '.Bar__Bar___lx-XI',
+        ]
 
     def open_file_panel(self):
         # Проверяем, открыта ли уже файловая панель
         try:
             # Проверяем наличие элементов файлового дерева
-            tree_selectors = ['[role="tree"]', '.tree', '[data-testid="file-tree"]', '.Bar__Bar___lx-XI']
-            for selector in tree_selectors:
+            for selector in self._tree_selectors:
                 if self.page.locator(selector).count() > 0:
                     element = self.page.locator(selector).first
                     # В новых версиях Playwright у is_visible нет параметра timeout,
@@ -48,7 +54,7 @@ class FilePanelPage(BasePage):
             
             # Ждем появления любого из селекторов файлового дерева
             found = False
-            for selector in tree_selectors:
+            for selector in self._tree_selectors:
                 try:
                     self.page.wait_for_selector(selector, timeout=5000)
                     found = True
@@ -550,7 +556,16 @@ class FilePanelPage(BasePage):
                     try:
                         self.open_file_panel()
                         # Проверяем, что панель действительно открылась
-                        self.page.wait_for_selector('.Bar__Bar___lx-XI', timeout=10000)
+                        panel_ready = False
+                        for selector in self._tree_selectors:
+                            try:
+                                self.page.wait_for_selector(selector, timeout=3000)
+                                panel_ready = True
+                                break
+                            except Exception:
+                                continue
+                        if not panel_ready:
+                            print("[WARN] Файловая панель не успела отобразить дерево после импорта, продолжаем")
                         print("[DEBUG] Файловая панель успешно открыта")
                         time.sleep(2)
                     except Exception as e:

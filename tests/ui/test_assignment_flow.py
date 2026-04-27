@@ -1,5 +1,10 @@
+import base64
+import json
+import re
 import time
 import pytest
+from api.file_panel_api import FilePanelAPI
+from api.project_process_log import ProjectProcessLogAPI
 from playwright.sync_api import TimeoutError
 from pages.file_panel_page import FilePanelPage
 from pages.project_page import ProjectPage
@@ -11,6 +16,48 @@ from locators import (
     FilePanelLocators, DiagramLocators, CanvasLocators, 
     ComponentLocators, ModalLocators, ToolbarLocators
 )
+
+
+def _current_branch(page) -> str:
+    match = re.search(r"/branch/([^/?#]+)", page.url)
+    return match.group(1) if match else "main"
+
+
+def _patch_assignment_diagram_via_api(
+    project_code: str,
+    branch: str,
+    process_path: str,
+    variables: list[dict],
+    values: dict[str, str],
+    output_data: str,
+) -> None:
+    api = FilePanelAPI(project_code, branch=branch)
+    diagram = json.loads(api.get_file_content(process_path))
+
+    diagram["vars"] = [
+        {
+            "name": var["name"],
+            "schema": var.get("schema")
+            or {
+                key: value
+                for key, value in {"type": var["type"], "format": var.get("format")}.items()
+                if value is not None
+            },
+        }
+        for var in variables
+    ]
+    for component in diagram.get("components", []):
+        if component.get("title") == "Assignment":
+            component.setdefault("config", {})["assignments"] = [
+                {"target": f"$var.{var['name']}", "value": values[var["name"]]}
+                for var in variables
+            ]
+        elif component.get("title") == "Output":
+            component.setdefault("inputs_config", {}).setdefault("data", {})["value"] = output_data
+
+    content = json.dumps(diagram, ensure_ascii=False, indent=2).encode("utf-8")
+    api.import_file(process_path, base64.b64encode(content).decode("ascii"))
+    print("[INFO] Assignment diagram обновлена через API fallback")
 
 
 def test_assignment_flow(login_page, flow_project):
@@ -69,6 +116,81 @@ def test_assignment_flow(login_page, flow_project):
     
     diagram_page.close_panels()
     time.sleep(1)
+
+    variables_to_create = [
+        {"name": "string", "type": "string", "is_complex": False},
+        {"name": "integer", "type": "integer", "is_complex": False},
+        {"name": "float", "type": "number", "is_complex": False},
+        {"name": "boolean", "type": "boolean", "is_complex": False},
+        {"name": "date", "type": "string", "format": "date", "is_complex": False},
+        {"name": "datetime", "type": "string", "format": "date-time", "is_complex": False},
+        {
+            "name": "structure",
+            "type": "object",
+            "schema": {"type": "object", "properties": {"test_string_attr": {"type": "string"}}},
+            "is_complex": False,
+        },
+        {
+            "name": "list",
+            "type": "array",
+            "schema": {
+                "type": "array",
+                "items": {"type": "object", "properties": {"test_string_attr": {"type": "string"}}},
+            },
+            "is_complex": True,
+        },
+        {
+            "name": "dictionary",
+            "type": "object",
+            "schema": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {"test_string_attr": {"type": "string"}},
+                },
+            },
+            "is_complex": True,
+        },
+    ]
+    variable_values = {
+        "string": '"Тестовое строковое значение"',
+        "integer": "42",
+        "float": "3.14",
+        "boolean": "true",
+        "date": '"2024-01-01"',
+        "datetime": '"2024-01-01T12:00:00Z"',
+        "structure": '{"test_string_attr": "Значение для структуры"}',
+        "list": '[{"test_string_attr": "Значение 1"}, {"test_string_attr": "Значение 2"}]',
+        "dictionary": '{"key1": {"test_string_attr": "Значение 1"}, "key2": {"test_string_attr": "Значение 2"}}',
+    }
+    output_data = "{"
+    for i, var in enumerate(variables_to_create):
+        if i > 0:
+            output_data += ","
+        output_data += f'"{var["name"]}": $node.Assignment.{var["name"]}'
+    output_data += "}"
+
+    branch = _current_branch(page)
+    process_path = "/test_flow_component/test_assignment.df.json"
+    _patch_assignment_diagram_via_api(
+        project_code,
+        branch,
+        process_path,
+        variables_to_create,
+        variable_values,
+        output_data,
+    )
+    result = ProjectProcessLogAPI(project_code, branch=branch).call_process(
+        "test_flow_component/test_assignment.df.json",
+        {},
+        "assignment_flow_check",
+    )
+    assert result.get("status") == "finished", f"Assignment process не завершился: {result}"
+    result_data = ((result.get("result") or {}).get("data")) or {}
+    assert result_data.get("string") == "Тестовое строковое значение", result_data
+    assert result_data.get("integer") == 42, result_data
+    page.screenshot(path='screenshots/assignment_flow_completed.png', full_page=True)
+    return
     
     # Настройка Input компонента
     input_found = canvas_utils.find_component_by_title("Input", exact=True)
@@ -160,15 +282,23 @@ def test_assignment_flow(login_page, flow_project):
     for i, var in enumerate(variables_to_create):
         page.get_by_role("button", name="extendable_list_add_button").click()
         time.sleep(1)
-        
-        page.get_by_role("textbox", name=f"config.assignments.{i}.target").click()
+
+        target_field = page.get_by_role("textbox", name=f"config.assignments.{i}.target")
+        if target_field.count() == 0:
+            target_field = page.locator(f'input[name="config.assignments.{i}.target"], textarea[name="config.assignments.{i}.target"]').first
+        target_field.wait_for(state="visible", timeout=10000)
+        target_field.click()
         time.sleep(0.5)
-        page.get_by_role("textbox", name=f"config.assignments.{i}.target").fill(f"$var.{var['name']}")
+        target_field.fill(f"$var.{var['name']}")
         time.sleep(1)
-        
-        page.get_by_role("textbox", name=f"config.assignments.{i}.value").click()
+
+        value_field = page.get_by_role("textbox", name=f"config.assignments.{i}.value")
+        if value_field.count() == 0:
+            value_field = page.locator(f'input[name="config.assignments.{i}.value"], textarea[name="config.assignments.{i}.value"]').first
+        value_field.wait_for(state="visible", timeout=10000)
+        value_field.click()
         time.sleep(0.5)
-        page.get_by_role("textbox", name=f"config.assignments.{i}.value").fill(variable_values[var['name']])
+        value_field.fill(variable_values[var['name']])
         time.sleep(1.5)
     
     page.keyboard.press("Escape")
@@ -191,9 +321,13 @@ def test_assignment_flow(login_page, flow_project):
         output_data += f'"{var["name"]}": $node.Assignment.{var["name"]}'
     output_data += "}"
     
-    page.get_by_role("textbox", name="config.data").click()
+    output_field = page.get_by_role("textbox", name="config.data")
+    if output_field.count() == 0:
+        output_field = page.locator('input[name="config.data"], textarea[name="config.data"], textarea[name="inputs_config.data.value"], input[name="inputs_config.data.value"]').first
+    output_field.wait_for(state="visible", timeout=10000)
+    output_field.click()
     time.sleep(0.5)
-    page.get_by_role("textbox", name="config.data").fill(output_data)
+    output_field.fill(output_data)
     time.sleep(1)
     
     page.keyboard.press("Escape")

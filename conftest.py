@@ -14,6 +14,14 @@ import json
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path, override=True)
 
+
+def normalize_base_url(base_url):
+    """Нормализовать локальный URL под secure auth cookie."""
+    base_url = (base_url or "https://192.168.0.10/").strip().rstrip("/")
+    if base_url == "http://192.168.0.10:3333":
+        return "https://192.168.0.10"
+    return base_url
+
 # Добавляем поддержку --host параметра
 def pytest_addoption(parser):
     """Добавляем кастомные опции pytest"""
@@ -37,7 +45,8 @@ def pytest_configure(config):
             "local-a": "http://192.168.0.10:3333",
             "local-b": "http://localhost:3334", 
             "local-c": "http://localhost:3335",
-            "local-192": "http://192.168.0.10:3333",
+            # HTTP-порт логинит, но не принимает session cookie на API (/api/projects -> 401).
+            "local-192": "https://192.168.0.10/",
             "local-192-https": "https://192.168.0.10/"
         }
         
@@ -90,7 +99,7 @@ REPO_URL_FLOW=git@gitlab.infra.b-pl.pro:ilya.kurilin/qa_auto_test.git"""
 
 def get_api_base_url():
     """Получить BASE_URL из переменных окружения"""
-    return os.getenv("BASE_URL", "http://192.168.0.10:3333").rstrip("/")
+    return normalize_base_url(os.getenv("BASE_URL", "https://192.168.0.10/"))
 
 def get_projects_api():
     """Получить URL для API проектов"""
@@ -178,7 +187,7 @@ def login_page():
     print(f"[PLAYWRIGHT] HEADLESS={headless} (env={headless_env})")
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=headless)
-        page = browser.new_page(viewport={'width': 1920, 'height': 1080})
+        page = browser.new_page(viewport={'width': 1920, 'height': 1080}, ignore_https_errors=True)
         login_page = LoginPage(page)
         login_page.goto()
         login_page.login(email, password)

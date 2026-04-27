@@ -262,7 +262,10 @@ class ProcessSchedulePage(BasePage):
             schedule_name: Название расписания
         """
         schedule_link = self.page.get_by_role("link", name=schedule_name)
-        schedule_link.click()
+        if schedule_link.count() == 0:
+            schedule_link = self.page.locator("tbody tr").filter(has_text=schedule_name).first
+        schedule_link.first.wait_for(state="visible", timeout=30000)
+        schedule_link.first.click()
         time.sleep(2)
         print(f"[INFO] Открыта страница расписания '{schedule_name}'")
 

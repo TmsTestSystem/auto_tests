@@ -55,8 +55,8 @@ class ComponentLocators:
     FULL_VIEW_BUTTON = 'button[aria-label="formitem_full_view_button"]'
     
     # Fallback локаторы
-    DATA_VALUE_FALLBACK = 'textarea[name*="data"], input[name*="data"], textarea[aria-label*="data"]'
-    URL_FIELD_FALLBACK = 'textarea[name="config.url"], input[name="config.url"]'
+    DATA_VALUE_FALLBACK = 'input[name="inputs_config.data.value"], textarea[name="inputs_config.data.value"], input[name="config.data"], textarea[name="config.data"], textarea[name*="data"], input[name*="data"], textarea[aria-label*="data"]'
+    URL_FIELD_FALLBACK = 'input[name="config.url"], textarea[name="config.url"], input[name*=".url"], textarea[name*=".url"], input[aria-label*="url"], textarea[aria-label*="url"]'
     METHOD_FIELD_FALLBACK = 'textarea[name="config.method"], select[name="config.method"]'
     HTTP_BODY_FIELD = 'textarea[name="body"], input[name="body"]'
     HTTP_EXPRESSION_BUTTON = 'button[aria-label*="expression"], button[title*="expression"]'

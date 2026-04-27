@@ -11,6 +11,8 @@ class LoginPage(BasePage):
     def __init__(self, page: Page):
         super().__init__(page)
         raw_base = (os.getenv("BASE_URL") or "").strip()
+        if raw_base.rstrip("/") == "http://192.168.0.10:3333":
+            raw_base = "https://192.168.0.10/"
         if raw_base and not raw_base.startswith(("http://", "https://")):
             # Если протокол не указан, считаем что https
             raw_base = "https://" + raw_base

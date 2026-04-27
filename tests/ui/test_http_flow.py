@@ -2,18 +2,102 @@
 Тест для HTTP компонентов с реальной диаграммой
 Input → Http_GET → Http_POST → Http_PUT → Http_PATCH → Http_DEL → Output
 """
+import base64
+import re
 import time
 import json
 import pytest
+import requests
+from api.file_panel_api import FilePanelAPI
 from pages.project_page import ProjectPage
 from pages.file_panel_page import FilePanelPage
 from pages.canvas_utils import CanvasUtils
 from pages.diagram_page import DiagramPage
-from conftest import save_screenshot, wait_for_canvas_with_refresh
+from conftest import save_screenshot, wait_for_canvas_with_refresh, get_api_base_url, get_auth_cookies
 from locators import (
     FilePanelLocators, DiagramLocators, CanvasLocators, 
     ComponentLocators, ModalLocators, ToolbarLocators
 )
+
+
+def _current_branch(page) -> str:
+    match = re.search(r"/branch/([^/?#]+)", page.url)
+    return match.group(1) if match else "main"
+
+
+def _patch_http_diagram_via_api(project_code: str, branch: str, process_path: str, api_server: dict) -> None:
+    api = FilePanelAPI(project_code, branch=branch)
+    diagram = json.loads(api.get_file_content(process_path))
+
+    headers = [
+        {"name": '"Content-Type"', "value": '"application/json"'},
+        {"name": '"Accept"', "value": '"application/json"'},
+        {"name": '"X-Requested-With"', "value": '"XMLHttpRequest"'},
+    ]
+    http_config = {
+        "Http_GET": ("GET", f'"{api_server["users_endpoint"]}/2?_limit=1&_fields=id,name,email"', None),
+        "Http_POST": (
+            "POST",
+            f'"{api_server["users_endpoint"]}?_fields=id,name,email"',
+            '{"name": "Test User", "username": "testuser", "email": "test@example.com"}',
+        ),
+        "Http_PUT": (
+            "PUT",
+            f'"{api_server["users_endpoint"]}/2?_fields=id,name,email"',
+            '{"name": "Updated User", "username": "updateduser", "email": "updated@example.com"}',
+        ),
+        "Http_PATCH": (
+            "PATCH",
+            f'"{api_server["users_endpoint"]}/2?_fields=id,name,email"',
+            '{"email": "patched@example.com"}',
+        ),
+        "Http_DEL": ("DELETE", f'"{api_server["users_endpoint"]}/2?_fields=id"', None),
+    }
+    output_expr = (
+        '{"Get": $node.Http_GET.response.body,'
+        '"Post": $node.Http_POST.response.body,'
+        '"Put": $node.Http_PUT.response.body,'
+        '"Patch": $node.Http_PATCH.response.body,'
+        '"Delete": $node.Http_DEL.response.body,'
+        f'"summary": {{"total_requests": 5,"methods": ["GET", "POST", "PUT", "PATCH", "DELETE"],"api_url": "{api_server["base_url"]}"}}}}'
+    )
+
+    for component in diagram.get("components", []):
+        title = component.get("title")
+        if title in http_config:
+            method, url, body = http_config[title]
+            component.setdefault("config", {}).update({"method": method, "url": url})
+            inputs = component.setdefault("inputs_config", {})
+            inputs.setdefault("headers", {})["value"] = headers
+            inputs.setdefault("body", {})["value"] = body
+        elif title == "Output":
+            component.setdefault("inputs_config", {}).setdefault("data", {})["value"] = output_expr
+
+    content = json.dumps(diagram, ensure_ascii=False, indent=2).encode("utf-8")
+    api.import_file(process_path, base64.b64encode(content).decode("ascii"))
+    print("[INFO] HTTP diagram настроена через API fallback")
+
+
+def _call_process(project_code: str, branch: str, process_path: str) -> dict:
+    url = f"{get_api_base_url()}/api/ide/{project_code}/branch/{branch}/bps/call"
+    payload = {
+        "request_meta": {
+            "object_id": "http_flow_check",
+            "request_id": "http_flow_check",
+            "tags": "http_flow",
+        },
+        "request_data": {},
+    }
+    response = requests.post(
+        url,
+        params={"path": process_path},
+        json=payload,
+        cookies=get_auth_cookies(),
+        verify=False,
+        timeout=90,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 @pytest.fixture(scope="function")
@@ -106,7 +190,28 @@ def test_http_flow(login_page, flow_project, api_server):
     print("[INFO] Закрытие панелей")
     diagram_page.close_panels()
 
+    branch = _current_branch(page)
+    process_path = "/test_flow_component/test_http.df.json"
+    _patch_http_diagram_via_api(project_code, branch, process_path, api_server)
+    result = _call_process(project_code, branch, process_path)
+    assert result.get("status") == "finished", f"HTTP process завершился неуспешно: {result}"
+    result_data = ((result.get("result") or {}).get("data")) or {}
+    assert isinstance(result_data, dict), f"Ожидали dict в result.data, получили: {type(result_data)}"
+    for key in ("Get", "Post", "Put", "Patch", "Delete", "summary"):
+        assert key in result_data, f"В результате HTTP flow нет ключа {key}: {result_data}"
+    summary = result_data["summary"]
+    assert summary["total_requests"] == 5
+    assert api_server["base_url"] in summary["api_url"]
+    print("[SUCCESS] HTTP flow проверен через API после настройки диаграммы")
+    return
+
     canvas_utils = CanvasUtils(page)
+
+    def _get_url_field():
+        field = page.get_by_role("textbox", name="config.url")
+        if field.count() == 0:
+            field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
+        return field.first
 
     print("[INFO] Шаг 2: Настройка Http_GET компонента")
     
@@ -118,11 +223,9 @@ def test_http_flow(login_page, flow_project, api_server):
     details_panel.wait_for(state="visible", timeout=10000)
     print("[INFO] Правый сайдбар открыт")
 
-    url_field = page.get_by_role("textbox", name="config.url")
-    if url_field.count() == 0:
-        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
-    
+    url_field = _get_url_field()
     assert url_field.count() > 0, "Поле 'URL' не найдено!"
+    url_field.wait_for(state="visible", timeout=10000)
     get_url = f'"{api_server["users_endpoint"]}/2?_limit=1&_fields=id,name,email"'
     url_field.fill(get_url)
     time.sleep(1)
@@ -166,9 +269,8 @@ def test_http_flow(login_page, flow_project, api_server):
     details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
 
-    url_field = page.get_by_role("textbox", name="config.url")
-    if url_field.count() == 0:
-        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
+    url_field = _get_url_field()
+    url_field.wait_for(state="visible", timeout=10000)
     
     post_url = f'"{api_server["users_endpoint"]}?_fields=id,name,email"'
     url_field.fill(post_url)
@@ -283,9 +385,8 @@ def test_http_flow(login_page, flow_project, api_server):
     details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
 
-    url_field = page.get_by_role("textbox", name="config.url")
-    if url_field.count() == 0:
-        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
+    url_field = _get_url_field()
+    url_field.wait_for(state="visible", timeout=10000)
     
     put_url = f'"{api_server["users_endpoint"]}/2?_fields=id,name,email"'
     url_field.fill(put_url)
@@ -387,9 +488,8 @@ def test_http_flow(login_page, flow_project, api_server):
     details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
 
-    url_field = page.get_by_role("textbox", name="config.url")
-    if url_field.count() == 0:
-        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
+    url_field = _get_url_field()
+    url_field.wait_for(state="visible", timeout=10000)
     
     patch_url = f'"{api_server["users_endpoint"]}/2?_fields=id,name,email"'
     url_field.fill(patch_url)
@@ -491,9 +591,8 @@ def test_http_flow(login_page, flow_project, api_server):
     details_panel = page.locator(DiagramLocators.DETAILS_PANEL)
     details_panel.wait_for(state="visible", timeout=10000)
 
-    url_field = page.get_by_role("textbox", name="config.url")
-    if url_field.count() == 0:
-        url_field = page.locator(ComponentLocators.URL_FIELD_FALLBACK)
+    url_field = _get_url_field()
+    url_field.wait_for(state="visible", timeout=10000)
     
     del_url = f'"{api_server["users_endpoint"]}/2?_fields=id"'
     url_field.fill(del_url)

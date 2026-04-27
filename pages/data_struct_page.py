@@ -348,15 +348,36 @@ class DataStructPage(BasePage):
 
     def select_attribute_type_by_index(self, idx, type_name):
         type_box = self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.type")
-        try:
-            # Пытаемся выбрать тип через выпадающий список, если он есть
-            type_box.click()
-            option = self.page.locator('div.TreeItem__LabelPrimary___vzajD').filter(has_text=type_name).first
-            option.wait_for(state="visible", timeout=2000)
-            option.click()
-        except Exception:
-            # В актуальном UI достаточно просто вписать тип в поле
-            type_box.fill(type_name)
+        type_box.wait_for(state="visible", timeout=10000)
+        type_box.click(force=True)
+
+        candidates = [type_name]
+        if type_name == "list":
+            candidates.extend(["Список", "Массив", "array"])
+        elif type_name == "dictionary":
+            candidates.extend(["dict", "Словарь", "Объект", "object"])
+        elif type_name == "dict":
+            candidates.extend(["dictionary", "Словарь", "Объект", "object"])
+        elif type_name == "Структура данных":
+            candidates.append("structure")
+
+        last_error = None
+        for candidate in candidates:
+            locators = [
+                self.page.get_by_role("treeitem", name=candidate),
+                self.page.get_by_text(candidate, exact=True),
+                self.page.locator('div.TreeItem__LabelPrimary___vzajD').filter(has_text=candidate),
+            ]
+            for locator in locators:
+                try:
+                    option = locator.first
+                    option.wait_for(state="visible", timeout=2500)
+                    option.click()
+                    return
+                except Exception as e:
+                    last_error = e
+
+        raise AssertionError(f"Не удалось выбрать тип атрибута {type_name!r}: {last_error}")
 
     def fill_attribute_description_by_index(self, idx, value):
         locator = self.page.get_by_role("textbox", name=f"attributes.{idx}.schema.description")

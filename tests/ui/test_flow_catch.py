@@ -84,14 +84,14 @@ def test_flow_catch(login_page, flow_project):
     if success:
         print("[SUCCESS] Диаграмма завершилась успешно!")
 
-        # Ищем именно UI‑toast, избегая внутренних monaco‑alert с role=alert.
+        # Ищем именно UI-toast, избегая внутренних monaco-alert с role=alert.
         try:
             toast = page.locator(ModalLocators.TOAST_SPECIFIC).first
             toast.wait_for(state="visible", timeout=3000)
             toast_text = toast.text_content()
             print(f"[SUCCESS] Тост найден: {toast_text}")
         except TimeoutError:
-            print("[WARN] UI‑toast не появился или скрыт – продолжаем без проверки текста тоста")
+            print("[WARN] UI-toast не появился или скрыт - продолжаем без проверки текста тоста")
     else:
         print("[WARN] Диаграмма не завершилась успешно, но продолжаем проверку")
 
